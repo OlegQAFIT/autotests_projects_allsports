@@ -7,11 +7,9 @@ from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from helpers import BasePage
 from helpers.authorization import LoginPage
-from locators.for_company_page_locators import CompanyPageLocators
+from locators.journal.for_company_page_locators import CompanyPageLocators
 from selenium.webdriver.support.ui import Select
 import time
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 class Company(LoginPage, CompanyPageLocators, BasePage):

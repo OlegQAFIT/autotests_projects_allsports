@@ -1,5 +1,5 @@
 import allure
-from pages.company import Company
+from pages.journal.company import Company
 
 
 @allure.feature('Company page')

@@ -1,0 +1,1 @@
+from locators.for_company_page_locators import CompanyPageLocators

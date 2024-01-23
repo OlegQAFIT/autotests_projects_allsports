@@ -3,6 +3,7 @@ import random
 
 import allure
 from faker import Faker
+from selenium.common import NoSuchElementException
 from selenium.webdriver.common.by import By
 from helpers import BasePage
 from helpers.authorization import LoginPage
@@ -11,6 +12,7 @@ from selenium.webdriver.support.ui import Select
 import time
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
 
 class Company(LoginPage, CompanyPageLocators, BasePage):
 
@@ -52,9 +54,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     @allure.step("")
     def click_save_portal_user(self):
         self.hard_click(self.MODAL_BUTTON_ADD_LOCATOR)
-
-
-
 
     @allure.step("Click Create Company tab")
     def click_create_company_tab(self):
@@ -353,8 +352,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         assert not self.search_text_on_page(
             self.company_input_value), f"Текст '{self.company_input_value}' найден на странице"
 
-
-
     @allure.step("")
     def open_page_add_portal_user(self):
         dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
@@ -372,7 +369,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         else:
             print("Кнопок дропдауна не найдено.")
 
-
     @allure.step("Assert elements on page portal user")
     def assert_page_portal_user(self):
         elements_to_check = [
@@ -386,9 +382,8 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         for element, expected_text in elements_to_check:
             self.assert_element_text_equal(element, expected_text)
 
-
     @allure.step("Assert elements on modal window portal user")
-    def assert_page_portal_user(self):
+    def assert_page_modal_portal_user(self):
         elements_to_check = [
             (self.MODAL_PHONE_LOCATOR, 'Телефон:'),
             (self.MODAL_NAME_LOCATOR, 'Имя'),
@@ -448,7 +443,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         assert self.search_text_on_page(
             self.generation_phone_number), f"Текст '{self.generation_phone_number}' не найден на странице"
 
-
     def add_new_portal_user_by_phone(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_PHONE_LOCATOR, self.PORTAL_USER_PHONE)
 
@@ -459,13 +453,14 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     def add_new_portal_user_by_email(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_EMAIL_LOCATOR, self.PORTAL_USER_EMAIL)
 
+    def add_new_portal_user_by_cy(self):
+        self.fills(CompanyPageLocators.INPUT_MODAL_PHONE_LOCATOR, self.PORTAL_USER_PHONE_BY_CY)
 
     @allure.step("")
     def assert_new_portal_user_by_phone(self):
         time.sleep(3)
         assert self.search_text_on_page(
             self.PORTAL_USER_PHONE), f"Текст '{self.PORTAL_USER_PHONE}' не найден на странице"
-
 
     @allure.step("")
     def add_wrong_email(self):
@@ -494,8 +489,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         for element, expected_text in elements_to_check:
             self.assert_element_text_equal(element, expected_text)
 
-
-
     @allure.step("open last dropdown and edit")
     def open_sms_for_portal_user(self):
         dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
@@ -512,7 +505,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
                 print("Кнопок ' SMS коды ' не найдено.")
         else:
             print("Кнопок дропдауна не найдено.")
-
 
     @allure.step("open last dropdown and edit")
     def open_edit_portal_user(self):
@@ -534,9 +526,12 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     def change_portal_user(self):
         self.fill(CompanyPageLocators.INPUT_MODAL_NAME_LOCATOR, self.MODAL_NAME_TEXT_CHANGE)
 
-
     def assert_search_change_portal_user(self):
         self.find_elements("//td[text()='AQA OLEG CHANGE']")
+
+    def assert_search_portal_user_by_cy(self):
+        time.sleep(3)
+        self.find_elements("//td[@data-v-4270064e=''][text()='Phone CY']")
 
     def assert_and_extract_sms_code(create_portal_user):
         sms_code_locator = (By.XPATH, '//*[contains(text(), "Sms code:")]')
@@ -545,3 +540,28 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         sms_code = ''.join(filter(str.isdigit, sms_code_text))
         print("Extracted SMS Code:", sms_code)
         assert len(sms_code) == 4, "SMS Code should be 4 digits"
+
+    @allure.step("open last dropdown and delete")
+    def delete_for_portal_user(self):
+        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+
+        if dropdown_buttons:
+            last_dropdown_button = dropdown_buttons[-1]
+            last_dropdown_button.click()
+
+            edit_buttons = self.find_elements("//a[contains(text(), ' Удалить ')]")
+
+            if edit_buttons:
+                edit_buttons[-1].click()
+            else:
+                print("Кнопок ' SMS коды ' не найдено.")
+        else:
+            print("Кнопок дропдауна не найдено.")
+
+
+    @allure.step("Search deleted portal user")
+    def assert_deleted_portal_user(self):
+        try:
+            self.find_elements("//td[text()='AQA OLEG']")
+        except NoSuchElementException:
+            print("Portal user 'AQA OLEG' удален.")

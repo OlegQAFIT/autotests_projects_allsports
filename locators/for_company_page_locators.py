@@ -101,7 +101,7 @@ class CompanyPageLocators():
 
     ERRORE_TEXT_legal_name = "/html/body/div/div/div[2]/form/section[3]/label[2]/div/span"
 
-    ERRORE_TEXT_LEGAL_NAME = "//span[@data-v-8a5e45de and @data-error-type='message' and contains(text(), 'Такое значение поля legal name уже существует.')]"
+    ERRORE_TEXT_LEGAL_NAME = "//p[@class='info-banner_message' and text()='Такое значение поля legal name уже существует.']"
 
 
     SWIFT_INPUT = "//section[@class='section']//label[@class='large']/p[contains(text(),'SWIFT')]/following-sibling::" \
@@ -181,6 +181,7 @@ class CompanyPageLocators():
     SELECT_TIMEZONE_MINSK = "/html/body/div/div/div[1]/form/label[6]/div/ul/li/a"
 
     PORTAL_USER_PHONE = "375441234578"
+    PORTAL_USER_PHONE_BY_CY = "35796348952"
     PORTAL_USER_EMAIL = "forAtest@gmail.com"
     NAME_PORTAL_USER = "Oleg for test"
     SEARCH_PORTAL_USER = "/html/body/div/div/div[2]/div[3]/table/tbody/tr/td[4]"

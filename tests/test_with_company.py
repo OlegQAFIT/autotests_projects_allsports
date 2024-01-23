@@ -2,7 +2,7 @@ import allure
 from pages.company import Company
 
 
-@allure.feature('Company Creation')
+@allure.feature('Company page')
 @allure.severity('Critical')
 @allure.story('Create new company without copay')
 def test_create_new_company_without_copay(driver):
@@ -26,7 +26,7 @@ def test_create_new_company_without_copay(driver):
     create_company.assert_find_new_company()
 
 
-@allure.feature('Company Creation')
+@allure.feature('Company page')
 @allure.severity('Critical')
 @allure.story('Create new company with copay')
 def test_create_new_company_with_copay(driver):
@@ -50,7 +50,7 @@ def test_create_new_company_with_copay(driver):
     create_company_with_copay.assert_find_new_company()
 
 
-@allure.feature('Company Creation')
+@allure.feature('Company Elements')
 @allure.severity('Critical')
 @allure.story('Disable fields with copay')
 def test_disable_fields(driver):
@@ -85,7 +85,7 @@ def test_found_actual_elements_on_add_company_page(driver):
     actual_elements.assert_found_elements_on_add_company_page()
 
 
-@allure.feature('Company Creation')
+@allure.feature('Company UNN')
 @allure.severity('Critical')
 @allure.story('Check UNN through external service')
 def test_create_heck_UNN(driver):
@@ -284,6 +284,7 @@ def test_open_new_company_without_copay_1(driver):
     create_company.open_last_dropdown_and_edit()
     create_company.assert_open_and_found_new_company()
 
+
 @allure.feature('Company Elements')
 @allure.severity('Critical')
 @allure.story('Check disable elements in new company with copay')
@@ -309,6 +310,7 @@ def test_check_disable_elements_in_new_company_with_copay(driver):
     create_company_with_copay.open_last_dropdown_and_edit()
     create_company_with_copay.assert_disable_elements_in_new_company()
 
+
 @allure.feature('Company Filters')
 @allure.severity('Critical')
 @allure.story('Check filter by manager')
@@ -323,6 +325,7 @@ def test_checking_filter_by_manager(driver):
     create_company_with_copay.click_and_open_company_tab()
     create_company_with_copay.drop_manager_selection_for_select()
     create_company_with_copay.assert_find_company_with_manager()
+
 
 @allure.feature('Company Search')
 @allure.severity('Critical')
@@ -366,9 +369,9 @@ def test_create_new_and_delete_company(driver):
     create_company.assert_company_not_found()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Open Page for Creating Portal User')
 def test_open_page_portal_user(driver):
     """
     Открытие вкладки для создания Portal User
@@ -391,9 +394,9 @@ def test_open_page_portal_user(driver):
     create_portal_user.assert_page_portal_user()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Open Modal Window for Creating Portal User')
 def test_open_modal_window_portal_user(driver):
     """
     Открытие вкладки для создания Portal User
@@ -416,9 +419,10 @@ def test_open_modal_window_portal_user(driver):
     create_portal_user.click_add_portal_user()
     create_portal_user.assert_page_portal_user()
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Check Clickable Cancel Button')
 def test_clickable_cancel_buttom(driver):
     """
     Кликабельна кнопка Отменить
@@ -442,10 +446,9 @@ def test_clickable_cancel_buttom(driver):
     create_portal_user.assert_clickable_cancel_button()
 
 
-
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('critical')
+@allure.story('Add Portal User')
 def test_add_portal_user(driver):
     """
     Добавление нового портал юзера
@@ -470,9 +473,10 @@ def test_add_portal_user(driver):
     create_portal_user.click_save_portal_user()
     create_portal_user.assert_new_portal_user()
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+
+@allure.feature('Portal User Management')
+@allure.severity('critical')
+@allure.story('Add Portal User by Phone')
 def test_add_portal_user_by_phone(driver):
     """
     Поиск и добавления существующего пользователя по номеру
@@ -498,9 +502,9 @@ def test_add_portal_user_by_phone(driver):
     # create_portal_user.assert_new_portal_user_by_phone()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('critical')
+@allure.story('Add Portal User by Email')
 def test_add_portal_user_by_email(driver):
     """
     Поиск и добавления существующего пользователя по почте
@@ -526,9 +530,37 @@ def test_add_portal_user_by_email(driver):
     # create_portal_user.assert_new_portal_user_by_phone()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('critical')
+@allure.story('Add Portal User CY')
+def test_add_portal_user_by_CY(driver):
+    """
+    Поиск и добавления существующего пользователя с кипра номера
+    """
+    create_portal_user = Company(driver)
+    create_portal_user.open_jn()
+    create_portal_user.login()
+    create_portal_user.click_and_open_company_tab()
+    create_portal_user.click_create_company_tab()
+    create_portal_user.drop_city_selection()
+    create_portal_user.drop_locale_selection()
+    create_portal_user.drop_timezone_selection()
+    create_portal_user.drop_sell_strategy_selection()
+    create_portal_user.drop_registration_type_selection()
+    create_portal_user.drop_manager_selection()
+    create_portal_user.fill_fields()
+    create_portal_user.click_save_company()
+    create_portal_user.click_and_open_company_tab()
+    create_portal_user.open_page_add_portal_user()
+    create_portal_user.click_add_portal_user()
+    create_portal_user.add_new_portal_user_by_cy()
+    create_portal_user.click_save_portal_user()
+    create_portal_user.assert_search_portal_user_by_cy()
+
+
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Check Validation of Email Field')
 def test_errore_filds(driver):
     """
     Проверка валидации поля email
@@ -551,6 +583,7 @@ def test_errore_filds(driver):
     create_portal_user.click_add_portal_user()
     create_portal_user.add_wrong_email()
     create_portal_user.assert_found_errore_text_portal_user()
+
 
 # @allure.feature('')
 # @allure.severity('')
@@ -578,14 +611,13 @@ def test_errore_filds(driver):
 #     create_portal_user.add_new_portal_user_by_phone_1()
 #     create_portal_user.click_save_portal_user()
 #     create_portal_user.click_add_portal_user()
-#     create_portal_user.add_new_portal_user_by_phone_1()
-#     # create_portal_user.add_new_portal_user_by_phone()
+#     create_portal_user.add_new_portal_user_by_phone_1_1()
 #     create_portal_user.assert_found_errore_text_added_portal_user()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Check SMS for Portal User')
 def test_sms_for_portal_user(driver):
     """
     СМС код для portal user
@@ -612,12 +644,12 @@ def test_sms_for_portal_user(driver):
     create_portal_user.assert_and_extract_sms_code()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Change Portal User')
 def test_change_portal_user(driver):
     """
-    СМС код для portal user
+    Изменение Portal User
     """
     create_portal_user = Company(driver)
     create_portal_user.open_jn()
@@ -641,3 +673,32 @@ def test_change_portal_user(driver):
     create_portal_user.change_portal_user()
     create_portal_user.click_save_portal_user()
     create_portal_user.assert_search_change_portal_user()
+
+
+@allure.feature('Portal User Management')
+@allure.severity('normal')
+@allure.story('Delete Portal User')
+def test_delete_portal_user(driver):
+    """
+    Удаление portal user
+    """
+    create_portal_user = Company(driver)
+    create_portal_user.open_jn()
+    create_portal_user.login()
+    create_portal_user.click_and_open_company_tab()
+    create_portal_user.click_create_company_tab()
+    create_portal_user.drop_city_selection()
+    create_portal_user.drop_locale_selection()
+    create_portal_user.drop_timezone_selection()
+    create_portal_user.drop_sell_strategy_selection()
+    create_portal_user.drop_registration_type_selection()
+    create_portal_user.drop_manager_selection()
+    create_portal_user.fill_fields()
+    create_portal_user.click_save_company()
+    create_portal_user.click_and_open_company_tab()
+    create_portal_user.open_page_add_portal_user()
+    create_portal_user.click_add_portal_user()
+    create_portal_user.generate_new_portal_user()
+    create_portal_user.click_save_portal_user()
+    create_portal_user.delete_for_portal_user()
+    create_portal_user.assert_deleted_portal_user()

@@ -8,7 +8,7 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
-
+from selenium.common.exceptions import TimeoutException, NoAlertPresentException
 class BasePage:
     def __int__(self, driver):
         self.driver = driver
@@ -24,7 +24,19 @@ class BasePage:
         alert = Alert(self.driver)
         alert.accept()
 
-    # Обрабатывает Confirmation Alert и нажимает "Отмена" для отклонения.
+    def alert_accept (self):
+        WebDriverWait(self.driver, 10).until(EC.alert_is_present())
+        alert = self.driver.switch_to.alert
+        alert.accept()
+
+    def alert_acceptt(self):
+        alert = WebDriverWait(self.driver, 10).until(EC.alert_is_present())
+        if alert:
+            print("Текст алерта:", alert.text)
+            alert.accept()
+
+
+        # Обрабатывает Confirmation Alert и нажимает "Отмена" для отклонения.
     def alert_dismiss(self):
         alert = Alert(self.driver)
         alert.dismiss()

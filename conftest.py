@@ -21,11 +21,12 @@ def pytest_addoption(parser):
 
 
 def create_chrome(headless=True):
-    chrome_option = ChromeOption()
+    chrome_options = ChromeOption()
     if headless == 'True':
-        chrome_option.add_argument('--headless')
-        chrome_option.add_argument('window-size=1900x1600')
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_option)
+        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('window-size=1900x1600')
+    chrome_options.add_argument('--disable-notifications')  # Отключить уведомления
+    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     return driver
 
 

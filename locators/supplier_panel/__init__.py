@@ -1,0 +1,1 @@
+from locators.supplier_panel.for_login_page_locators import LoginPageLocators

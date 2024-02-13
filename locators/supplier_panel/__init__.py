@@ -1,1 +1,3 @@
 from locators.supplier_panel.for_login_page_locators import LoginPageLocators
+from locators.supplier_panel.for_visit_history_page_locators import VisitHistoryLocators
+from locators.supplier_panel.for_registration_of_visits_pade_locators import RegistrationVisitsLocators

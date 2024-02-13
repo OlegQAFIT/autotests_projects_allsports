@@ -6,6 +6,7 @@ from selenium.webdriver import ActionChains, Keys
 from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from selenium.common.exceptions import TimeoutException, NoAlertPresentException
@@ -71,6 +72,14 @@ class BasePage:
     # Получение текста элемента
     def get_text(self):
         return self.element.text
+
+    def get_numeric_value(self):
+        text = self.element.text
+        numeric_value = re.search(r'\d+', text)
+        if numeric_value:
+            return int(numeric_value.group())
+        else:
+            return None
 
     # Получение информации о элементе, включая тег, текст и CSS-свойства
     def get_element_info(self):
@@ -182,6 +191,10 @@ class BasePage:
     def hard_click(self, locator):
         element = self.driver.find_element(By.XPATH, locator)
         self.driver.execute_script("arguments[0].click();", element)
+
+    def hard_click_on_edit(self, locator):
+        element = self.driver.find_element(By.XPATH, locator)
+        element.click()
 
     # Прокрутка страницы вниз
     def scroll_down(self):
@@ -378,6 +391,14 @@ class BasePage:
         element.clear()
         element.send_keys(text)
         return element.get_attribute("value")
+
+    def find_elementtt(driver, locator):
+        try:
+            element = driver.find_element(*locator)
+            return element
+        except NoSuchElementException:
+            print("Элемент не найден:", locator)
+            return None
 
     """
     Проверки Asserts:

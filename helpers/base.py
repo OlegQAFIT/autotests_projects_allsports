@@ -10,6 +10,8 @@ from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
 
 from selenium.common.exceptions import TimeoutException, NoAlertPresentException
+
+
 class BasePage:
     def __int__(self, driver):
         self.driver = driver
@@ -25,7 +27,7 @@ class BasePage:
         alert = Alert(self.driver)
         alert.accept()
 
-    def alert_accept (self):
+    def alert_accept(self):
         WebDriverWait(self.driver, 10).until(EC.alert_is_present())
         alert = self.driver.switch_to.alert
         alert.accept()
@@ -36,8 +38,8 @@ class BasePage:
             print("Текст алерта:", alert.text)
             alert.accept()
 
-
         # Обрабатывает Confirmation Alert и нажимает "Отмена" для отклонения.
+
     def alert_dismiss(self):
         alert = Alert(self.driver)
         alert.dismiss()
@@ -113,13 +115,21 @@ class BasePage:
         return self.element.is_displayed()
 
     # Проверка, активен ли элемент (например, активна ли кнопка)
-    def is_enabled(self):
-        return self.element.is_enabled()
+    def is_enabled(self, locator):
+        element = self.driver.find_element(*locator)
+        return element.is_enabled()
 
     # Выполнение двойного щелчка на элементе
     def double_click(self):
         action_chains = ActionChains(self.driver)
         action_chains.double_click(self.element).perform()
+
+    def is_button_clickable(self, locator):
+        try:
+            element = self.driver.find_element(By.XPATH, locator)
+            return element.is_enabled()
+        except NoSuchElementException:
+            return False
 
     """
     Взаимодействие с элементами:
@@ -237,8 +247,6 @@ class BasePage:
         else:
             raise Exception(f"Недопустимый индекс окна: {index}")
 
-
-
     def switch_to_new_window(self):
         self.driver.switch_to.window(self.driver.window_handles[1])
 
@@ -251,7 +259,6 @@ class BasePage:
     # Переключение на родительское окно
     def switch_to_parent_window(self):
         self.driver.switch_to.window(self.driver.window_handles[0])
-
 
     # Открытие в новом окне
     def open_new_window(self):
@@ -424,7 +431,6 @@ class BasePage:
         element_text = self.find_element(locator).text
         return element_text
 
-
     # Проверка значения атрибута элемента на равенство ожидаемому значению
     def assert_element_attribute_equal(self, locator, attribute_name, expected_value):
         element = self.wait_for_visible(locator)
@@ -465,7 +471,6 @@ class BasePage:
         for locator in locators:
             element = self.find_element(locator)
             assert not element.is_enabled(), f"Элемент {locator} активен"
-
 
     # Проверка, что элемент выбран (например, чекбокс)
     def assert_element_selected(self, locator):
@@ -527,8 +532,6 @@ class BasePage:
         page_text = self.driver.page_source.encode('utf-8')  # Преобразование в байтовый формат
         detected_language = detect(page_text)
         assert detected_language != language_code, f"{language_code} words found on the page"
-
-
 
     def get_number_from_element(self, locator):
         element = self.driver.find_element(By.XPATH, locator)

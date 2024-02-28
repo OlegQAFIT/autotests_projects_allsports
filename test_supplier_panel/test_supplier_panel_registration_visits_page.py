@@ -1,5 +1,4 @@
 import allure
-
 from pages.supplier_panel.registration_visits_page import SupplierPanelRegistrationVisits
 
 

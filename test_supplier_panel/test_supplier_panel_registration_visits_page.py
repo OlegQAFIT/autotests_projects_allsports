@@ -102,24 +102,6 @@ def test_reject_visit_ru(driver):
     registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_ru()
 
 
-@allure.feature('Supplier Panel')
-@allure.severity('Critical')
-@allure.story('Rejecting a visit in English')
-def test_reject_visit_en(driver):
-    """
-    Test rejecting a visit in English.
-    """
-    registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
-    registration_visits_supplier_panel.open_sp()
-    registration_visits_supplier_panel.login_supplier_panel()
-    registration_visits_supplier_panel.select_language()
-    registration_visits_supplier_panel.login_and_create_visit()
-    registration_visits_supplier_panel.click_reject_visit_en()
-    registration_visits_supplier_panel.enter_reason_visit()
-    registration_visits_supplier_panel.click_save_reject_visit_en()
-    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en()
-
-
 @allure.feature('Панель поставщика')
 @allure.severity('Критическая')
 @allure.story('Подтверждение визита на русском')
@@ -148,6 +130,24 @@ def test_confirm_visit_elements_en(driver):
     registration_visits_supplier_panel.select_language()
     registration_visits_supplier_panel.click_confirm_visit_en()
     registration_visits_supplier_panel.assert_found_elements_on_confirm_visit_modal_en()
+
+
+@allure.feature('Supplier Panel')
+@allure.severity('Critical')
+@allure.story('Rejecting a visit in English')
+def test_reject_visit_en(driver):
+    """
+    Test rejecting a visit in English.
+    """
+    registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
+    registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_supplier_panel()
+    registration_visits_supplier_panel.select_language()
+    registration_visits_supplier_panel.click_reject_visit_en()
+    registration_visits_supplier_panel.enter_reason_visit()
+    registration_visits_supplier_panel.click_save_reject_visit_en()
+    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en()
+
 
 # @allure.feature('')
 # @allure.severity('')

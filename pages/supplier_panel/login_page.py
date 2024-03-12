@@ -24,8 +24,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.SIGNIN_BUTTON_SUPPLER_PANEL, 'Продолжить'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Assert found elements on login page in English")
     def assert_found_elements_on_login_page_en(self):
@@ -36,8 +37,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.SIGNIN_BUTTON_SUPPLER_PANEL, 'Continue'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):
@@ -58,8 +60,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_EMAIL, 'Выбранное значение для email не найдено в списке.'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Assert found error text for wrong user in English")
     def assert_found_errore_text_wrong_user_en(self):
@@ -67,8 +70,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_USER, 'The selected email is invalid.'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Login email field validation")
     def login_email_field_validation_supplier_panel(self):
@@ -81,8 +85,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_FORMAT, 'Проверьте правильность введенных данных.'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Assert found error text for email field validation in English")
     def assert_found_errore_text_email_field_validation_en(self):
@@ -90,8 +95,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_FORMAT_EN, 'Check that the entered data is correct.'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Login password field validation")
     def login_password_field_validation_supplier_panel(self):
@@ -106,8 +112,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD, 'Неверный пароль'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Assert found error text for password field validation in English")
     def assert_found_errore_text_pasword_field_validation_en(self):
@@ -115,5 +122,6 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             (self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN, 'Invalid password'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"

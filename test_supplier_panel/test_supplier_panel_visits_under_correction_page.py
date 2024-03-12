@@ -58,6 +58,7 @@ def test_checking_period_with_visits_supplier_panel_en(driver):
     visits_under_correction_supplier_panel.login_supplier_panel()
     visits_under_correction_supplier_panel.click_visit_under_correction()
     visits_under_correction_supplier_panel.select_language()
+    visits_under_correction_supplier_panel.click_period_en()
     visits_under_correction_supplier_panel.assert_found_elements_on_visit_under_correction_period_page_en()
 
 
@@ -72,4 +73,5 @@ def test_checking_period_with_visits_supplier_panel_ru(driver):
     visits_under_correction_supplier_panel.open_sp()
     visits_under_correction_supplier_panel.login_supplier_panel()
     visits_under_correction_supplier_panel.click_visit_under_correction()
+    visits_under_correction_supplier_panel.click_period()
     visits_under_correction_supplier_panel.assert_found_elements_on_visit_under_correction_period_page_ru()

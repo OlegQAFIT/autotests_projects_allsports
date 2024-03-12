@@ -25,6 +25,9 @@ class VisitUnderCorrectionLocators():
     PERIOD_INTERVAL_LOCATOR_EN = "//p[@class='select_option']/span[@title='Interval']"
     PERIOD_INTERVAL_LOCATOR_RU = "//p[@class='select_option']/span[@title='Интервал']"
 
+    PERIOD_EN = '//*[@id="app"]/div/div/main/div[2]/div/div[1]/div[2]/label/div[2]/div[1]'
+    PERIOD_RU = '//*[@id="app"]/div/div/main/div[2]/div/div[1]/div[2]/label/div[2]/div[1]'
+
     # Таблица
     DATE_RU = "//a[contains(text(), 'Дата ')]"
     DATE_EN = "//a[contains(text(), 'Date')]"

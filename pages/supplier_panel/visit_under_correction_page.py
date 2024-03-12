@@ -29,23 +29,29 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
     def click_visit_under_correction(self):
         self.hard_click(self.VISITS_UNDER_CORRECTION_RU)
 
+    @allure.step("")
+    def click_period(self):
+        self.hard_click(self.PERIOD_RU)
+
+    @allure.step("")
+    def click_period_en(self):
+        self.hard_click(self.PERIOD_EN)
+
     @allure.step("Found elements")
     def assert_found_elements_on_visit_under_correction_page_ru(self):
         elements_to_check = [
             (self.VISITS_UNDER_CORRECTION_TEXT_LOCATOR_RU, 'Визиты на исправлении'),
             (self.DATE_NAME_TEXT_CALENDAR_LOCATOR_RU, 'Дата:'),
             (self.PERIOD_NAME_TEXT_LOCATOR_RU, 'Период:'),
-            (self.DATE_RU, 'Дата '),
-            (self.VISIT_INFO_RU, 'Данные визита '),
-            (self.CORRECTION_REQUEST_RU, 'Запрос на корректировку '),
-            (self.DECISION_RU, 'Решение '),
+            (self.DATE_RU, 'Дата'),
+            (self.VISIT_INFO_RU, 'Данные визита'),
+            (self.CORRECTION_REQUEST_RU, 'Запрос на корректировку'),
+            (self.DECISION_RU, 'Решение'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_visit_under_correction_page_en(self):
@@ -59,11 +65,9 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
             (self.DECISION_EN, 'Decision'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_visit_under_correction_period_page_en(self):
@@ -74,11 +78,9 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
             (self.PERIOD_INTERVAL_LOCATOR_EN, 'Interval'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_visit_under_correction_period_page_ru(self):
@@ -89,11 +91,9 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
             (self.PERIOD_INTERVAL_LOCATOR_RU, 'Интервал'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):

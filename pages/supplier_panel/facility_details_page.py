@@ -51,11 +51,9 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
             (self.KINDS_OF_SERVICE_LOCATOR_RU, 'Виды услуг:'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_facility_details_en(self):
@@ -71,11 +69,9 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
             (self.KINDS_OF_SERVICE_LOCATOR_EN, 'Kinds of service:'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):
@@ -91,11 +87,9 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
             (self.TEXT_CONTACT_PHONE_LOCATOR, '+375000000000;+375123456789'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_button_on_facility_details_ru(self):
@@ -104,11 +98,9 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
             (self.BUTTON_CHANGE_DATA_LOCATOR_RU, 'Изменить данные'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_button_on_facility_details_en(self):
@@ -117,11 +109,9 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
             (self.BUTTON_CHANGE_DATA_LOCATOR_EN, 'Change data'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Assert clickable button")
     def assert_clickable_button(self):
@@ -141,27 +131,23 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
         elements_to_check = [
             (self.CHANGE_DATA_LOCATOR_EN, 'Change data'),
             (self.TEXT_INFO_LOCATOR_EN, 'In order to change the data you need to contact technical support:'),
-            (self.PHONE_NUMBER_LOCATOR, '375291294950'),
-            (self.EMAIL_LOCATOR, 'support@sportbenefit.eu'),
+            (self.PHONE_NUMBER_LOCATOR, '375445253892'),
+            (self.EMAIL_LOCATOR, 'alex@allsports.by'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_modal_on_facility_details_ru(self):
         elements_to_check = [
             (self.CHANGE_DATA_LOCATOR_RU, 'Изменить данные'),
             (self.TEXT_INFO_LOCATOR_RU, 'Для того, чтобы изменить данные вам необходимо связаться с тех. поддержкой:'),
-            (self.PHONE_NUMBER_LOCATOR, '375291294950'),
-            (self.EMAIL_LOCATOR, 'support@sportbenefit.eu'),
+            (self.PHONE_NUMBER_LOCATOR, '375445253892'),
+            (self.EMAIL_LOCATOR, 'alex@allsports.by'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"

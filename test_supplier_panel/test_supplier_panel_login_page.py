@@ -75,6 +75,7 @@ def test_unregistered_user_error_login_page_en(driver):
     """
     login_supplier_panel = SupplierPanel(driver)
     login_supplier_panel.open_sp()
+    login_supplier_panel.select_language()
     login_supplier_panel.login_wrong_user_supplier_panel()
     login_supplier_panel.assert_found_errore_text_wrong_user_en()
 
@@ -88,6 +89,7 @@ def test_email_field_validation_login_page_en(driver):
     """
     login_supplier_panel = SupplierPanel(driver)
     login_supplier_panel.open_sp()
+    login_supplier_panel.select_language()
     login_supplier_panel.login_email_field_validation_supplier_panel()
     login_supplier_panel.assert_found_errore_text_email_field_validation_en()
 

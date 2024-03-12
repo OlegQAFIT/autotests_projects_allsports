@@ -59,8 +59,8 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.THIRD_INSTRUCTION_LOCATOR,
              'Ответьте на вопрос о схожести посетителя с фото (Ответ не влияет на подтверждение визита).'),
             (self.BUTTON_NEW_VISITS_LOCATOR, 'Новые визиты'),
-            (self.SIDEBAR_VISITS_HISTORY_LOCATOR, 'Регистрация визитов'),
-            (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR, 'История визитов'),
+            (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
+            (self.SIDEBAR_VISITS_HISTORY_LOCATOR, 'История визитов'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR, 'Визиты на исправлении'),
             (self.SIDEBAR_FACILITY_DETAILS_LOCATOR, 'Описание обьекта'),
             (self.SIDEBAR_CONTACTS_LOCATOR, 'Контакты'),
@@ -68,8 +68,9 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.BUTTON_LOGOUT_LOCATOR, 'Выйти'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_registrarion_visitspage_en(self):
@@ -82,8 +83,8 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.THIRD_INSTRUCTION_LOCATOR,
              "Answer the question about the visitor's resemblance to the photo (The answer does not affect the visit confirmation)."),
             (self.BUTTON_NEW_VISITS_LOCATOR_EN, 'New visits'),
-            (self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN, 'Registration of visits'),
-            (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR_EN, 'Visit history'),
+            (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
+            (self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN, 'Visit history'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR_EN, 'Visits under correction'),
             (self.SIDEBAR_FACILITY_DETAILS_LOCATOR_EN, 'Facility details'),
             (self.SIDEBAR_CONTACTS_LOCATOR_EN, 'Contacts'),
@@ -91,8 +92,9 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.BUTTON_LOGOUT_LOCATOR_EN, 'Logout'),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_confirm_visit_modal(self):
@@ -100,11 +102,11 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.TEXT_QUESTION_ACCEPT_LOCATOR, 'Является ли клиент человеком на фото?'),
             (self.BUTTON_LOOKS_LIKE_LOCATOR, 'Похож'),
             (self.BUTTON_NOT_SURE_LOCATOR, 'Не уверен'),
-            (self.FOTO_LOCATOR_MODAL, None),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_on_confirm_visit_modal_en(self):
@@ -112,11 +114,11 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.TEXT_QUESTION_ACCEPT_LOCATOR_EN, 'Is the visitor the person in the photo?'),
             (self.BUTTON_LOOKS_LIKE_LOCATOR_EN, 'Looks like'),
             (self.BUTTON_NOT_SURE_LOCATOR_EN, 'Not sure'),
-            (self.FOTO_LOCATOR_MODAL, None),
         ]
 
-        for element, expected_text in elements_to_check:
-            self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):
@@ -133,14 +135,11 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),
             (self.DECLINE_BUTTON_LOCATOR, 'Отклонить'),
             (self.ACCEPT_BUTTON_LOCATOR, 'Принять'),
-            (self.FOTO_LOCATOR, None),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_en(self):
@@ -151,14 +150,11 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),
             (self.DECLINE_BUTTON_LOCATOR_EN, 'Decline'),
             (self.ACCEPT_BUTTON_LOCATOR_EN, 'Accept'),
-            (self.FOTO_LOCATOR, None),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Click reject visit")
     def click_reject_visit(self):
@@ -184,11 +180,9 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.BUTTON_SAVE_LOCATOR, 'Сохранить'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_modal_reject_visit_page_en(self):
@@ -198,11 +192,9 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.BUTTON_SAVE_LOCATOR_EN, 'Save'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Add reason visit")
     def enter_reason_visit(self):

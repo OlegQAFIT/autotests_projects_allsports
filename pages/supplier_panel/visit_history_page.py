@@ -231,11 +231,9 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             (self.ALL_VISITS_BUTTON_EN, 'Все'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_en(self):
@@ -243,19 +241,17 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             (self.VISIT_HISTORY_TEXT_LOCATOR_EN, 'Visit history'),
             (self.TOTAL_VISITS_TEXT_LOCATOR_EN, 'Total visits:'),
             (self.TOTAL_PRICE_TEXT_LOCATOR_EN, 'Total price:'),
-            (self.DATE_NAME_TEXT_CALENDAR_LOCATOR_EN, 'Дата:'),
-            (self.PERIOD_NAME_TEXT_LOCATOR_EN, 'Date:'),
-            (self.ACCEPTED_VISITS_BUTTON_EN, 'Принятые'),
-            (self.DECLINED_VISITS_BUTTON_EN, 'Отклоненные'),
-            (self.TIMEOUT_VISITS_BUTTON_EN, 'Тайм-аут'),
-            (self.ALL_VISITS_BUTTON_EN, 'Все'),
+            (self.DATE_NAME_TEXT_CALENDAR_LOCATOR_EN, 'Date:'),
+            (self.PERIOD_NAME_TEXT_LOCATOR_EN, 'Period:'),
+            (self.ACCEPTED_VISITS_BUTTON_EN, 'Accepted'),
+            (self.DECLINED_VISITS_BUTTON_EN, 'Declined'),
+            (self.TIMEOUT_VISITS_BUTTON_EN, 'Timeout'),
+            (self.ALL_VISITS_BUTTON_EN, 'All'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):
@@ -279,11 +275,9 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             (self.CORRECT_VISIT_BUTTON_MODAL_LOCATOR_EN, 'Correct visit'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_elements_modal_correction_page_ru(self):
@@ -297,8 +291,6 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             (self.CORRECT_VISIT_BUTTON_MODAL_LOCATOR_RU, 'Исправить'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"

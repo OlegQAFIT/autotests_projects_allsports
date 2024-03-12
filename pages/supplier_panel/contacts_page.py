@@ -31,11 +31,9 @@ class SupplierPanelContacts(LoginPageSupplierPanel, ContactsLocators, BasePage):
             (self.HOURS_LOCATOR_RU, 'Режим работы'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Select language")
     def select_language(self):
@@ -52,26 +50,22 @@ class SupplierPanelContacts(LoginPageSupplierPanel, ContactsLocators, BasePage):
             (self.HOURS_LOCATOR_EN, 'Support availability hours'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found elements")
     def assert_found_text_on_facility_details(self):
         elements_to_check = [
-            (self.TEXT_PHONE_LOCATOR, '375291294950'),
-            (self.TEXT2_PHONE_LOCATOR, '375291294950'),
-            (self.TEXT_EMAIL_LOCATOR, 'support@sportbenefit.eu'),
-            (self.TEXT_HOURS_LOCATOR, 'Режим работы Ежедневно 08:00-19:00'),
+            (self.TEXT_PHONE_LOCATOR, '375445253892'),
+            (self.TEXT2_PHONE_LOCATOR, '375445253892'),
+            (self.TEXT_EMAIL_LOCATOR, 'alex@allsports.by'),
+            (self.TEXT_HOURS_LOCATOR, 'Режим работы\nЕжедневно 08:00-19:00'),
         ]
 
-        for element, expected_text in elements_to_check:
-            if expected_text is None:
-                self.assert_element_present(element)
-            else:
-                self.assert_element_text_equal(element, expected_text)
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Found link and check")
     def assert_check_social_media_links(self):

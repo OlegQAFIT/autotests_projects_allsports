@@ -8,6 +8,10 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select
+from datetime import datetime
+import re
+import locale
+from selenium.common.exceptions import NoSuchElementException
 
 
 class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, BasePage):
@@ -37,6 +41,10 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
     @allure.step("Click Calendar History")
     def click_calendar_history(self):
         self.hard_click(self.CALENDAR_BUTTON_LOCATOR)
+
+    @allure.step("Click Calendar History")
+    def click_calendar_month(self):
+        self.hard_click(self.APRIL_MONTH)
 
     @allure.step("Total Accepted Visits on Page")
     def total_accepted_visits_on_page(self):
@@ -132,6 +140,10 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
     @allure.step("Click All visits")
     def click_all_visits(self):
         self.hard_click(self.ALL_VISITS_BUTTON_EN)
+
+    @allure.step("Click ACCEPTED visits")
+    def click_accepted_visits(self):
+        self.hard_click(self.ACCEPTED_VISITS_BUTTON_RU)
 
     @allure.step("Number of Declined Visits")
     def number_declined_visits(self):
@@ -294,3 +306,167 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+    def found_last_visit(self):
+
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
+        )
+        rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+
+        latest_visit = None
+        latest_date = None
+
+        for row in rows:
+            date_str = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Дата"]').text
+            visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+
+            if latest_date is None or visit_date > latest_date:
+                latest_date = visit_date
+                latest_visit = row
+
+        if latest_visit is not None:
+            data = {}
+            data['Дата'] = latest_visit.find_element(By.CSS_SELECTOR, 'td[data-cell="Дата"]').text
+            data['№'] = latest_visit.find_element(By.CSS_SELECTOR, 'td[data-cell="№"]').text
+            data['Услуга'] = latest_visit.find_element(By.CSS_SELECTOR, 'td[data-cell="Услуга"]').text
+            data['Статус'] = latest_visit.find_element(By.CSS_SELECTOR, 'td span.cell_status').get_attribute(
+                'data-cell-status')
+            data['Стоимость'] = latest_visit.find_element(By.CSS_SELECTOR, 'td[data-cell="Стоимость"]').text
+
+            print(data)
+        else:
+            print("Записей не найдено.")
+
+    def sum_and_assert_visit(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
+        )
+        rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+
+        total_cost = 0
+
+        for row in rows:
+            date_str = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Дата"]').text
+            visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+
+            data = {}
+            data['Дата'] = date_str
+            data['№'] = row.find_element(By.CSS_SELECTOR, 'td[data-cell="№"]').text
+            data['Услуга'] = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Услуга"]').text
+            data['Статус'] = row.find_element(By.CSS_SELECTOR, 'td span.cell_status').get_attribute('data-cell-status')
+            cost_str = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Стоимость"]').text
+
+            # Удаляем все символы, кроме цифр и десятичной точки, из строки стоимости
+            cost_str_cleaned = re.sub(r'[^\d.,]+', '', cost_str)
+
+            # Преобразуем очищенную строку в число и добавляем к общей стоимости
+            total_cost += float(cost_str_cleaned.replace(',', '.'))
+
+        # Форматируем общую стоимость в соответствии с локальными настройками и добавляем символ валюты
+        locale.setlocale(locale.LC_ALL, '')
+        formatted_cost = locale.currency(total_cost, grouping=True, symbol=True)
+
+        # Получаем числовое значение из локатора TOTAL_PRICE_TEXT_LOCATOR_EN
+        sum_element = self.driver.find_element(By.XPATH, self.TOTAL_PRICE_TEXT_LOCATOR_EN)
+        sum_text = sum_element.text
+        sum_value = float(sum_text.replace(',', '.').replace(' BYN', '').replace('\xa0', ''))
+
+        # Сравниваем полученную сумму со значением из локатора
+        if total_cost == sum_value:
+            print(f"Значения совпадают: {formatted_cost} и {sum_text}")
+        else:
+            print(f"Значения не совпадают. formatted_cost: {formatted_cost}, sum_value: {sum_text}")
+            assert total_cost == sum_value, "Значения не совпадают"
+
+    def open_last_visit_correction(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
+        )
+        rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+
+        latest_visit = None
+        latest_date = None
+
+        for row in rows:
+            date_str = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Дата"]').text
+            visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+
+            if latest_date is None or visit_date > latest_date:
+                latest_date = visit_date
+                latest_visit = row
+
+        if latest_visit is not None:
+            # Нажатие на кнопку
+            button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
+            button.click()
+        else:
+            print("Записей не найдено.")
+
+
+    def open_last_visit_correction_en(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
+        )
+        rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+
+        latest_visit = None
+        latest_date = None
+
+        for row in rows:
+            date_str = row.find_element(By.CSS_SELECTOR, 'td[data-cell="Date"]').text
+            visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+
+            if latest_date is None or visit_date > latest_date:
+                latest_date = visit_date
+                latest_visit = row
+
+        if latest_visit is not None:
+            # Нажатие на кнопку
+            button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
+            button.click()
+        else:
+            print("Записей не найдено.")
+
+
+    @allure.step("Found elements")
+    def assert_found_elements_modal_correction_table_page_en(self):
+        elements_to_check = [
+            (self.DATE_TEXT_MODAL_EN, 'Date:'),
+            (self.ATTRACTION_TEXT_MODAL_EN, "Attraction:"),
+            (self.STATUS_TEXT_MODAL_EN, 'Status:'),
+            (self.CORRECTION_REASON_TEXT_MODAL_EN, 'Correction reason:'),
+            (self.CEMPOYEE_REASON_TEXT_MODAL_EN, 'Employee:'),
+            (self.CANCEL_BUTTON_MODAL_LOCATOR_EN, 'Cancel'),
+            (self.CORRECT_VISIT_BUTTON_MODAL_LOCATOR_EN, 'Correct visit'),
+        ]
+
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+    @allure.step("Found elements")
+    def assert_found_elements_modal_correction_table_page_ru(self):
+        elements_to_check = [
+            (self.DATE_TEXT_MODAL_RU, 'Дата:'),
+            (self.ATTRACTION_TEXT_MODAL_RU, "Услуга:"),
+            (self.STATUS_TEXT_MODAL_RU, 'Статус:'),
+            (self.CORRECTION_REASON_TEXT_MODAL_RU, 'Причина корректировки:'),
+            (self.CEMPOYEE_REASON_TEXT_MODAL_RU, 'Сотрудник'),
+            (self.CANCEL_BUTTON_MODAL_LOCATOR_RU, 'Отменить'),
+            (self.CORRECT_VISIT_BUTTON_MODAL_LOCATOR_RU, 'Исправить'),
+        ]
+
+        for element_locator, expected_value in elements_to_check:
+            actual_value = self.find_element_text(element_locator)
+            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+    def check_no_edit_button(self):
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
+        )
+        try:
+            self.driver.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
+            print("Кнопка найдена.")
+        except NoSuchElementException:
+            print("Кнопка не найдена.")

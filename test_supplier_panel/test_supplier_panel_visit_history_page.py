@@ -163,6 +163,7 @@ def test_checking_elements_on_page_supplier_panel_en(driver):
     visits_history_supplier_panel.select_language()
     visits_history_supplier_panel.assert_found_elements_with_wisit_page_en()
 
+
 # @allure.feature('')
 # @allure.severity('')
 # @allure.story('')
@@ -192,3 +193,127 @@ def test_checking_elements_on_page_supplier_panel_en(driver):
 #     visits_history_supplier_panel.click_visit_history()
 #     visits_history_supplier_panel.click_correction_visits()
 #     visits_history_supplier_panel.assert_found_elements_modal_correction_page_ru()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_checking_last_declined_visits_supplier_panel_ru(driver):
+    """
+    Проверка последнего по дате визита
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_declined_visits()
+    visits_history_supplier_panel.found_last_visit()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_checking_last_timeout_visits_supplier_panel_ru(driver):
+    """
+    Проверка последнего по дате визита
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_timeout_visits()
+    visits_history_supplier_panel.found_last_visit()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_checking_last_accepted_visits_supplier_panel_ru(driver):
+    """
+    Проверка последнего по дате визита
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.found_last_visit()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_checking_last_all_visits_supplier_panel_ru(driver):
+    """
+    Проверка последнего по дате визита
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_all_visits()
+    visits_history_supplier_panel.found_last_visit()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_checking_sum_all_visits_supplier_panel_ru(driver):
+    """
+    Проверка суммы визитов и общей суммы
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_all_visits()
+    visits_history_supplier_panel.sum_and_assert_visit()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_open_last_visits_and_open_correction_table_supplier_panel_ru(driver):
+    """
+    Проверка елементов с модального окна корректироваок на русском
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_all_visits()
+    visits_history_supplier_panel.open_last_visit_correction()
+    visits_history_supplier_panel.assert_found_elements_modal_correction_table_page_ru()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_open_last_visits_and_open_correction_table_supplier_panel_en(driver):
+    """
+    Проверка елементов с модального окна корректироваок на анлийском
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_all_visits()
+    visits_history_supplier_panel.select_language()
+    visits_history_supplier_panel.open_last_visit_correction_en()
+    visits_history_supplier_panel.assert_found_elements_modal_correction_table_page_en()
+
+
+@allure.feature('')
+@allure.severity('')
+@allure.story('')
+def test_check_no_edit_button_last_month_supplier_panel(driver):
+    """
+    Проверка, что нельзя отправить визит на корректировку за прошлый месяц
+    """
+    visits_history_supplier_panel = SupplierPanelVisitsHistory(driver)
+    visits_history_supplier_panel.open_sp()
+    visits_history_supplier_panel.login_supplier_panel()
+    visits_history_supplier_panel.click_visit_history()
+    visits_history_supplier_panel.click_all_visits()
+    visits_history_supplier_panel.click_calendar_history()
+    visits_history_supplier_panel.click_calendar_month()
+    visits_history_supplier_panel.check_no_edit_button()

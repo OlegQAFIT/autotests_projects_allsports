@@ -100,7 +100,7 @@ pip обычно устанавливается вместе с Python. Чтоб
 После установки Python, клонируйте этот репозиторий и установите необходимые зависимости:
 
   ```sh
-     git clone https://github.com/OlegQAFIT/autotests_projects_allsports
+     git clone https://github.com/OlegQAFIT/autotests_projects_allsports 
      cd имя-проекта
      pip install -r requirements.txt
    ```

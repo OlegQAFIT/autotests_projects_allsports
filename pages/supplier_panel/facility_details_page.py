@@ -82,9 +82,11 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
     @allure.step("Found elements")
     def assert_found_text_on_facility_details(self):
         elements_to_check = [
-            (self.TEXT_FACILITY_NAME_LOCATOR, 'Gym1'),
-            (self.TEXT_ADDRESS_LOCATOR, 'есенина 73'),
+            (self.TEXT_FACILITY_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
+            (self.TEXT_ADDRESS_LOCATOR, 'г. Минск, ул. Малинина, д. 35А'),
             (self.TEXT_CONTACT_PHONE_LOCATOR, '+375000000000;+375123456789'),
+            (self.TEXT_DESCRIPTION_LOCATOR, 'Полностью укомплектованный тренажерный зал. В дополнение к указанным услугам, актуальный список услуг смотрите на сайте.'),
+            (self.TEXT_WEBSITE_LOCATOR, 'https://mayert.com/nihil-sed-pariatur-eos-et-reprehenderit-ut.html'),
         ]
 
         for element_locator, expected_value in elements_to_check:

@@ -27,12 +27,12 @@ class FacilityDetailsLocators():
 
 
     # Текста в блоках
-    TEXT_FACILITY_NAME_LOCATOR = "//p[text()='Gym1']"
-    # TEXT_DESCRIPTION_LOCATOR = "//span[contains(@style, 'font-family: Calibri, sans-serif; font-size: 18px;') and text()='Some text hereSome text hereSome text hereSome text hereSome text hereSome text hereSome text hereSome text hereSome text here ']"
-    # TEXT_VISITING_RULES_LOCATOR = "//h2[text()='Visiting rules:']"
-    TEXT_ADDRESS_LOCATOR = "//p[text()='есенина 73']"
+    TEXT_FACILITY_NAME_LOCATOR = "//p[text()='Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО']"
+    TEXT_DESCRIPTION_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/p[2]'
+    # TEXT_VISITING_RULES_LOCATOR = "//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/a[2]"
+    TEXT_ADDRESS_LOCATOR = "//p[text()='г. Минск, ул. Малинина, д. 35А']"
     TEXT_CONTACT_PHONE_LOCATOR = "//p[text()='+375000000000;+375123456789']"
-    # TEXT_WEBSITE_LOCATOR = "//h2[text()='Website:']"
+    TEXT_WEBSITE_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/a[2]'
     # TEXT_WORKING_HOURS_LOCATOR = "//h2[text()='Working hours:']"
     TEXT_KINDS_OF_SERVICE_LOCATOR = "//p[text()='Теннис SG, Посещение SGP, Посещение SGP D']"
 

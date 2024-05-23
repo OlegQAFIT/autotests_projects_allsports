@@ -129,7 +129,7 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_ru(self):
         elements_to_check = [
-            (self.SUPPLIER_NAME_LOCATOR, 'Gym1'),
+            (self.SUPPLIER_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
             (self.NAME_USER_LOCATOR, 'Oleg Atr'),
             (self.LEVEL_USER_LOCATOR, 'platinum'),
             (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),
@@ -144,7 +144,7 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_en(self):
         elements_to_check = [
-            (self.SUPPLIER_NAME_LOCATOR, 'Gym1'),
+            (self.SUPPLIER_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
             (self.NAME_USER_LOCATOR, 'Oleg Atr'),
             (self.LEVEL_USER_LOCATOR, 'platinum'),
             (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),

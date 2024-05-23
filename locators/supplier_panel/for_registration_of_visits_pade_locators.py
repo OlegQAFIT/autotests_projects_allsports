@@ -45,7 +45,7 @@ class RegistrationVisitsLocators():
     BUTTON_NEW_VISITS_LOCATOR_EN = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and .//div[contains(@class, 'btn-content_slot') and text()='New visits']]"
 
     # REGISTRATION OF VISITS PAGE когда пришел визит
-    SUPPLIER_NAME_LOCATOR = '//div[@class="row pb-3 pb-sm-4"]/h2[text()="Gym1"]'
+    SUPPLIER_NAME_LOCATOR = '//div[@class="row pb-3 pb-sm-4"]/h2[text()="Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО"]'
     NAME_USER_LOCATOR = '//div[@class="row visit-info-item"][1]/p[@class="col-6 visit-info-item_body"]'
     LEVEL_USER_LOCATOR = '//div[@class="row visit-info-item"][2]/p[@class="col-6 visit-info-item_body"]'
     ATTRACTION_USER_LOCATOR = '//div[@class="row visit-info-item"][3]/p[@class="col-6 visit-info-item_body"]'

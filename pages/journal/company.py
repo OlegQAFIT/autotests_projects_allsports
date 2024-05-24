@@ -102,7 +102,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         self.hard_click(self.MANAGER_SELECT)
         self.hard_click(self.MANAGER_VALUE)
 
-
     @allure.step("Fill fields with random values")
     def fill_fields(self):
         custom_name = self.faker.word()
@@ -557,7 +556,6 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
                 print("Кнопок ' SMS коды ' не найдено.")
         else:
             print("Кнопок дропдауна не найдено.")
-
 
     @allure.step("Search deleted portal user")
     def assert_deleted_portal_user(self):

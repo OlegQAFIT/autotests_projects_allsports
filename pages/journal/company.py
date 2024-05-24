@@ -60,14 +60,16 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     @allure.step("Drop City selection")
     def drop_city_selection(self):
         location_dropdown = self.find_element(self.LOCATION_DROP_DOWN)
-        select = Select(location_dropdown)
-        select.select_by_visible_text("Minsk")
+        location_dropdown.click()
+        minsk_option = self.find_element(self.MINSK_VALUE)
+        minsk_option.click()
 
     @allure.step("Drop Locale selection")
     def drop_locale_selection(self):
-        locale_dropdown = self.find_element(self.LOCALE_DROP_DOWN)
-        select = Select(locale_dropdown)
-        select.select_by_visible_text("ru")
+        locale_dropdown = self.driver.find_element(By.XPATH, self.LOCALE_DROP_DOWN)
+        locale_dropdown.click()
+        ru_option = self.driver.find_element(By.XPATH, self.RU_VALUE)
+        ru_option.click()
 
     @allure.step("Drop Timezone selection")
     def drop_timezone_selection(self):
@@ -76,32 +78,30 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("Drop Sell Strategy selection")
     def drop_sell_strategy_selection(self):
-        strategy_dropdown = self.find_element(self.SELL_STRATEGY_DROP_DOWN)
-        select = Select(strategy_dropdown)
-        select.select_by_visible_text("Country")
+        self.hard_click(self.SELL_STRATEGY_DROP_DOWN)
+        self.hard_click(self.BY3_VALUE)
 
     @allure.step("Drop Registration Type selection")
     def drop_registration_type_selection(self):
         self.hard_click(self.REGISTRATION_TYPE_STANDARD)
         self.hard_click(self.REGISTRATION_TYPE_FORM)
 
-    @allure.step("Drop Registration Type dropdown")
-    def drop_registration_type_dropdown(self):
-        registration_type_dropdown = self.find_element(self.dropdown)
-        select = Select(registration_type_dropdown)
-        select.select_by_visible_text("REGISTRATION_FORM")
+    # @allure.step("Drop Registration Type dropdown")
+    # def drop_registration_type_dropdown(self):
+    #     registration_type_dropdown = self.find_element(self.dropdown)
+    #     select = Select(registration_type_dropdown)
+    #     select.select_by_visible_text("REGISTRATION_FORM")
 
     @allure.step("Drop Manager selection")
     def drop_manager_selection(self):
-        locale_dropdown = self.find_element(self.MANAGER_DROP_DOWN)
-        select = Select(locale_dropdown)
-        select.select_by_visible_text("QA-Oleg-A")
+        self.hard_click(self.MANAGER_DROP_DOWN)
+        self.hard_click(self.MANAGER_VALUE)
 
     @allure.step("Drop MANAGER")
     def drop_manager_selection_for_select(self):
-        manager_dropdown = self.find_element(self.MANAGER_SELECT)
-        select = Select(manager_dropdown)
-        select.select_by_visible_text("Nadezhda Sadovskaya")
+        self.hard_click(self.MANAGER_SELECT)
+        self.hard_click(self.MANAGER_VALUE)
+
 
     @allure.step("Fill fields with random values")
     def fill_fields(self):
@@ -110,8 +110,8 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         self.company_input_value = self.created_company_name
 
         self.fill(CompanyPageLocators.COMPANY_INPUT, self.company_input_value)
-        self.fill(CompanyPageLocators.LEGAL_NAME_INPUT, self.company_input_value)
         self.fill(CompanyPageLocators.VAT_NUMBER_INPUT, self.VAT_NUMBER_TEXT)
+        self.fill(CompanyPageLocators.LEGAL_NAME_INPUT, self.company_input_value)
         self.fill(CompanyPageLocators.LEGAL_ADDRESS_INPUT, self.LEGAL_ADDRESS_TEXT)
         self.fill(CompanyPageLocators.CONTACT_PHONE_INPUT, self.CONTACT_PHONE_TEXT)
 
@@ -285,7 +285,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("open last dropdown and edit")
     def open_last_dropdown_and_edit(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("//button[@data-v-d162a11e='']/*[name()='svg']/*[name()='circle'][3]")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]
@@ -329,7 +329,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("delete last company ")
     def delete_last_company(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("//button[@data-v-d162a11e='']/*[name()='svg']/*[name()='circle'][3]")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]
@@ -352,7 +352,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("")
     def open_page_add_portal_user(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("//button[@data-v-d162a11e='']/*[name()='svg']/*[name()='circle'][3]")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]
@@ -428,9 +428,8 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
         self.fill(CompanyPageLocators.INPUT_MODAL_EMAIL_LOCATOR, self.email_input_value)
 
-        local_dropdown = self.find_element(self.DROP_MODAL_LOCAL_LOCATOR)
-        select = Select(local_dropdown)
-        select.select_by_visible_text("RU")
+        self.hard_click(self.DROP_MODAL_LOCAL_LOCATOR)
+        self.hard_click(self.EN)
 
         self.hard_click(self.DROP_MODAL_TIMEZONE_LOCATOR)
         self.fills(CompanyPageLocators.INPUT_TIMEZONE, self.MODAL_TIMEZONE_TEXT)
@@ -443,6 +442,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     def add_new_portal_user_by_phone(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_PHONE_LOCATOR, self.PORTAL_USER_PHONE)
+        time.sleep(5)
 
     def add_new_portal_user_by_phone_1(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_PHONE_LOCATOR, self.PORTAL_USER_PHONE)
@@ -450,9 +450,11 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     def add_new_portal_user_by_email(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_EMAIL_LOCATOR, self.PORTAL_USER_EMAIL)
+        time.sleep(3)
 
     def add_new_portal_user_by_cy(self):
         self.fills(CompanyPageLocators.INPUT_MODAL_PHONE_LOCATOR, self.PORTAL_USER_PHONE_BY_CY)
+        time.sleep(3)
 
     @allure.step("")
     def assert_new_portal_user_by_phone(self):
@@ -470,13 +472,12 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("Assert found error text")
     def assert_found_errore_text_added_portal_user(self):
-        # elements_to_check = [
-        #     (self.WRONG_PORTAL_USER_ERRORE_LOCATOR, 'Phone already used by another Portal User'),
-        # ]
-        #
-        # for element, expected_text in elements_to_check:
-        #     self.assert_element_text_equal(element, expected_text)
-        self.find_elements("//span[@title='Phone already used by another Portal User']")
+        elements_to_check = [
+            (self.WRONG_PORTAL_USER_ERRORE_LOCATOR, 'Формат данных неверен'),
+        ]
+
+        for element, expected_text in elements_to_check:
+            self.assert_element_text_equal(element, expected_text)
 
     @allure.step("Assert found error text")
     def assert_found_errore_text_portal_user(self):
@@ -489,7 +490,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("open last dropdown and edit")
     def open_sms_for_portal_user(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("/html/body/div/div/div[2]/div[3]/table/tbody/tr/td[5]/div/button")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]
@@ -506,7 +507,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("open last dropdown and edit")
     def open_edit_portal_user(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("/html/body/div/div/div[2]/div[3]/table/tbody/tr/td[5]/div/button")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]
@@ -529,7 +530,8 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     def assert_search_portal_user_by_cy(self):
         time.sleep(3)
-        self.find_elements("//td[@data-v-4270064e=''][text()='Phone CY']")
+        assert self.search_text_on_page(
+            self.PORTAL_USER_PHONE_BY_CY), f"Текст '{self.PORTAL_USER_PHONE_BY_CY}' не найден на странице"
 
     def assert_and_extract_sms_code(create_portal_user):
         sms_code_locator = (By.XPATH, '//*[contains(text(), "Sms code:")]')
@@ -541,7 +543,7 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
 
     @allure.step("open last dropdown and delete")
     def delete_for_portal_user(self):
-        dropdown_buttons = self.find_elements("//button[@data-v-cb972dc2]")
+        dropdown_buttons = self.find_elements("/html/body/div/div/div[2]/div[3]/table/tbody/tr/td[5]/div/button")
 
         if dropdown_buttons:
             last_dropdown_button = dropdown_buttons[-1]

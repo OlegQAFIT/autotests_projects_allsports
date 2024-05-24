@@ -18,7 +18,6 @@ def test_create_new_company_without_copay(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields()
     create_company.click_save_company()
@@ -42,7 +41,7 @@ def test_create_new_company_with_copay(driver):
     create_company_with_copay.drop_locale_selection()
     create_company_with_copay.drop_timezone_selection()
     create_company_with_copay.drop_sell_strategy_selection()
-    create_company_with_copay.drop_registration_type_dropdown()
+    create_company_with_copay.drop_registration_type_selection()
     create_company_with_copay.drop_manager_selection()
     create_company_with_copay.fill_fields()
     create_company_with_copay.click_save_company()
@@ -66,7 +65,7 @@ def test_disable_fields(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.assert_disable_elements()
 
 
@@ -90,7 +89,7 @@ def test_found_actual_elements_on_add_company_page(driver):
 @allure.story('Check UNN through external service')
 def test_create_heck_UNN(driver):
     """
-    Стронний сервис по поиску УНП
+    Сторонний сервис по поиску УНП
     """
     create_company = Company(driver)
     create_company.open_jn()
@@ -125,7 +124,7 @@ def test_error_checking_max_number_of_characters(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields_name_company()
     create_company.click_save_company()
@@ -149,7 +148,7 @@ def test_error_checking_min_number_of_characters(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields_name_min_company()
     create_company.click_save_company()
@@ -173,7 +172,7 @@ def test_error_checking_UNN_number_of_characters(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields_name_min_company()
     create_company.click_save_company()
@@ -196,7 +195,7 @@ def test_legal_name_validation_check(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields_legal_name()
     create_company.click_save_company()
@@ -236,7 +235,7 @@ def test_disable_fields_after_saving(driver):
     create_company.drop_locale_selection()
     create_company.drop_timezone_selection()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.drop_manager_selection()
     create_company.fill_fields()
     create_company.click_save_company()
@@ -256,7 +255,7 @@ def test_disable_elements_with_select_registration_type(driver):
     create_company.click_and_open_company_tab()
     create_company.click_create_company_tab()
     create_company.drop_sell_strategy_selection()
-    create_company.drop_registration_type_dropdown()
+    create_company.drop_registration_type_selection()
     create_company.assert_disable_elements_with_select_registration_type()
 
 
@@ -302,7 +301,7 @@ def test_check_disable_elements_in_new_company_with_copay(driver):
     create_company_with_copay.drop_locale_selection()
     create_company_with_copay.drop_timezone_selection()
     create_company_with_copay.drop_sell_strategy_selection()
-    create_company_with_copay.drop_registration_type_dropdown()
+    create_company_with_copay.drop_registration_type_selection()
     create_company_with_copay.drop_manager_selection()
     create_company_with_copay.fill_fields()
     create_company_with_copay.click_save_company()
@@ -417,7 +416,7 @@ def test_open_modal_window_portal_user(driver):
     create_portal_user.click_and_open_company_tab()
     create_portal_user.open_page_add_portal_user()
     create_portal_user.click_add_portal_user()
-    create_portal_user.assert_page_portal_user()
+    create_portal_user.assert_page_modal_portal_user()
 
 
 @allure.feature('Portal User Management')
@@ -499,7 +498,7 @@ def test_add_portal_user_by_phone(driver):
     create_portal_user.click_add_portal_user()
     create_portal_user.add_new_portal_user_by_phone()
     create_portal_user.click_save_portal_user()
-    # create_portal_user.assert_new_portal_user_by_phone()
+    create_portal_user.assert_new_portal_user_by_phone()
 
 
 @allure.feature('Portal User Management')
@@ -527,7 +526,7 @@ def test_add_portal_user_by_email(driver):
     create_portal_user.click_add_portal_user()
     create_portal_user.add_new_portal_user_by_email()
     create_portal_user.click_save_portal_user()
-    # create_portal_user.assert_new_portal_user_by_phone()
+    create_portal_user.assert_new_portal_user_by_phone()
 
 
 @allure.feature('Portal User Management')
@@ -611,7 +610,7 @@ def test_errore_filds(driver):
 #     create_portal_user.add_new_portal_user_by_phone_1()
 #     create_portal_user.click_save_portal_user()
 #     create_portal_user.click_add_portal_user()
-#     create_portal_user.add_new_portal_user_by_phone_1_1()
+#     create_portal_user.add_new_portal_user_by_phone_1()
 #     create_portal_user.assert_found_errore_text_added_portal_user()
 
 

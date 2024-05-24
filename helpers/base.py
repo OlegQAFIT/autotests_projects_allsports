@@ -102,6 +102,11 @@ class BasePage:
     def submit_form(self):
         self.element.submit()
 
+    def select_by_visible_text(self, locator, text):
+        element = self.find_element(locator)
+        select = Select(element)
+        select.select_by_visible_text(text)
+
     # Очистка текста внутри элемента
     def clear_text(self):
         self.element.clear()
@@ -138,6 +143,13 @@ class BasePage:
     # Заполнение поля ввода текстом
     def fill(self, locator, text):
         element = self.wait_for_visible(locator)
+        element.clear()
+        element.send_keys(text)
+        return text
+
+    def fill_for_journal(self, locator, text):
+        element = self.wait_for_visible_journal(locator)
+        WebDriverWait(self.driver, 10).until(EC.element_to_be_clickable(locator))  # Явное ожидание доступности элемента
         element.clear()
         element.send_keys(text)
         return text
@@ -358,6 +370,13 @@ class BasePage:
         try:
             return WebDriverWait(self.driver, 10).until(
                 EC.element_to_be_clickable((By.XPATH, locator)))
+        except WebDriverException:
+            assert False, f"Элемент {locator} не кликабельный"
+
+    def wait_for_visible_journal(self, locator):
+        try:
+            return WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(locator))
         except WebDriverException:
             assert False, f"Элемент {locator} не кликабельный"
 

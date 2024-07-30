@@ -13,7 +13,7 @@ from selenium.common.exceptions import TimeoutException, NoAlertPresentException
 
 
 class BasePage:
-    def __int__(self, driver):
+    def __init__(self, driver):
         self.driver = driver
         self.WAIT_UNTIL = 5
 

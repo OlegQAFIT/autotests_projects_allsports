@@ -4,7 +4,6 @@ from selenium.webdriver.edge.service import Service as EdgeService
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOption
-from webdriver_manager.chrome import ChromeDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOption
 from webdriver_manager.firefox import GeckoDriverManager
@@ -26,7 +25,10 @@ def create_chrome(headless=True):
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('window-size=1900x1600')
     chrome_options.add_argument('--disable-notifications')  # Отключить уведомления
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+
+    # Указание пути к уже установленному драйверу
+    driver_path = "C:/Users/test/.wdm/drivers/chromedriver/win64/126.0.6478.182/chromedriver-win32/chromedriver.exe"
+    driver = webdriver.Chrome(service=ChromeService(driver_path), options=chrome_options)
     return driver
 
 
@@ -47,15 +49,6 @@ def create_edge(headless=True):
     return driver
 
 
-# def create_opera(headless=True):
-#     opera_option = OperaOption()
-#     if headless == 'True':
-#         opera_option.add_argument('--headless')
-#         opera_option.add_argument('window-size=1900x1600')
-#     driver = webdriver.Opera(service=OperaService(OperaDriverManager().install()), options=opera_option)
-#     return driver
-
-
 @pytest.fixture(autouse=True)
 def driver(request):
     driver = None
@@ -68,8 +61,6 @@ def driver(request):
         driver = create_firefox(headless)
     elif browser == 'edge':
         driver = create_edge(headless)
-    # elif browser == 'opera':
-    #     driver = create_opera(headless)
 
     driver.implicitly_wait(5)
     driver.maximize_window()

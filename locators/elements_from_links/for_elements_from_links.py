@@ -217,8 +217,19 @@ class LocatorsFromPagesLinks():
         "/ru/rule/210615_rule/"
     ]
 
-
-
+    links = [
+        "https://www.allsports.by/ru-by/affiliates-table/",
+        "https://www.allsports.by/contact/",
+        "http://www.allsports.by/objects",
+        "http://allsports.by/affiliates",
+        "https://www.allsports.by/политика-конфиденциальности",
+        "https://www.allsports.by/program-rules-allsports-super",
+        "https://www.allsports.by/holder-app-license-agreement/",
+        "https://allsports.by/price/220418_price/",
+        "https://allsports.by/holder-app-rules",
+        "https://www.allsports.by/android-policy",
+        "https://www.allsports.by/price/210615_price/"
+    ]
 
 
 

@@ -281,21 +281,7 @@ class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
 
 
     def check_links_for_404(self):
-        links = [
-            "https://www.allsports.by/ru-by/affiliates-table/",
-            "https://www.allsports.by/contact/",
-            "http://www.allsports.by/objects",
-            "http://allsports.by/affiliates",
-            "https://www.allsports.by/политика-конфиденциальности",
-            "https://www.allsports.by/program-rules-allsports-super",
-            "https://www.allsports.by/holder-app-license-agreement/",
-            "https://allsports.by/price/220418_price/",
-            "https://allsports.by/holder-app-rules",
-            "https://www.allsports.by/android-policy",
-            "https://www.allsports.by/price/210615_price/"
-        ]
-
-        for link in links:
+        for link in self.links:
             try:
                 response = requests.get(link)
                 if response.status_code == 404:
@@ -345,10 +331,8 @@ class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
         # Проверка редиректа
         self.driver.get(input_url)
         try:
-            # Ожидание изменения URL
             WebDriverWait(self.driver, 300).until(EC.url_changes(input_url))
 
-            # Ожидание полной загрузки страницы (например, можно проверять наличие какого-либо элемента на странице)
             WebDriverWait(self.driver, 300).until(EC.presence_of_element_located((By.TAG_NAME, 'body')))
 
             current_url = self.driver.current_url

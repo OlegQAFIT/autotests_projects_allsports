@@ -1,8 +1,6 @@
 class LocatorsFromPagesLinks():
     domain_production = "https://www.allsports.fit/by"
     domain_production_new = "https://www.allsports.by/ru-by"
-    # domain_test = "https://www.allsports.fit/by"
-    # domain_test_new = "https://www.allsports.by/ru-by"
     domain_test = "https://оллспортс.бел/by"
     domain_test_new = "https://сайт.оллспортс.бел/ru-by"
 
@@ -57,128 +55,83 @@ class LocatorsFromPagesLinks():
         "/policy/231109_processing_personal_data/"
     ]
 
-    pages_lincs_three = [
-        "/s/df34",
-        "/prices/",
-        "/prices/#objects",
-        "/objects/",
-        "/contact/",
-        "/affiliates/",
-        "/payment_service_rules/providing_payment_service_rules/",
+    paths_and_redirects = [
+        {
+            "path": "/s/df34",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/app",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/app"
+        },
+        {
+            "path": "/prices/",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/levels",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/levels"
+        },
+        {
+            "path": "/prices/#objects",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/levels#objects",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/levels#objects"
+        },
+        {
+            "path": "/objects/",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/facilities",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/facilities"
+        },
+        {
+            "path": "/contact/",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/contacts",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/contacts"
+        },
+        {
+            "path": "/affiliates/",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/partners",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/partners"
+        },
+        {
+            "path": "/payment_service_rules/providing_payment_service_rules/",
+            "expected_redirect_test": "https://сайт.оллспортс.бел/ru-by/providing-payment-service-rules",
+            "expected_redirect_prod": "https://www.allsports.by/ru-by/providing-payment-service-rules"
+        }
     ]
-
-    mappings = {
-        "/s/df34": "https://сайт.оллспортс.бел/ru-by/app",
-        "/prices/": "https://сайт.оллспортс.бел/ru-by/levels",
-        "/prices/#objects": "https://сайт.оллспортс.бел/ru-by/levels#objects",
-        "/objects/": "https://сайт.оллспортс.бел/ru-by/facilities",
-        "/contact/": "https://сайт.оллспортс.бел/ru-by/contacts",
-        "/affiliates/": "https://сайт.оллспортс.бел/ru-by/partners",
-        "/payment_service_rules/providing_payment_service_rules/": "https://сайт.оллспортс.бел/ru-by/providing-payment-service-rules"
-    }
-    redirects_to_pages = {
-        "https://оллспортс.бел/by/app/",
-        "https://сайт.оллспортс.бел/ru-by/levels",
-        "https://сайт.оллспортс.бел/ru-by/prices/#objects",
-        "https://сайт.оллспортс.бел/ru-by/facilities",
-        "https://сайт.оллспортс.бел/ru-by/contacts",
-        "https://сайт.оллспортс.бел/ru-by/partners",
-        "https://сайт.оллспортс.бел/ru-by/providing-payment-service-rules"
-    }
-    # mappings_prod = {
-    #     "/s/df34": "https://www.allsports.fit/by/app",
-    #     "/prices/": "https://www.allsports.fit/by/levels",
-    #     "/prices/#objects": "https://www.allsports.fit/by/levels#objects",
-    #     "/objects/": "https://www.allsports.fit/by/facilities",
-    #     "/contact/": "https://www.allsports.fit/by/contacts",
-    #     "/affiliates/": "https://www.allsports.fit/by/partners",
-    #     "/payment_service_rules/providing_payment_service_rules/": "https://www.allsports.fit/by/providing-payment-service-rules"
-    # }
-    # redirects_to_pages_prod = {
-    #     "https://www.allsports.fit/by/app",
-    #     "https://www.allsports.fit/by/levels",
-    #     "https://www.allsports.fit/by/levels#objects",
-    #     "https://www.allsports.fit/by/facilities",
-    #     "https://www.allsports.fit/by/contacts",
-    #     "https://www.allsports.fit/by/partners",
-    #     "https://www.allsports.fit/by/providing-payment-service-rules"
-    # }
 
 
 
 
     pages_lincs_four = [
-        "https://оллспортс.бел/holder-app-license-agreement",
-        "https://оллспортс.бел/by/holder-app-license-agreement",
-        "https://оллспортс.бел/holder-app-legal_license-agreement",
-        "https://оллспортс.бел/by/holder-app-legal_license-agreement",
-        "https://оллспортс.бел/holder_app_rules",
-        "https://оллспортс.бел/by/holder_app_rules",
-        "https://оллспортс.бел/holder-app-rules",
-        "https://оллспортс.бел/holder-app-rules",
-        "https://оллспортс.бел/user-agreements",
-        "https://оллспортс.бел/by/user-agreements",
-        "https://оллспортс.бел/program-rules-allsports-super",
-        "https://оллспортс.бел/program-rules-allsports-super",
-        "https://оллспортс.бел/card_rules",
-        "https://оллспортс.бел/card_rules",
-        "https://оллспортс.бел/holder-app-faq",
-        "https://оллспортс.бел/by/holder-app-faq",
-        "https://оллспортс.бел/ru/holder-app-faq",
-        "https://оллспортс.бел/am/holder-app-faq",
-        "https://оллспортс.бел/faq",
-        "https://оллспортс.бел/ru/companies/",
-        "https://оллспортс.бел/by/companies/",
-        "https://оллспортс.бел/am/companies/",
-        "https://оллспортс.бел/en_am/companies/",
-        "https://оллспортс.бел/политика-конфиденциальности",
-        "https://оллспортс.бел/android-policy",
-        "https://оллспортс.бел/by/processing-personal-data",
-        "https://оллспортс.бел/faq_partner",
-        "https://оллспортс.бел/holder-app-policy",
-        "https://оллспортс.бел/am/holder-app-policy",
-        "https://оллспортс.бел/holder-app-policy",
-        "https://оллспортс.бел/am/holder-app-rules",
-        "https://оллспортс.бел/en_am/holder-app-rules",
-        "https://оллспортс.бел/holder-app-rules",
-        "https://оллспортс.бел/ru/holder-app-rules"
+        "/holder-app-license-agreement",
+        "/by/holder-app-license-agreement",
+        "/holder-app-legal_license-agreement",
+        "/by/holder-app-legal_license-agreement",
+        "/holder_app_rules",
+        "/by/holder_app_rules",
+        "/holder-app-rules",
+        "/holder-app-rules",
+        "/user-agreements",
+        "/by/user-agreements",
+        "/program-rules-allsports-super",
+        "/program-rules-allsports-super",
+        "/card_rules",
+        "/card_rules",
+        "/holder-app-faq",
+        "/by/holder-app-faq",
+        "/ru/holder-app-faq",
+        "/am/holder-app-faq",
+        "/faq",
+        "/ru/companies/",
+        "/by/companies/",
+        "/am/companies/",
+        "/en_am/companies/",
+        "/политика-конфиденциальности",
+        "/android-policy",
+        "/by/processing-personal-data",
+        "/faq_partner",
+        "/holder-app-policy",
+        "/am/holder-app-policy",
+        "/holder-app-policy",
+        "/am/holder-app-rules",
+        "/en_am/holder-app-rules",
+        "/holder-app-rules",
+        "/ru/holder-app-rules"
     ]
-    # pages_lincs_prod_four = [
-    #     "https://www.allsports.fit/by/holder-app-license-agreement",
-    #     "https://www.allsports.fit/by/holder-app-license-agreement",
-    #     "https://www.allsports.fit/by/holder-app-legal_license-agreement",
-    #     "https://www.allsports.fit/by/holder-app-legal_license-agreement",
-    #     "https://www.allsports.fit/by/holder_app_rules",
-    #     "https://www.allsports.fit/by/holder_app_rules",
-    #     "https://www.allsports.fit/by/holder-app-rules",
-    #     "https://www.allsports.fit/by/holder-app-rules",
-    #     "https://www.allsports.fit/by/user-agreements",
-    #     "https://www.allsports.fit/by/user-agreements",
-    #     "https://www.allsports.fit/by/program-rules-allsports-super",
-    #     "https://www.allsports.fit/by/program-rules-allsports-super",
-    #     "https://www.allsports.fit/by/card_rules",
-    #     "https://www.allsports.fit/by/card_rules",
-    #     "https://www.allsports.fit/by/holder-app-faq",
-    #     "https://www.allsports.fit/by/holder-app-faq",
-    #     "https://www.allsports.fit/by/holder-app-faq",
-    #     "https://www.allsports.fit/by/holder-app-faq",
-    #     "https://www.allsports.fit/by/faq",
-    #     "https://www.allsports.fit/ru/companies/",
-    #     "https://www.allsports.fit/by/companies/",
-    #     "https://www.allsports.fit/am/companies/",
-    #     "https://www.allsports.fit/en_am/companies/",
-    #     "https://www.allsports.fit/by/политика-конфиденциальности",
-    #     "https://www.allsports.fit/by/android-policy",
-    #     "https://www.allsports.fit/by/processing-personal-data",
-    #     "https://www.allsports.fit/by/faq_partner",
-    #     "https://www.allsports.fit/by/holder-app-policy",
-    #     "https://www.allsports.fit/am/holder-app-policy",
-    #     "https://www.allsports.fit/by/holder-app-policy",
-    #     "https://www.allsports.fit/am/holder-app-rules",
-    #     "https://www.allsports.fit/en_am/holder-app-rules",
-    #     "https://www.allsports.fit/by/holder-app-rules",
-    #     "https://www.allsports.fit/ru/holder-app-rules"
-    # ]
 
     expected_parts = [
         "/ru-by/individual_license/240415_license",
@@ -217,8 +170,12 @@ class LocatorsFromPagesLinks():
         "/ru/rule/210615_rule/"
     ]
 
+
+
+
+
+
     links = [
-        "https://www.allsports.by/ru-by/affiliates-table/",
         "https://www.allsports.by/contact/",
         "http://www.allsports.by/objects",
         "http://allsports.by/affiliates",

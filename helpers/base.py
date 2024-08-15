@@ -159,6 +159,18 @@ class BasePage:
         element.send_keys(text)
         return text
 
+    def fills_fild(self, locator, text):
+        try:
+            element = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, locator))
+            )
+            element.click()
+            element.clear()
+            element.send_keys(text)
+        except Exception as e:
+            print(f"Ошибка при взаимодействии с элементом: {e}")
+        return text
+
     def assert_text_on_page(self, text_to_find):
         try:
             WebDriverWait(self.driver, 10).until(
@@ -490,6 +502,11 @@ class BasePage:
         for locator in locators:
             element = self.find_element(locator)
             assert not element.is_enabled(), f"Элемент {locator} активен"
+
+    def assert_element_disabld(self, locator):
+        element = self.wait_for_visible(locator)
+        assert element is not None, f"Элемент {locator} не найден"
+        assert not element.is_enabled(), f"Элемент {locator} активен"
 
     # Проверка, что элемент выбран (например, чекбокс)
     def assert_element_selected(self, locator):

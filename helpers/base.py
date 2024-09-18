@@ -401,6 +401,15 @@ class BasePage:
         except TimeoutException:
             assert False, f"Один из элементов {locators} не присутствует на странице"
 
+    def wait_for_visible_3(self, *locators):
+        try:
+            for locator in locators:
+                WebDriverWait(self.driver, 20).until(
+                    EC.visibility_of_element_located((By.XPATH, locator))
+                )
+        except TimeoutException:
+            assert False, f"Один из элементов {locators} не видим на странице"
+
     # Получение значения атрибута элемента
     def get_attribute(self, locator, attribute_name):
         element = self.driver.find_element(By.XPATH, locator)

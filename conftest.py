@@ -27,7 +27,7 @@ def create_chrome(headless=True):
     chrome_options.add_argument('--disable-notifications')  # Отключить уведомления
 
     # Указание пути к уже установленному драйверу
-    driver_path = "C:/Users/test/.wdm/drivers/chromedriver/win64/126.0.6478.182/chromedriver-win32/chromedriver.exe"
+    driver_path = "C:/Users/test/.wdm/drivers/chromedriver/win64/128.0.6613.137/chromedriver-win32/chromedriver.exe"
     driver = webdriver.Chrome(service=ChromeService(driver_path), options=chrome_options)
     return driver
 

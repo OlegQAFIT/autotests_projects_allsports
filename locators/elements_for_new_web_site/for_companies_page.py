@@ -28,7 +28,7 @@ class CompaniesPageLocators():
 
     TEXT_ON_PAGE_CONTACTS = '//*[@id="contactsSection"]/section/h2'
     TEXT_ON_PAGE_PHONE = '//*[@id="contactsSection"]/section/div/div[1]/div[1]/a'
-    TEXT_ON_PAGE_PHONE_TEH = '//*[@id="contactsSection"]/section/div/div[1]/div[1]/a'
+    TEXT_ON_PAGE_PHONE_TEH = '//*[@id="contactsSection"]/section/div/div[1]/div[2]/a'
     TEXT_ON_PAGE_ADREAS = '//*[@id="contactsSection"]/section/div/div[1]/div[3]/p[2]'
     TEXT_ON_PAGE_EMAIL = '//*[@id="contactsSection"]/section/div/div[1]/div[4]/a'
     TEXT_ON_PAGE_TIME = '//*[@id="contactsSection"]/section/div/div[1]/div[5]/p[2]'

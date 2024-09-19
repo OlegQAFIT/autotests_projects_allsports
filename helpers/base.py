@@ -232,7 +232,18 @@ class BasePage:
 
     # Прокрутка страницы вниз
     def scroll_down(self):
-        self.driver.execute_script("window.scrollTo(0, window.innerHeight);")
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    def scroll_to_element(self, locator):
+        """
+        Метод для прокрутки страницы до указанного элемента.
+
+        :param locator: Локатор элемента (кортеж с методом поиска и значением, например (By.XPATH, "//*[contains(text(), 'Контакты')]"))
+        """
+        element = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located(locator)
+        )
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
 
     # Нажатие клавиши Enter
     def press_enter(self, locator):

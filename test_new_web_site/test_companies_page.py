@@ -103,6 +103,7 @@ def test_checking_elements_on_the_page(driver):
     checking_text.open()
     checking_text.accept_cookie_consent()
     checking_text.clc_for_companies_page()
+    checking_text.scroll_down2()
     checking_text.assert_found_correct_elements_on_page()
 
 
@@ -117,5 +118,6 @@ def test_checking_elements_on_the_page_bloc_contacts(driver):
     checking_text.open()
     checking_text.accept_cookie_consent()
     checking_text.clc_for_companies_page()
-    checking_text.scroll_to_bottom()
+    checking_text.scroll_down()
     checking_text.assert_text_on_page()
+

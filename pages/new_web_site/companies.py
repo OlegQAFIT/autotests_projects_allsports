@@ -1,4 +1,6 @@
 import re
+import time
+
 import requests
 from selenium.webdriver.support import expected_conditions as EC
 import allure
@@ -86,7 +88,6 @@ class CompamiesPage(BasePage, CompaniesPageLocators, HeaderLocators):
     def clc_for_partner_offer(self):
         self.hard_click(self.BECOME_PARTNER)
 
-
     @allure.step("Click on locator")
     def clc_send_form_header(self):
         self.hard_click(self.BUTTON_GET_OFFER_HEADER)
@@ -123,7 +124,6 @@ class CompamiesPage(BasePage, CompaniesPageLocators, HeaderLocators):
         print(f"Получен статус-код: {response.status_code}")
         assert response.status_code == expected_status_code, f"Ожидался статус код {expected_status_code}, но получен {response.status_code}"
 
-
     @allure.step("correct subscription")
     def assert_found_correct_elements_on_page(self):
         elements_to_check = [
@@ -150,87 +150,67 @@ class CompamiesPage(BasePage, CompaniesPageLocators, HeaderLocators):
             except WebDriverException:
                 assert False, f"Элемент с локатором '{locator}' отсутствует на странице."
 
-    # @allure.step("Проверка текста на странице")
-    # def assert_found_correct_text(self):
-    #     """
-    #     Метод для проверки текста элементов на странице.
-    #     Проверяет текст для указанных элементов на странице.
-    #     """
-    #     elements_to_check = [
-    #         (self.TEXT_ON_PAGE_CONTACTS, 'Наши контакты'),
-    #         (self.TEXT_ON_PAGE_PHONE, '+375 44 771 09 47'),
-    #         (self.TEXT_ON_PAGE_PHONE_TEH, '+375 44 525 38 92'),
-    #         (self.TEXT_ON_PAGE_ADREAS, '220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21'),
-    #         (self.TEXT_ON_PAGE_EMAIL, 'contact@allsports.by'),
-    #         (self.TEXT_ON_PAGE_TIME, 'пн-пт: 09:00-18:00'),
-    #         (self.TEXT_ON_PAGE_TIME_2, 'сб-вс: выходной')
-    #     ]
-    #
-    #     for locator, expected_text in elements_to_check:
-    #         try:
-    #             element = self.wait_for_visible_3(locator)
-    #             found_text = element.text
-    #
-    #             assert found_text == expected_text, (
-    #                 f"Текст элемента с локатором '{locator}' не соответствует ожидаемому. "
-    #                 f"Ожидаемый текст: '{expected_text}', найденный текст: '{found_text}'"
-    #             )
-    #
-    #             print(f"Найден элемент с локатором '{locator}' и текстом '{found_text}'")
-    #
-    #         except WebDriverException:
-    #             assert False, f"Элемент с локатором '{locator}' отсутствует на странице."
-
     def assert_text_on_page(self, timeout=10):
-        """
-        Метод для проверки наличия текстов на странице.
-
-        :param timeout: время ожидания в секундах
-        """
-        texts_to_find = [
-            "Наши контакты",
-            "+375 44 771 09 47",
-            "+375 44 525 38 92",
-            "220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21",
-            "contact@allsports.by",
-            "пн-пт: 09:00-18:00",
-            "сб-вс: выходной"
+        elements_to_check = [
+            (self.TEXT_ON_PAGE_CONTACTS, 'Наши контакты'),
+            (self.TEXT_ON_PAGE_PHONE, '+375 44 771 09 47'),
+            (self.TEXT_ON_PAGE_PHONE_TEH, '+375 44 525 38 92'),
+            (self.TEXT_ON_PAGE_ADREAS, '220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21'),
+            (self.TEXT_ON_PAGE_EMAIL, 'contact@allsports.by'),
+            (self.TEXT_ON_PAGE_TIME, 'пн-пт: 09:00-18:00'),
+            (self.TEXT_ON_PAGE_TIME_2, 'сб-вс: выходной')
         ]
 
-        for text_to_find in texts_to_find:
+        for locator, expected_text in elements_to_check:
             try:
-                # Ожидание, что текст будет присутствовать на странице
-                WebDriverWait(self.driver, timeout).until(
-                    EC.text_to_be_present_in_element(
-                        (By.XPATH, "//*[contains(text(), '{}')]".format(text_to_find)),
-                        text_to_find
-                    )
+                element = self.wait_for_visible(locator)
+                found_text = element.text
+
+                assert found_text == expected_text, (
+                    f"Текст элемента с локатором '{locator}' не соответствует ожидаемому. "
+                    f"Ожидаемый текст: '{expected_text}', найденный текст: '{found_text}'"
                 )
-                print(f"Текст '{text_to_find}' найден на странице.")
 
-            except TimeoutException:
-                assert False, f"Текст '{text_to_find}' не найден на странице в течение {timeout} секунд."
+                print(f"Найден элемент с локатором '{locator}' и текстом '{found_text}'")
 
+            except WebDriverException:
+                assert False, f"Элемент с локатором '{locator}' отсутствует на странице."
 
-    @allure.step("Scroll down to the bottom of the page")
-    def scroll_to_bottom(self):
-        self.scroll_to_bottom()
+    def scroll_down(self):
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
 
+        while True:
+            # Scroll down to the bottom
+            self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
 
+            # Wait for new elements to load
+            time.sleep(2)  # Adjust the sleep time according to the page load speed
 
+            # Calculate new scroll height and compare with the last scroll height
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
 
+            if new_height == last_height:
+                break  # If heights are the same, exit the loop
 
+            last_height = new_height
 
+    def scroll_down2(self):
+        last_height = self.driver.execute_script("return document.body.scrollHeight")
 
+        while True:
+            # Прокрутка на 100 пикселей вниз
+            self.driver.execute_script("window.scrollBy(0, 100);")
 
+            time.sleep(1)  # Ожидание загрузки контента
 
+            new_height = self.driver.execute_script("return document.body.scrollHeight")
 
+            # Если высота не изменилась за несколько шагов прокрутки, выходим из цикла
+            if new_height == last_height:
+                # Проверим, находимся ли мы внизу страницы
+                end_of_page = self.driver.execute_script(
+                    "return window.innerHeight + window.pageYOffset >= document.body.scrollHeight")
+                if end_of_page:
+                    break
 
-
-
-
-
-
-
-
-
+            last_height = new_height

@@ -159,6 +159,18 @@ class BasePage:
         element.send_keys(text)
         return text
 
+    def fills_fild(self, locator, text):
+        try:
+            element = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable((By.XPATH, locator))
+            )
+            element.click()
+            element.clear()
+            element.send_keys(text)
+        except Exception as e:
+            print(f"Ошибка при взаимодействии с элементом: {e}")
+        return text
+
     def assert_text_on_page(self, text_to_find):
         try:
             WebDriverWait(self.driver, 10).until(
@@ -220,7 +232,18 @@ class BasePage:
 
     # Прокрутка страницы вниз
     def scroll_down(self):
-        self.driver.execute_script("window.scrollTo(0, window.innerHeight);")
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
+    def scroll_to_element(self, locator):
+        """
+        Метод для прокрутки страницы до указанного элемента.
+
+        :param locator: Локатор элемента (кортеж с методом поиска и значением, например (By.XPATH, "//*[contains(text(), 'Контакты')]"))
+        """
+        element = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located(locator)
+        )
+        self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
 
     # Нажатие клавиши Enter
     def press_enter(self, locator):
@@ -389,6 +412,15 @@ class BasePage:
         except TimeoutException:
             assert False, f"Один из элементов {locators} не присутствует на странице"
 
+    def wait_for_visible_3(self, *locators):
+        try:
+            for locator in locators:
+                WebDriverWait(self.driver, 20).until(
+                    EC.visibility_of_element_located((By.XPATH, locator))
+                )
+        except TimeoutException:
+            assert False, f"Один из элементов {locators} не видим на странице"
+
     # Получение значения атрибута элемента
     def get_attribute(self, locator, attribute_name):
         element = self.driver.find_element(By.XPATH, locator)
@@ -490,6 +522,11 @@ class BasePage:
         for locator in locators:
             element = self.find_element(locator)
             assert not element.is_enabled(), f"Элемент {locator} активен"
+
+    def assert_element_disabld(self, locator):
+        element = self.wait_for_visible(locator)
+        assert element is not None, f"Элемент {locator} не найден"
+        assert not element.is_enabled(), f"Элемент {locator} активен"
 
     # Проверка, что элемент выбран (например, чекбокс)
     def assert_element_selected(self, locator):

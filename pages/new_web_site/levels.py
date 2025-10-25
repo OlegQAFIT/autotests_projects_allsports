@@ -21,6 +21,7 @@ class LevelPage(BasePage, LevelPageLocators, HeaderLocators):
         self.text_email_wrong = '.'
         self.text_email = 'testOleg@gmail.com'
         self.text_name_company = 'ОАО Проверка Oleg'
+        self.text_city = 'Минск'
         self.text_questin = 'Проверка теста вопроса'
         self.driver = driver
 
@@ -41,11 +42,12 @@ class LevelPage(BasePage, LevelPageLocators, HeaderLocators):
             pass
 
     @allure.step("Fill Form")
-    def fill_form(self, INPUT_NAME, INPUT_PHONE, INPUT_EMAIL, INPUT_NAME_COMPANY):
+    def fill_form(self, INPUT_NAME, INPUT_PHONE, INPUT_EMAIL, INPUT_NAME_COMPANY, INPUT_CITY):
         self.fills_fild(INPUT_NAME, self.text_name)
         self.fills_fild(INPUT_PHONE, self.text_phone)
         self.fills_fild(INPUT_EMAIL, self.text_email)
         self.fills_fild(INPUT_NAME_COMPANY, self.text_name_company)
+        self.fills_fild(INPUT_CITY, self.text_city)
 
     @allure.step("Click on locator")
     def clc_checkbox(self):

@@ -18,7 +18,8 @@ def test_submitting_the_form_header_1(driver):
         send_form.INPUT_NAME,
         send_form.INPUT_PHONE,
         send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
+        send_form.INPUT_NAME_COMPANY,
+        send_form.INPUT_CITY)
     send_form.clc_checkbox()
     send_form.clc_send_1()
     send_form.check_form_submission()

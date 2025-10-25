@@ -1,19 +1,20 @@
-from selenium.webdriver.edge.options import Options as EdgeOption
-from webdriver_manager.microsoft import EdgeChromiumDriverManager
-from selenium.webdriver.edge.service import Service as EdgeService
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.options import Options as FirefoxOption
-from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.edge.options import Options as EdgeOption
+from selenium.webdriver.edge.service import Service as EdgeService
+from webdriver_manager.chrome import ChromeDriverManager
+from webdriver_manager.firefox import GeckoDriverManager
+from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 
 def pytest_addoption(parser):
     parser.addoption('--headless',
                      default='False',
-                     help='headless options: "yes" or "no"')
+                     help='headless options: "True" or "False"')
     parser.addoption('--b',
                      default='chrome',
                      help='option to define type of browser')
@@ -22,13 +23,14 @@ def pytest_addoption(parser):
 def create_chrome(headless=True):
     chrome_options = ChromeOption()
     if headless == 'True':
-        chrome_options.add_argument('--headless')
+        chrome_options.add_argument('--headless=new')
         chrome_options.add_argument('window-size=1900x1600')
-    chrome_options.add_argument('--disable-notifications')  # Отключить уведомления
 
-    # Указание пути к уже установленному драйверу
-    driver_path = "C:/Users/test/.wdm/drivers/chromedriver/win64/128.0.6613.137/chromedriver-win32/chromedriver.exe"
-    driver = webdriver.Chrome(service=ChromeService(driver_path), options=chrome_options)
+    chrome_options.add_argument('--disable-notifications')
+
+    # 🧩 Автоматически скачивает драйвер под твою ОС (macOS, Windows, Linux)
+    service = ChromeService(ChromeDriverManager().install())
+    driver = webdriver.Chrome(service=service, options=chrome_options)
     return driver
 
 
@@ -51,7 +53,6 @@ def create_edge(headless=True):
 
 @pytest.fixture(autouse=True)
 def driver(request):
-    driver = None
     browser = request.config.getoption('--b')
     headless = request.config.getoption('--headless')
 
@@ -61,9 +62,10 @@ def driver(request):
         driver = create_firefox(headless)
     elif browser == 'edge':
         driver = create_edge(headless)
+    else:
+        raise ValueError(f"Unsupported browser: {browser}")
 
     driver.implicitly_wait(5)
     driver.maximize_window()
-
     yield driver
     driver.quit()

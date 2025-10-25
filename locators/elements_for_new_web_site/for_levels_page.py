@@ -1,11 +1,12 @@
 class LevelPageLocators():
-    INPUT_NAME = "/html/body/div[1]/div/div[2]/form/div[1]/label[1]/div[2]/input"
-    INPUT_PHONE = "/html/body/div[1]/div/div[2]/form/div[1]/label[2]/div[2]/input"
-    INPUT_EMAIL = "/html/body/div[1]/div/div[2]/form/div[1]/label[3]/div[2]/input"
-    INPUT_NAME_COMPANY = "/html/body/div[1]/div/div[2]/form/div[1]/label[4]/div[2]/input"
+    INPUT_NAME = "/html/body/div[5]/div/div[2]/form/div[1]/label[1]/div[2]"
+    INPUT_PHONE = "/html/body/div[5]/div/div[2]/form/div[1]/label[2]/div[2]"
+    INPUT_EMAIL = "/html/body/div[5]/div/div[2]/form/div[1]/label[3]/div[2]"
+    INPUT_NAME_COMPANY = "/html/body/div[5]/div/div[2]/form/div[1]/label[4]/div[2]"
+    INPUT_CITY = "/html/body/div[5]/div/div[2]/form/div[1]/label[4]/div[2]"
 
-    CHECKBOX = "/html/body/div[1]/div/div[2]/form/div[1]/div/div/label"
-    BUTTON_SEND = "/html/body/div[1]/div/div[2]/form/div[2]/button"
+    CHECKBOX = "/html/body/div[5]/div/div[2]/form/div[1]/div/div/label"
+    BUTTON_SEND = "/html/body/div[5]/div/div[2]/form/div[2]/button/div/span"
 
     BECOME_PARTNER = "(//ul[@class='select-tab']//li[@id='becomePartner'])[1]"
 

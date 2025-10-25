@@ -1,5 +1,5 @@
 class ContactsLocators():
-    BUTTON_CONTACTS_TAB = "//div[@class='list-wrapper']//a[text()='Контакты']"
+    BUTTON_CONTACTS_TAB = '//*[@id="defaultView"]/header/div/nav/ul/li[3]/a'
 
     ELEMENT_ON_CONTACTS_PAGE_1 = "//section[@class='contacts']/h1[text()='Контакты']"
     ELEMENT_ON_CONTACTS_PAGE_2 = "//section[@class='contacts']/p[text()='Техподдержка объектов']"
@@ -23,3 +23,6 @@ class ContactsLocators():
     VALUE = "//button[text()='Количество сотрудников']"
     OPTION = "//button[text()='от 10 до 100']"
     GET_OFFER_BUTTON = "//button[text()='Получить предложение']"
+
+
+    CONFIRM = "/html/body/div[4]/div/div[2]/button/div/span"

@@ -12,6 +12,7 @@ def test_check_current_url_contacts_page(driver):
     """
     current_page = Contacts(driver)
     current_page.open()
+    current_page.click_confirm_buttom()
     current_page.click_contacts_tab()
     current_page.assert_current_url_page()
 

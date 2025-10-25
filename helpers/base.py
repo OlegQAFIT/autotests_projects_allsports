@@ -458,6 +458,43 @@ class BasePage:
             print("Элемент не найден:", locator)
             return None
 
+        # Проверка существования элемента без ожидания
+
+    def is_element_exist(self, locator):
+        """
+        Проверяет наличие элемента в DOM без ожидания.
+        Возвращает True, если элемент найден, иначе False.
+        """
+        from selenium.common.exceptions import NoSuchElementException
+        try:
+            self.driver.find_element(By.XPATH, locator)
+            return True
+        except NoSuchElementException:
+            return False
+
+        # Подсчёт количества найденных элементов
+
+    def count_elements(self, locator):
+        """
+        Возвращает количество найденных элементов по заданному локатору.
+        Удобно для случаев, где нужно убедиться, что элементов несколько.
+        """
+        elements = self.driver.find_elements(By.XPATH, locator)
+        return len(elements)
+
+        # Получение ошибок из консоли браузера
+
+    def get_js_console_errors(self):
+        """
+        Возвращает список ошибок уровня SEVERE из консоли браузера.
+        Используется для тестов на наличие JavaScript-ошибок.
+        """
+        try:
+            logs = self.driver.get_log("browser")
+            return [entry for entry in logs if entry.get("level") == "SEVERE"]
+        except Exception:
+            return []
+
     """
     Проверки Asserts:
     """

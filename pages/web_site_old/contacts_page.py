@@ -23,15 +23,20 @@ class Contacts(BasePage, ContactsLocators):
     def open(self):
         self.driver.get('https://www.allsports.fit/by/')
 
+
     # Methods for interacting with the 'Contacts' tab
     @allure.step("Click on 'Become a Partner' Tab")
     def click_contacts_tab(self):
         self.hard_click(self.BUTTON_CONTACTS_TAB)
 
+    @allure.step("Click on CONFIRM")
+    def click_confirm_buttom(self):
+        self.hard_click(self.CONFIRM)
+
     # Methods for asserting elements on the 'Contacts' page
     @allure.step("Assert Current URL of the Page")
     def assert_current_url_page(self):
-        expected_url = 'https://www.allsports.fit/by/contact/'
+        expected_url = 'https://www.allsports.by/ru-by/contacts'
         wait = WebDriverWait(self.driver, 10)
         wait.until(EC.url_to_be(expected_url))
         current_url = self.get_current_url()

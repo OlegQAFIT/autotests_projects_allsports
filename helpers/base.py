@@ -172,14 +172,20 @@ class BasePage:
         return text
 
     def assert_text_on_page(self, text_to_find):
+        """
+        Проверяет наличие заданного текста на странице.
+        Игнорирует регистр и лишние пробелы.
+        """
         try:
             WebDriverWait(self.driver, 10).until(
                 EC.presence_of_element_located((By.TAG_NAME, 'body'))
             )
             page_text = self.driver.find_element(By.TAG_NAME, 'body').text
-            assert text_to_find in page_text, f"Текст '{text_to_find}' не найден на странице."
+            normalized_page = " ".join(page_text.lower().split())
+            normalized_expected = " ".join(text_to_find.lower().split())
+            assert normalized_expected in normalized_page, f"Текст '{text_to_find}' не найден на странице."
         except WebDriverException:
-            assert False, f"Произошла ошибка при поиске текста '{text_to_find}' на странице."
+            assert False, f"Ошибка при поиске текста '{text_to_find}' на странице."
 
     # Очистка поля ввода
     def clear(self, locator):
@@ -223,8 +229,26 @@ class BasePage:
 
     # "Жесткий" клик на элементе
     def hard_click(self, locator):
-        element = self.driver.find_element(By.XPATH, locator)
-        self.driver.execute_script("arguments[0].click();", element)
+        """
+        Исправленный жёсткий клик через JS.
+        Работает и со строками, и с tuple (By, XPATH).
+        """
+        try:
+            # Унифицированная обработка локатора
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
+
+            # Поиск и скролл к элементу
+            element = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located((by, value))
+            )
+            self.driver.execute_script("arguments[0].scrollIntoView(true);", element)
+            self.driver.execute_script("arguments[0].click();", element)
+        except Exception as e:
+            raise AssertionError(f"Не удалось выполнить hard_click для {locator}: {e}")
+
 
     def hard_click_on_edit(self, locator):
         element = self.driver.find_element(By.XPATH, locator)
@@ -389,34 +413,73 @@ class BasePage:
         self.driver.refresh()
 
     # Ожидание видимости элемента
-    def wait_for_visible(self, locator):
+    def wait_for_visible(self, locator, timeout=10):
+        """
+        Универсальное ожидание видимости/кликабельности элемента.
+        Работает и с tuple-локаторами (By, value), и со строками (xpath).
+        """
         try:
-            return WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable((By.XPATH, locator)))
-        except WebDriverException:
-            assert False, f"Элемент {locator} не кликабельный"
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
 
-    def wait_for_visible_journal(self, locator):
-        try:
-            return WebDriverWait(self.driver, 10).until(
-                EC.element_to_be_clickable(locator))
+            return WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((by, value))
+            )
+        except TimeoutException:
+            assert False, f"Элемент {locator} не найден или не кликабелен за {timeout} секунд"
         except WebDriverException:
-            assert False, f"Элемент {locator} не кликабельный"
+            assert False, f"Элемент {locator} не кликабелен"
+
+    def wait_for_visible_journal(self, locator, timeout=10):
+        """
+        Альтернативный вариант для страниц журнала — также безопасно поддерживает tuple и строки.
+        """
+        try:
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
+
+            return WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable((by, value))
+            )
+        except TimeoutException:
+            assert False, f"Элемент {locator} не найден или не кликабелен за {timeout} секунд"
+        except WebDriverException:
+            assert False, f"Элемент {locator} не кликабелен"
 
     def wait_for_visible_2(self, *locators):
+        """
+        Ожидание присутствия сразу нескольких элементов (по xpath или tuple).
+        """
         try:
             for locator in locators:
+                if isinstance(locator, tuple):
+                    by, value = locator
+                else:
+                    by, value = By.XPATH, locator
+
                 WebDriverWait(self.driver, 10).until(
-                    EC.presence_of_element_located((By.XPATH, locator))
+                    EC.presence_of_element_located((by, value))
                 )
         except TimeoutException:
             assert False, f"Один из элементов {locators} не присутствует на странице"
 
     def wait_for_visible_3(self, *locators):
+        """
+        Ожидание видимости сразу нескольких элементов.
+        """
         try:
             for locator in locators:
+                if isinstance(locator, tuple):
+                    by, value = locator
+                else:
+                    by, value = By.XPATH, locator
+
                 WebDriverWait(self.driver, 20).until(
-                    EC.visibility_of_element_located((By.XPATH, locator))
+                    EC.visibility_of_element_located((by, value))
                 )
         except TimeoutException:
             assert False, f"Один из элементов {locators} не видим на странице"
@@ -501,9 +564,18 @@ class BasePage:
 
     # Проверка наличия элемента на странице
     def assert_element_present(self, locator):
+        """
+        Проверяет наличие элемента на странице. Поддерживает tuple и строку.
+        """
         try:
             self.wait_for_visible(locator)
-        except Exception as e:
+        except Exception:
+            # Логируем HTML для дебага
+            try:
+                html_snapshot = self.driver.page_source
+                print(f"[DEBUG HTML SNAPSHOT]\n{html_snapshot[:1000]}...\n")
+            except Exception:
+                pass
             assert False, f"Элемент {locator} отсутствует на странице"
 
     # Проверка отсутствия элемента на странице

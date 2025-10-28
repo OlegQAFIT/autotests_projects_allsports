@@ -8,6 +8,10 @@ from selenium.webdriver.support.wait import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.common.exceptions import NoSuchElementException
 from selenium.webdriver.common.by import By
+import time
+from selenium.common.exceptions import TimeoutException, NoSuchElementException, ElementClickInterceptedException
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
 
 from selenium.common.exceptions import TimeoutException, NoAlertPresentException
 
@@ -170,6 +174,30 @@ class BasePage:
         except Exception as e:
             print(f"Ошибка при взаимодействии с элементом: {e}")
         return text
+
+    def click_if_visible(self, locator, timeout=3):
+        """
+        Клик по элементу, если он отображается на странице.
+        Без исключений, если элемент не найден.
+        Используется для баннера cookies и подобных штук.
+        """
+        try:
+            WebDriverWait(self.driver, timeout).until(
+                EC.element_to_be_clickable(locator)
+            ).click()
+        except (TimeoutException, NoSuchElementException, ElementClickInterceptedException):
+            # просто пропускаем, если элемента нет
+            pass
+
+    def resize_window(self, width, height):
+        """
+        Меняет размер окна браузера (для проверки адаптивности).
+        """
+        try:
+            self.driver.set_window_size(width, height)
+            time.sleep(1)  # небольшая пауза для перестроения DOM
+        except Exception as e:
+            print(f"[WARN] Ошибка resize_window: {e}")
 
     def assert_text_on_page(self, text_to_find):
         """
@@ -335,6 +363,59 @@ class BasePage:
         locator = f"//button[contains(text(), '{text}')]"
         element = self.wait_for_visible(locator)
         element.click()
+
+    def is_element_present(self, locator):
+        try:
+            self.driver.find_element(*locator)
+            return True
+        except Exception:
+            return False
+
+    def is_element_visible(self, locator, timeout=5):
+        """
+        Проверяет, что элемент видим на странице (displayed = True).
+        Возвращает True/False без падения теста.
+        """
+        try:
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
+
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((by, value))
+            )
+            return element.is_displayed()
+        except Exception:
+            return False
+
+        def _safe_scroll(self, locator):
+            """Безопасно скроллит к элементу, если он существует."""
+            try:
+                element = WebDriverWait(self.driver, 5).until(
+                    EC.presence_of_element_located(locator)
+                )
+                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+                time.sleep(0.5)
+            except Exception:
+                # fallback: плавный скролл к низу страницы
+                for _ in range(3):
+                    self.driver.execute_script("window.scrollBy(0, 800);")
+                    time.sleep(0.5)
+
+    def is_element_visible(self, locator, timeout=5):
+        """Проверяет, что элемент видим на странице."""
+        try:
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
+            element = WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((by, value))
+            )
+            return element.is_displayed()
+        except Exception:
+            return False
 
     # Выбор опции из выпадающего списка по тексту
     # Выбор опции по-видимому тексту

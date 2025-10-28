@@ -1,35 +1,122 @@
-class CompaniesPageLocators():
-    INPUT_NAME = "/html/body/div[5]/div/div[2]/form/div[1]/label[1]/div[2]"
-    INPUT_PHONE = "/html/body/div[5]/div/div[2]/form/div[1]/label[2]/div[2]"
-    INPUT_EMAIL = "/html/body/div[5]/div/div[2]/form/div[1]/label[3]/div[2]"
-    INPUT_NAME_COMPANY = "/html/body/div[5]/div/div[2]/form/div[1]/label[4]/div[2]"
+# -*- coding: utf-8 -*-
+from selenium.webdriver.common.by import By
 
-    BUTTON_SEND_OFFER = '//*[@id="defaultView"]/main/section/div[1]/button'
-    CHECKBOX = "/html/body/div[5]/div/div[2]/form/div[1]/div/div/label"
-    BUTTON_SEND = "/html/body/div[5]/div/div[2]/form/div[2]/button"
 
-    BECOME_PARTNER = '//*[@id="becomePartner"]'
+class CompaniesLocators:
+    BASE_URL = "https://www.allsports.by/ru-by/companies"
 
-    BECOME_PARTNER_HEADER = "(//ul[@class='select-tab']//li[@id='becomePartner'])[1]"
+    # === HEADER ===
+    HEADER = (By.CSS_SELECTOR, "header.header")
+    HEADER_LOGO = (By.CSS_SELECTOR, ".header-navbar__logo img[alt='allsports']")
+    HEADER_BTN_OFFER = (By.ID, "offer-btn")
+    HEADER_BTN_QUESTION = (By.XPATH, "//button//span[contains(text(),'Задать вопрос')]")
 
-    TEXT_ON_PAGE = '//*[@id="defaultView"]/main/section/div[1]/p[2]'
-    TEXT_ON_PAGE_ADVANTAGES = '//*[@id="benefitSection"]/section/h2'
-    TEXT_ON_PAGE_COOPERATE = '//*[@id="cooperationSection"]/section/h2'
-    TEXT_ON_PAGE_REVIEWS = '//*[@id="feedbackSection"]/section/h2'
-    TEXT_ON_PAGE_QUESTIONS = '//*[@id="faqSection"]/section/h2'
+    # === PROMO BLOCK ===
+    PROMO_SECTION = (By.CSS_SELECTOR, "section.suggestion")
+    PROMO_TITLE = (By.XPATH, "//h1[normalize-space()='Allsports']")
+    PROMO_IMG = (By.CSS_SELECTOR, ".suggestion-images picture img")
+    BTN_GET_OFFER = (By.XPATH, "//button//span[contains(text(),'Получить предложение')]")
+    BTN_ASK_QUESTION = (By.XPATH, "//button//span[contains(text(),'Задать вопрос')]")
 
-    INPUT_NAME_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/label[1]/div[2]/input'
-    INPUT_PHONE_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/label[2]/div[2]/input'
-    INPUT_EMAIL_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/label[3]/div[2]/input'
-    INPUT_NAME_COMPANY_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/label[4]/div[2]/input'
+    # === MODAL FORMS ===
+    MODAL = (By.CSS_SELECTOR, "div.modal")
+    MODAL_HEADER = (By.CSS_SELECTOR, ".modal-header div")
+    MODAL_CLOSE = (By.CSS_SELECTOR, ".modal-header button.icon-btn")
+    MODAL_INPUT_NAME = (By.XPATH, "//input[@placeholder='Ваше имя' or @placeholder='Ваше имя*']")
+    MODAL_INPUT_PHONE = (By.XPATH, "//input[@type='tel']")
+    MODAL_INPUT_EMAIL = (By.XPATH, "//input[@type='email' or @name='email']")
+    MODAL_INPUT_COMPANY = (By.XPATH, "//input[@placeholder='Компания' or @placeholder='Название компании*']")
+    MODAL_INPUT_CITY = (By.XPATH, "//input[@placeholder='Введите город']")
+    MODAL_TEXTAREA = (By.TAG_NAME, "textarea")
+    MODAL_CHECKBOX = (By.CSS_SELECTOR, ".agreement label.checkbox input")
+    MODAL_BTN_SUBMIT = (By.XPATH, "//button[@type='submit']")
+    MODAL_POLICY_LINK = (By.XPATH, "//a[contains(@href,'policy')]")
+    MODAL_PHONE_LINK = (By.XPATH, "//a[contains(@href,'tel:')]")
 
-    CHECKBOX_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/div/div/label'
-    BUTTON_SEND_PAGE = '//*[@id="getDetailsSection"]/section/div/div[1]/div/form/button/div/span'
 
-    TEXT_ON_PAGE_CONTACTS = '//*[@id="contactsSection"]/section/h2'
-    TEXT_ON_PAGE_PHONE = '//*[@id="contactsSection"]/section/div/div[1]/div[1]/a'
-    TEXT_ON_PAGE_PHONE_TEH = '//*[@id="contactsSection"]/section/div/div[1]/div[2]/a'
-    TEXT_ON_PAGE_ADREAS = '//*[@id="contactsSection"]/section/div/div[1]/div[3]/p[2]'
-    TEXT_ON_PAGE_EMAIL = '//*[@id="contactsSection"]/section/div/div[1]/div[4]/a'
-    TEXT_ON_PAGE_TIME = '//*[@id="contactsSection"]/section/div/div[1]/div[5]/p[2]'
-    TEXT_ON_PAGE_TIME_2 = '//*[@id="contactsSection"]/section/div/div[1]/div[5]/p[3]'
+    # === BENEFITS SECTION ===
+    BENEFIT_SECTION = (By.ID, "benefitSection")
+    BENEFIT_TITLE = (By.XPATH, "//*[@id='benefitSection']//h2[normalize-space()='Преимущества']")
+    BENEFIT_ITEMS = (By.CSS_SELECTOR, "#benefitSection li.item")
+    BENEFIT_TEXTS = (By.CSS_SELECTOR, "#benefitSection li.item p:not(:has(svg))")
+    BENEFIT_NEXT = (By.CSS_SELECTOR, "#benefitSection .scroll-slider-control__next")
+    BENEFIT_PREV = (By.CSS_SELECTOR, "#benefitSection .scroll-slider-control__prev")
+
+    # === COOPERATION SECTION ===
+    COOP_SECTION = (By.ID, "cooperationSection")
+    COOP_TITLE = (By.XPATH, "//*[@id='cooperationSection']//h2[contains(.,'Сотрудничать')]")
+    COOP_ITEMS = (By.CSS_SELECTOR, "#cooperationSection li.item")
+    COOP_TEXTS = (By.CSS_SELECTOR, "#cooperationSection li.item p")
+    COOP_NEXT = (By.CSS_SELECTOR, "#cooperationSection .scroll-slider-control__next")
+    COOP_PREV = (By.CSS_SELECTOR, "#cooperationSection .scroll-slider-control__prev")
+
+    # === FEEDBACK SECTION ===
+    FEEDBACK_SECTION = (By.ID, "feedbackSection")
+    FEEDBACK_TITLE = (By.XPATH, "//*[@id='feedbackSection']//h2[normalize-space()='Нам доверяют']")
+    FEEDBACK_ITEMS = (By.CSS_SELECTOR, "#feedbackSection li.item")
+    FEEDBACK_COMPANY_LOGOS = (By.CSS_SELECTOR, "#feedbackSection li.item picture img")
+    FEEDBACK_TEXTS = (By.CSS_SELECTOR, "#feedbackSection li.item p")
+    FEEDBACK_LINKS = (By.XPATH, "//a[contains(text(),'Читать отзыв')]")
+    FEEDBACK_MODAL = (By.CSS_SELECTOR, "div.modal")
+    FEEDBACK_MODAL_TITLE = (By.CSS_SELECTOR, ".modal-header div")
+    FEEDBACK_MODAL_BODY = (By.CSS_SELECTOR, ".modal-body span")
+
+    # === FOOTER ===
+    FOOTER = (By.CSS_SELECTOR, "footer.footer")
+    FOOTER_LINKS = (By.CSS_SELECTOR, "footer a")
+    FOOTER_COMPANY_INFO = (By.XPATH, "//div[contains(text(),'ООО') or contains(text(),'Allsports')]")
+
+    # === VALID DATA (для форм) ===
+    VALID_NAME = "Олег"
+    VALID_PHONE = "375297000000"
+    VALID_EMAIL = "oleg@example.com"
+    VALID_COMPANY = "ООО Автотест"
+    VALID_CITY = "Минск"
+
+    """Локаторы элементов блока FAQ (Часто задаваемые вопросы)."""
+
+    # === БАЗОВЫЕ ЭЛЕМЕНТЫ ===
+    FAQ_SECTION = (By.CSS_SELECTOR, "section.faq")
+    FAQ_TITLE = (By.XPATH, "//h2[normalize-space()='Часто задаваемые вопросы']")
+    FAQ_CONTAINER = (By.CSS_SELECTOR, ".faq-container")
+    FAQ_LIST = (By.CSS_SELECTOR, ".faq-list")
+    FAQ_ITEMS = (By.CSS_SELECTOR, ".faq-list .expansion-item")
+    FAQ_QUESTIONS = (By.CSS_SELECTOR, ".expansion-item-title h5")
+    FAQ_ANSWERS = (By.CSS_SELECTOR, ".expansion-item-text")
+    FAQ_ARROWS = (By.CSS_SELECTOR, ".expansion-item__arrow svg")
+
+    # === ССЫЛКА ДЛЯ ПАРТНЁРОВ ===
+    FAQ_PARTNERS_BLOCK = (By.CSS_SELECTOR, ".faq-links")
+    FAQ_PARTNERS_LINK = (By.XPATH, "//a[contains(@href,'/partners')]")
+
+    # === ФОРМА "Не нашли ответ?" ===
+    FAQ_FORM = (By.CSS_SELECTOR, ".faq-form")
+    FAQ_FORM_TITLE = (By.XPATH, "//h5[contains(text(),'Не нашли ответ')]")
+    FAQ_FORM_BUTTON = (By.XPATH, "//button//span[contains(text(),'Задать вопрос')]")
+
+    # === ТЕКСТОВЫЕ ЭТАЛОНЫ ДЛЯ СРАВНЕНИЙ ===
+    EXPECTED_QUESTIONS = [
+        "Что такое Allsports и как он работает?",
+        "Как подключить сотрудников компании к сервису Allsports?",
+        "Как поменять список сотрудников?",
+        "Чем отличаются типы подписок?",
+        "Какие преимущества для компаний предоставляет Allsports?",
+        "На какой срок можно оформить подписку и какие условия оплаты?",
+        "Облагаются ли компенсации за спорт дополнительными налогами?",
+        "Как узнать цены подписок?",
+        "Можно поменять тип подписки для сотрудника?",
+        "Мы забыли оплатить сервис. Что произойдёт?",
+        "Что такое архивные подписки и как их подключить?",
+    ]
+
+    # =====================
+    # CONTACTS
+    # =====================
+    CONTACTS_SECTION = (By.ID, "contactsSection")
+    CONTACTS_CONTAINER = (By.CSS_SELECTOR, "#contactsSection .contacts-container")
+    CONTACTS_INFO = (By.CSS_SELECTOR, "#contactsSection .contacts-info")
+    CONTACTS_INFO_BLOCKS = (By.CSS_SELECTOR, "#contactsSection .contacts-info > div")
+    CONTACTS_MAP = (By.CSS_SELECTOR, "#contactsSection .contacts-map")
+    CONTACTS_MAP_CANVAS = (By.CSS_SELECTOR, "#contactsSection canvas.mapboxgl-canvas")
+    CONTACTS_MARKER = (By.CSS_SELECTOR, "#contactsSection .mapboxgl-marker")
+

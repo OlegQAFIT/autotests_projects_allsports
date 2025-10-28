@@ -9,6 +9,7 @@ from selenium.webdriver.edge.service import Service as EdgeService
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 
 
 def pytest_addoption(parser):
@@ -20,6 +21,8 @@ def pytest_addoption(parser):
                      help='option to define type of browser')
 
 
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+
 def create_chrome(headless=True):
     chrome_options = ChromeOption()
     if headless == 'True':
@@ -28,17 +31,11 @@ def create_chrome(headless=True):
 
     chrome_options.add_argument('--disable-notifications')
 
-    # 🧩 Автоматически скачивает драйвер под твою ОС (macOS, Windows, Linux)
+    # ✅ Современный способ добавить capabilities
+    chrome_options.set_capability("goog:loggingPrefs", {"browser": "ALL"})
+
     service = ChromeService(ChromeDriverManager().install())
     driver = webdriver.Chrome(service=service, options=chrome_options)
-    return driver
-
-
-def create_firefox(headless=True):
-    ff_option = FirefoxOption()
-    if headless == 'True':
-        ff_option.add_argument('--headless')
-    driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=ff_option)
     return driver
 
 

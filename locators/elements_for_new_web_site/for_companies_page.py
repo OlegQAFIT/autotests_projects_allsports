@@ -182,3 +182,38 @@ class CompaniesLocators:
     SUCCESS_MODAL = (By.CSS_SELECTOR, "div.modal")
     SUCCESS_TEXT = (By.XPATH, "//div[contains(text(),'Спасибо за ваш запрос')]")
     SUCCESS_CLOSE_BTN = (By.XPATH, "//button//span[text()='Закрыть']")
+
+    # === COMMON ===
+    COOKIE_ACCEPT_BTN = (By.CSS_SELECTOR, "button.cookie-accept, button[data-test='cookie-accept']")
+    PAGE_TITLE = (By.XPATH, "//h1[contains(text(),'Компаниям')]")
+
+    # ===================== SUBSCRIPTION BLOCK =====================
+
+    # Основные карточки (обычные)
+    SUBSCRIPTION_CARDS = (By.CSS_SELECTOR, ".scroll-slider-card__carousel--item")
+    SUBSCRIPTION_CARD_TITLE = (By.CSS_SELECTOR, ".level-card__main h2.text-20-600")
+    SUBSCRIPTION_CARD_TEXTS = (By.CSS_SELECTOR, ".level-card__main-description-text p.text-body")
+    SUBSCRIPTION_CARD_MISC = (By.CSS_SELECTOR, ".level-card__misc p.text-body")
+    SUBSCRIPTION_LINK_OBJECTS = (By.XPATH, ".//span[contains(text(),'Объекты подписки')]")
+    SUBSCRIPTION_LINK_TABLE = (By.XPATH, ".//span[contains(text(),'Список объектов (таблица)')]")
+
+    # Кнопка и модалка архивных типов подписок
+    SUBSCRIPTIONS_ARCHIVE_BTN = (By.XPATH, "//button[.//span[contains(text(),'Архивные типы подписок')]]")
+    SUBSCRIPTIONS_ARCHIVE_MODAL = (By.CSS_SELECTOR, "div.modal")
+    SUBSCRIPTIONS_ARCHIVE_CLOSE = (By.CSS_SELECTOR, "div.modal button.icon-btn")
+
+    # Карточки в модалке "Архивные подписки"
+    SUBSCRIPTIONS_ARCHIVE_CARDS = (By.CSS_SELECTOR, "div.modal .level-card-wrapper")
+    SUBSCRIPTIONS_ARCHIVE_CARD_TITLE = (By.CSS_SELECTOR, "div.modal .level-card__main h2.text-20-600")
+    SUBSCRIPTIONS_ARCHIVE_CARD_TEXTS = (By.CSS_SELECTOR, "div.modal .level-card__main-description-text p.text-body")
+    SUBSCRIPTIONS_ARCHIVE_CARD_MISC = (By.CSS_SELECTOR, "div.modal .level-card__misc p.text-body")
+    SUBSCRIPTIONS_ARCHIVE_LINK_OBJECTS = (By.XPATH, ".//span[contains(text(),'Объекты подписки')]")
+    SUBSCRIPTIONS_ARCHIVE_LINK_TABLE = (By.XPATH, ".//span[contains(text(),'Список объектов (таблица)')]")
+
+    # Страница "Объекты подписки" (проверка фильтра)
+    FACILITIES_SELECT_VALUE = (By.CSS_SELECTOR, ".select__value-container .select__single-value")
+
+    # Страница "Список объектов (таблица)"
+    FACILITIES_TABLE_TITLE = (By.CSS_SELECTOR, "h1.text-h3, h2.text-h3")
+    FACILITIES_TABLE_ROWS = (By.CSS_SELECTOR, "table tbody tr")
+

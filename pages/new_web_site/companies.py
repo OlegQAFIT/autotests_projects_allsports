@@ -1120,3 +1120,226 @@ class CompaniesPage(BasePage):
                     time.sleep(0.3)
                 except Exception:
                     pass
+# ===================== SUBSCRIPTION BLOCK ========================================================================
+
+    # =====================
+    # SUBSCRIPTION TYPES (обычные и архивные)
+    # =====================
+
+    @allure.step("Проверить карточки уровней подписок (обычные и архивные)")
+    def check_subscription_cards_and_archives(self):
+        """Проверяет кликабельность ссылок карточек и корректность открываемых страниц."""
+        # Принудительно прокручиваем страницу к блоку с карточками
+        try:
+            self._safe_scroll((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
+        except Exception:
+            self.driver.execute_script("window.scrollBy(0, 1500);")
+            time.sleep(1.5)
+
+        # Проверяем основные карточки
+        self._check_subscription_cards(in_archive=False)
+
+        # Проверяем архивные карточки
+        self.open_archive_modal()
+        self._check_subscription_cards(in_archive=True)
+        self.close_archive_modal()
+
+    # === ВСПОМОГАТЕЛЬНЫЕ ===
+    def _check_subscription_cards(self, in_archive=False):
+        """Обход карточек, переход по 2 ссылкам ('Объекты подписки' и 'Список объектов (таблица)')."""
+        driver = self.driver
+        wait = WebDriverWait(driver, 20)
+
+        # Принудительно скроллим вниз до блока подписок (важно для ленивой подгрузки)
+        try:
+            self._safe_scroll((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
+        except Exception:
+            driver.execute_script("window.scrollBy(0, 1200);")
+            time.sleep(1.5)
+
+        # Определяем, какие локаторы использовать
+        if in_archive:
+            cards = wait.until(EC.presence_of_all_elements_located(L.SUBSCRIPTIONS_ARCHIVE_CARDS))
+            title_locator = L.SUBSCRIPTIONS_ARCHIVE_CARD_TITLE
+            link_objects_locator = L.SUBSCRIPTIONS_ARCHIVE_LINK_OBJECTS
+            link_table_locator = L.SUBSCRIPTIONS_ARCHIVE_LINK_TABLE
+        else:
+            cards = wait.until(EC.presence_of_all_elements_located(L.SUBSCRIPTION_CARDS))
+            title_locator = L.SUBSCRIPTION_CARD_TITLE
+            link_objects_locator = L.SUBSCRIPTION_LINK_OBJECTS
+            link_table_locator = L.SUBSCRIPTION_LINK_TABLE
+
+        allure.attach(str(len(cards)), "Количество карточек")
+        assert cards, "❌ Карточки подписок не найдены — блок не прогрузился"
+
+        for index, card in enumerate(cards, start=1):
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", card)
+            time.sleep(0.4)
+            level_name = card.find_element(*title_locator).text.strip()
+
+            # 🟢 исправление allure.step()
+            with allure.step(f"Проверяем карточку {index}: {level_name}"):
+                # Проверяем, что карточка содержит описание
+                texts = [t.text.strip() for t in card.find_elements(*L.SUBSCRIPTION_CARD_TEXTS)]
+                assert any(texts), f"❌ В карточке '{level_name}' отсутствует текст описания"
+
+                # Проверяем обе ссылки
+                self._check_objects_link(card, link_objects_locator, level_name)
+                self._check_table_link(card, link_table_locator, level_name)
+
+    @allure.step("Проверить переход по ссылке 'Объекты подписки'")
+    def _check_objects_link(self, card, locator, level_name):
+        """Открывает ссылку 'Объекты подписки' и проверяет, что выбран корректный уровень."""
+        driver = self.driver
+        link_el = card.find_element(*locator)
+
+        # Прокручиваем, чтобы элемент был виден
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", link_el)
+        time.sleep(0.4)
+
+        href = link_el.find_element(By.XPATH, "ancestor::a").get_attribute("href")
+        driver.execute_script("window.open(arguments[0]);", href)
+        driver.switch_to.window(driver.window_handles[-1])
+
+        try:
+            # Ждём появления блока селекта и нужного span
+            WebDriverWait(driver, 25).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "span.select-field__value"))
+            )
+            time.sleep(0.5)
+
+            el = driver.find_element(By.CSS_SELECTOR, "span.select-field__value")
+            selected_value = el.text.strip()
+            expected_value = f"{level_name} подписка"
+
+            assert selected_value == expected_value, (
+                f"❌ Неверное значение селекта — ожидалось '{expected_value}', "
+                f"а получено '{selected_value}'"
+            )
+
+            allure.attach(
+                f"✅ Уровень выбран корректно: {selected_value}",
+                name=f"Проверка фильтра ({level_name})",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+
+        except TimeoutException:
+            page_html = driver.page_source[:1500]
+            allure.attach(page_html, "❌ Страница не загрузила селект (HTML-снимок)")
+            raise
+        finally:
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+            time.sleep(0.6)
+
+    @allure.step("Проверить переход по ссылке 'Список объектов (таблица)'")
+    def _check_table_link(self, card, locator, level_name):
+        """Открывает 'Список объектов (таблица)' и проверяет, что страница загрузилась и таблица видна."""
+        driver = self.driver
+        link_el = card.find_element(*locator)
+
+        # Скроллим до ссылки и открываем
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", link_el)
+        time.sleep(0.4)
+        href = link_el.find_element(By.XPATH, "ancestor::a").get_attribute("href")
+
+        driver.execute_script("window.open(arguments[0]);", href)
+        driver.switch_to.window(driver.window_handles[-1])
+
+        try:
+            # Явное ожидание появления таблицы div.facilities-table
+            WebDriverWait(driver, 30).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "div.facilities-table"))
+            )
+            time.sleep(1.0)  # даём странице дорендериться
+
+            # Проверяем наличие строк таблицы
+            rows = driver.find_elements(By.CSS_SELECTOR, "div.facilities-table__row")
+            assert len(rows) > 1, f"❌ Таблица пуста или не прогрузилась ({level_name})"
+
+            header = driver.find_element(By.CSS_SELECTOR, "div.facilities-table__row--heading")
+            header_text = header.text.strip()
+            allure.attach(
+                f"✅ Таблица найдена ({len(rows)} строк)\nШапка: {header_text}",
+                name=f"Таблица объектов ({level_name})",
+                attachment_type=allure.attachment_type.TEXT,
+            )
+
+        except TimeoutException:
+            allure.attach(driver.page_source[:1500], f"❌ Таблица не загрузилась ({level_name})")
+            raise
+        finally:
+            driver.close()
+            driver.switch_to.window(driver.window_handles[0])
+            time.sleep(0.6)
+
+    # === ОТКРЫТИЕ / ЗАКРЫТИЕ МОДАЛКИ АРХИВНЫХ УРОВНЕЙ ===
+    @allure.step("Открыть модалку 'Архивные типы подписок'")
+    def open_archive_modal(self):
+        """Открывает модальное окно с архивными типами подписок (точный рабочий вариант)."""
+        driver = self.driver
+        locator = (
+            By.XPATH,
+            "(//div[contains(@class,'level-section__button')]//button[.//span[contains(.,'Архивные типы подписок')]])[1]"
+        )
+
+        # Убедимся, что секция "Типы подписок" видна
+        try:
+            section = WebDriverWait(driver, 10).until(
+                EC.presence_of_element_located((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
+            )
+            driver.execute_script("arguments[0].scrollIntoView({block:'center'});", section)
+        except Exception:
+            driver.execute_script("window.scrollBy(0, 1000);")
+            time.sleep(1)
+
+        # Ищем кнопку
+        try:
+            btn = WebDriverWait(driver, 10).until(EC.element_to_be_clickable(locator))
+        except TimeoutException:
+            allure.attach(driver.page_source, "HTML перед кликом")
+            raise AssertionError("Кнопка 'Архивные типы подписок' не найдена на странице")
+
+        # Кликаем безопасно
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", btn)
+        time.sleep(0.3)
+        driver.execute_script("arguments[0].click();", btn)
+
+        # Ждём открытия модалки
+        try:
+            WebDriverWait(driver, 10).until(
+                EC.visibility_of_element_located((By.CSS_SELECTOR, "div.modal"))
+            )
+            time.sleep(0.5)
+        except TimeoutException:
+            allure.attach(driver.page_source, "HTML после клика")
+            raise AssertionError("Модальное окно 'Архивные типы подписок' не открылось")
+
+    @allure.step("Закрыть модалку 'Архивные типы подписок'")
+    def close_archive_modal(self):
+        """Закрывает модальное окно с архивными уровнями (с ожиданием исчезновения)."""
+        driver = self.driver
+        close_btn = WebDriverWait(driver, 15).until(
+            EC.element_to_be_clickable(L.SUBSCRIPTIONS_ARCHIVE_CLOSE)
+        )
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'});", close_btn)
+        driver.execute_script("arguments[0].click();", close_btn)
+        WebDriverWait(driver, 20).until(
+            EC.invisibility_of_element_located(L.SUBSCRIPTIONS_ARCHIVE_MODAL)
+        )
+        time.sleep(0.6)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

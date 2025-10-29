@@ -31,7 +31,7 @@ def test_promo_titles(driver):
 @allure.severity('Normal')
 @allure.story('Преимущества — наличие блока и заголовка')
 def test_benefits_section_presence(driver):
-    "Проверка наличия блока Преимущества и заголовка."
+    """Проверка наличия блока Преимущества и заголовка."""
     page = CompaniesPage(driver)
     page.open()
     page.accept_cookie_consent()
@@ -42,7 +42,7 @@ def test_benefits_section_presence(driver):
 @allure.severity('Normal')
 @allure.story('Преимущества — количество элементов')
 def test_benefits_items_count(driver):
-    "Проверка количества элементов преимуществ."
+    """Проверка количества элементов преимуществ."""
     page = CompaniesPage(driver)
     page.open()
     page.accept_cookie_consent()
@@ -527,3 +527,122 @@ def test_policy_link_in_all_forms(driver):
     page.open()
     page.accept_cookie_consent()
     page.check_policy_link_in_all_forms()
+
+
+
+# ===================== SUBSCRIPTION TYPES ====================================================================================
+@allure.feature("Companies Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — проверка карточек и ссылок")
+def test_subscription_cards_texts_and_links(driver):
+    """Проверка карточек всех типов подписок (основные и архивные):
+    - наличие карточек;
+    - наличие текста (визиты, спортивные объекты, приостановка);
+    - наличие ссылок 'Объекты подписки' и 'Список объектов (таблица)'.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем обычные карточки
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем архивные карточки
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()
+
+
+@allure.feature("Companies Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — переходы по ссылкам обычных карточек")
+def test_subscription_links_regular_cards(driver):
+    """Проверяет переходы по ссылкам обычных подписок:
+    - 'Объекты подписки' открывает страницу с правильным уровнем (например, 'Region подписка');
+    - 'Список объектов (таблица)' открывает таблицу, которая успешно загружается.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page._check_subscription_cards(in_archive=False)
+
+
+@allure.feature("Companies Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — переходы по ссылкам архивных карточек")
+def test_subscription_links_archive_cards(driver):
+    """Проверяет переходы по ссылкам в архивных карточках:
+    - корректность выбранного уровня ('Lite подписка', 'Region подписка' и т.п.);
+    - успешную загрузку таблицы объектов.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Открываем модалку архивных подписок
+    page.open_archive_modal()
+
+    # Проверяем переходы по ссылкам
+    page._check_subscription_cards(in_archive=True)
+
+    # Закрываем модалку
+    page.close_archive_modal()
+
+
+@allure.feature("Companies Page")
+@allure.severity("High")
+@allure.story("Типы подписок — полный сценарий проверки блока")
+def test_full_subscription_block_flow(driver):
+    """Полный сценарий проверки блока 'Типы подписок':
+    - карточки обычных и архивных уровней;
+    - клики по обеим ссылкам;
+    - корректный уровень и успешная загрузка таблицы.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_subscription_cards_and_archives()
+
+
+@allure.feature("Companies Page")
+@allure.severity("Normal")
+@allure.story("Типы подписок — стабильность загрузки таблиц")
+def test_subscription_facilities_tables_load(driver):
+    """Проверяет, что страницы 'Список объектов (таблица)' корректно подгружаются:
+    - таблица видна;
+    - есть хотя бы одна строка данных;
+    - не возникает таймаутов загрузки.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем таблицы обычных карточек
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем таблицы архивных карточек
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()
+
+
+@allure.feature("Companies Page")
+@allure.severity("Normal")
+@allure.story("Типы подписок — проверка текстов в карточках")
+def test_subscription_card_texts_valid(driver):
+    """Проверяет, что в карточках содержатся корректные тексты:
+    - упоминается 'визит';
+    - есть 'спорт' или 'объект';
+    - указано о 'приостановке' подписки.
+    """
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем тексты карточек обычных подписок
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем тексты карточек архивных подписок
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()

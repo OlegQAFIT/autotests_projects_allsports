@@ -568,6 +568,278 @@ class CompaniesPage(BasePage):
         assert button.is_displayed(), "Кнопка 'Задать вопрос' не отображается на странице"
         assert button.is_enabled(), "Кнопка 'Задать вопрос' недоступна для нажатия"
 
+    # =====================
+    # FORMS (HEADER / PROMO / FAQ / JOIN)
+    # =====================
+
+    INVALID_PHONE_1 = "1234"
+    INVALID_PHONE_2 = "привет"
+    INVALID_EMAIL_1 = "привет"
+    INVALID_EMAIL_2 = "qwert@@"
+    VALID_NAME = "QA Автотест"
+    VALID_EMAIL = "qa.autotest@allsports.by"
+    VALID_COMPANY = "Allsports QA"
+    VALID_CITY = "Минск"
+    VALID_PHONE = "+375 44 111 11 11"
+    VALID_QUESTION = "Проверка модального окна (автотест)"
+
+    # ====== Вспомогательные ======
+    def _scroll_modal_to_bottom(self):
+        """Аккуратно прокручивает модалку вниз, чтобы увидеть чекбокс и кнопку."""
+        try:
+            modal = self.driver.find_element(*L.MODAL)
+            self.driver.execute_script(
+                "arguments[0].scrollTo(0, arguments[0].scrollHeight);", modal
+            )
+        except Exception:
+            pass
+
+    def _blur(self):
+        """Снимает фокус с активного поля (для вызова ошибок валидации)."""
+        self.driver.execute_script(
+            "document.activeElement && document.activeElement.blur();"
+        )
+
+    def _ensure_btn_disabled(self, btn):
+        assert not btn.is_enabled(), "Кнопка отправки должна быть неактивна при текущем состоянии"
+
+    def _ensure_btn_enabled(self, btn):
+        assert btn.is_enabled(), "Кнопка отправки должна стать активной"
+
+    # ====== Открытие форм ======
+    @allure.step("Открыть модалку из хедера: 'Получить предложение'")
+    def open_header_offer_modal(self):
+        self.driver.execute_script("window.scrollTo({top:0});")
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(L.HEADER_OFFER_BTN)
+        ).click()
+        self._wait_modal_ready()
+        return self
+
+    @allure.step("Открыть модалку из хедера: 'Задать вопрос'")
+    def open_header_question_modal(self):
+        self.driver.execute_script("window.scrollTo({top:0});")
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(L.HEADER_ASK_BTN)
+        ).click()
+        self._wait_modal_ready()
+        return self
+
+    @allure.step("Открыть модалку из промо-блока: 'Получить предложение'")
+    def open_promo_offer_modal(self):
+        self._safe_scroll(L.PROMO_OFFER_BTN)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(L.PROMO_OFFER_BTN)
+        ).click()
+        self._wait_modal_ready()
+        return self
+
+    @allure.step("Открыть модалку из промо-блока: 'Задать вопрос'")
+    def open_promo_question_modal(self):
+        self._safe_scroll(L.PROMO_ASK_BTN)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(L.PROMO_ASK_BTN)
+        ).click()
+        self._wait_modal_ready()
+        return self
+
+    @allure.step("Открыть модалку из блока FAQ: 'Задать вопрос'")
+    def open_faq_question_modal(self):
+        self._safe_scroll(L.FAQ_ASK_BTN)
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable(L.FAQ_ASK_BTN)
+        ).click()
+        self._wait_modal_ready()
+        return self
+
+    # ====== Общие проверки модалок ======
+    @allure.step("Проверить общую структуру модалки (заголовок, политика, телефон)")
+    def check_modal_common(self, expected_title_substring: str):
+        """Проверяет наличие модалки, заголовка, ссылки на политику и телефона."""
+        self.assert_element_present(L.MODAL)
+        self.assert_element_present(L.MODAL_FORM)
+        title = WebDriverWait(self.driver, 5).until(
+            EC.visibility_of_element_located(L.MODAL_TITLE)
+        ).text.strip()
+        assert expected_title_substring in title, f"Ожидался заголовок '{expected_title_substring}', найдено '{title}'"
+
+        # Проверка ссылки на политику
+        policy = self.driver.find_element(*L.MODAL_POLICY_LINK)
+        href = policy.get_attribute("href")
+        assert "/policy/" in href, f"Некорректная ссылка политики: {href}"
+
+        # Проверка телефонной ссылки
+        phone_link = self.driver.find_element(*L.MODAL_PHONE_LINK)
+        tel = phone_link.get_attribute("href")
+        assert tel.startswith("tel:"), "Телефонная ссылка должна начинаться с tel:"
+        assert "375" in tel, f"Телефонная ссылка не содержит код страны: {tel}"
+
+    # ====== Валидации в модалках ======
+    @allure.step("Проверить ошибки валидации телефона (в модалке)")
+    def validate_phone_errors_in_modal(self):
+        """Проверяет, что при вводе некорректного телефона появляется ошибка."""
+        phone = self.driver.find_element(*L.MODAL_PHONE_INPUT)
+
+        # === Проверка 1: 1234 ===
+        phone.clear()
+        phone.send_keys(self.INVALID_PHONE_1)
+        self._blur()  # теряем фокус
+        # ждем появления ошибки
+        WebDriverWait(self.driver, 10).until(
+            lambda d: d.find_element(*L.MODAL_PHONE_ERROR).text.strip() != ""
+        )
+        err1 = self.driver.find_element(*L.MODAL_PHONE_ERROR).text.strip()
+        assert "Неверный формат" in err1 and "+375" in err1, (
+            f"Ожидалась ошибка формата телефона, получили: '{err1}'"
+        )
+
+        # === Проверка 2: 'привет' ===
+        phone.clear()
+        phone.send_keys(self.INVALID_PHONE_2)
+        self._blur()
+        WebDriverWait(self.driver, 10).until(
+            lambda d: d.find_element(*L.MODAL_PHONE_ERROR).text.strip() != ""
+        )
+        err2 = self.driver.find_element(*L.MODAL_PHONE_ERROR).text.strip()
+        assert "Неверный формат" in err2, (
+            f"Ожидалась ошибка при вводе кириллицы, получили: '{err2}'"
+        )
+
+    @allure.step("Проверить ошибки валидации Email (в модалке)")
+    def validate_email_errors_in_modal(self):
+        """Проверяет корректные ошибки валидации для поля email (запрещённые символы / недействительный адрес)."""
+        email = self.driver.find_element(*L.MODAL_EMAIL_INPUT)
+
+        # Локатор: span с ошибкой внутри label, где input[name='email']
+        error_locator = (
+            By.XPATH,
+            "//label[contains(@class,'input')][.//input[@name='email']]//span[contains(@class,'input-error__text')]"
+        )
+
+        # === Проверка 1: 'привет' ===
+        email.clear()
+        email.send_keys(self.INVALID_EMAIL_1)
+        self._blur()
+
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element(error_locator, "Поле содержит")
+        )
+        err1 = self.driver.find_element(*error_locator).text.strip()
+        assert "запрещ" in err1.lower() or "поле содержит" in err1.lower(), (
+            f"Ожидалась ошибка про запрещённые символы, получили: '{err1}'"
+        )
+
+        # --- Полное очищение input через JS (clear() не работает из-за кастомного поля) ---
+        self.driver.execute_script("arguments[0].value = '';", email)
+        self.driver.execute_script("arguments[0].dispatchEvent(new Event('input', { bubbles: true }));", email)
+        time.sleep(0.5)
+
+        # === Проверка 2: 'qwert@@' ===
+        email.send_keys(self.INVALID_EMAIL_2)
+        self._blur()
+
+        WebDriverWait(self.driver, 10).until(
+            EC.text_to_be_present_in_element(error_locator, "Адрес электронной почты")
+        )
+        err2 = self.driver.find_element(*error_locator).text.strip()
+        assert (
+                "должен" in err2.lower()
+                or "адрес" in err2.lower()
+                or "email" in err2.lower()
+        ), f"Ожидалась ошибка 'Адрес электронной почты должен быть действительным', получили: '{err2}'"
+
+    # ====== Проверка активации кнопок ======
+    @allure.step("Проверить активацию кнопки 'Отправить' в форме 'Получить предложение'")
+    def check_offer_submit_activation(self):
+        submit = self.driver.find_element(*L.MODAL_SUBMIT_BTN)
+        self._ensure_btn_disabled(submit)
+
+        self.driver.find_element(*L.MODAL_NAME_INPUT).send_keys(self.VALID_NAME)
+        self.driver.find_element(*L.MODAL_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+
+        company_inputs = self.driver.find_elements(*L.MODAL_COMPANY_INPUT)
+        if company_inputs:
+            company_inputs[0].send_keys(self.VALID_COMPANY)
+        else:
+            self.driver.find_element(*L.MODAL_OBJECT_INPUT).send_keys(self.VALID_COMPANY)
+
+        # Без чекбокса кнопка неактивна
+        self._ensure_btn_disabled(submit)
+
+        # Ставим чекбокс
+        label = self.driver.find_element(*L.MODAL_AGREE_LABEL)
+        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", label)
+        self.driver.execute_script("arguments[0].click();", label)
+        time.sleep(0.4)
+        self._ensure_btn_enabled(submit)
+
+    @allure.step("Проверить активацию кнопки 'Отправить' в форме 'Задать вопрос'")
+    def check_question_submit_activation(self):
+        """Проверяет, что кнопка 'Отправить' активируется только после заполнения всех обязательных полей и чекбокса."""
+        submit = self.driver.find_element(*L.MODAL_SUBMIT_BTN)
+        self._ensure_btn_disabled(submit)
+
+        # --- Заполняем все обязательные поля ---
+        self.driver.find_element(*L.MODAL_NAME_INPUT).send_keys(self.VALID_NAME)
+        self.driver.find_element(*L.MODAL_PHONE_INPUT).send_keys("+375 44 111 11 11")
+        self.driver.find_element(*L.MODAL_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        self.driver.find_element(*L.MODAL_TEXTAREA).send_keys(self.VALID_QUESTION)
+
+        # --- Проверяем: без чекбокса кнопка всё ещё неактивна ---
+        self._ensure_btn_disabled(submit)
+
+        # --- Ставим чекбокс согласия ---
+        label = self.driver.find_element(*L.MODAL_AGREE_LABEL)
+        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", label)
+        self.driver.execute_script("arguments[0].click();", label)
+        time.sleep(0.5)
+
+        # --- Проверяем, что кнопка активировалась ---
+        self._ensure_btn_enabled(submit)
+
+    # ====== Inline форма JOIN ======
+    @allure.step("Проверить inline-форму 'Присоединяйтесь к Allsports'")
+    def check_join_form_full(self):
+        """Проверяет структуру и активацию inline-формы 'Присоединяйтесь к Allsports'."""
+        # --- Скроллим вниз, чтобы форма точно прогрузилась ---
+        self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        time.sleep(1.5)
+
+        # --- Прокручиваем к секции с формой ---
+        self._safe_scroll(L.JOIN_SECTION)
+
+        # --- Проверяем наличие формы и кнопки ---
+        form = self.driver.find_element(*L.JOIN_FORM)
+        assert form is not None, "Форма 'Присоединяйтесь к Allsports' не найдена"
+
+        submit = self.driver.find_element(*L.JOIN_SUBMIT_BTN)
+        assert submit is not None, "Кнопка 'Получить предложение' не найдена"
+
+        # --- Проверяем, что кнопка изначально неактивна ---
+        self._ensure_btn_disabled(submit)
+
+        # --- Заполняем все обязательные поля ---
+        self.driver.find_element(*L.JOIN_NAME_INPUT).send_keys(self.VALID_NAME)
+        self.driver.find_element(*L.JOIN_PHONE_INPUT).send_keys(self.VALID_PHONE)
+        self.driver.find_element(*L.JOIN_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        self.driver.find_element(*L.JOIN_COMPANY_INPUT).send_keys(self.VALID_COMPANY)
+
+        # --- Проверяем, что кнопка всё ещё неактивна без чекбокса ---
+        self._ensure_btn_disabled(submit)
+
+        # --- Ставим чекбокс согласия ---
+        checkbox_label = self.driver.find_element(*L.JOIN_AGREE_LABEL)
+        self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", checkbox_label)
+        self.driver.execute_script("arguments[0].click();", checkbox_label)
+        time.sleep(0.5)
+
+        # --- Проверяем, что кнопка стала активной ---
+        self._ensure_btn_enabled(submit)
+
+        # --- Проверяем ссылку на политику ---
+        policy_link = self.driver.find_element(*L.JOIN_POLICY_LINK)
+        href = policy_link.get_attribute("href")
+        assert "/policy/" in href, f"Некорректная ссылка политики: {href}"
 
     # =====================
     # VIDEO
@@ -592,7 +864,6 @@ class CompaniesPage(BasePage):
         self._safe_scroll((By.ID, "videoSection"))
         iframe = self.driver.find_element(By.CSS_SELECTOR, "#videoSection iframe")
         assert iframe.get_attribute("allowfullscreen") is not None, "Атрибут allowfullscreen отсутствует"
-
 
     # =====================
     # CONTACTS
@@ -692,5 +963,160 @@ class CompaniesPage(BasePage):
         markers = self.driver.find_elements(*L.CONTACTS_MARKER)
         assert markers, "Маркер на карте отсутствует — возможно, карта не инициализирована"
 
+    # =====================
+    # FORM SUBMISSION CHECKS
+    # =====================
+    @allure.step("Отправить форму 'Получить предложение' (Промо-блок)")
+    def submit_promo_offer_form(self):
+        """Заполняет и отправляет форму 'Получить предложение' в промо-блоке, затем проверяет успех."""
+        driver = self.driver
+        driver.find_element(*L.MODAL_NAME_INPUT).send_keys(self.VALID_NAME)
+        driver.find_element(*L.MODAL_PHONE_INPUT).send_keys(self.VALID_PHONE)
+        driver.find_element(*L.MODAL_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        driver.find_element(*L.MODAL_INPUT_COMPANY).send_keys(self.VALID_COMPANY)
+        driver.find_element(*L.MODAL_INPUT_CITY).send_keys(self.VALID_CITY)
 
+        label = driver.find_element(*L.MODAL_AGREE_LABEL)
+        driver.execute_script("arguments[0].click();", label)
+        submit = driver.find_element(*L.MODAL_BTN_SUBMIT)
+        driver.execute_script("arguments[0].click();", submit)
 
+        success_text = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(L.SUCCESS_TEXT)
+        )
+        assert "Спасибо за ваш запрос" in success_text.text
+        self._close_success_modal()
+
+    @allure.step("Отправить форму 'Задать вопрос' (Промо-блок)")
+    def submit_promo_question_form(self):
+        driver = self.driver
+        driver.find_element(*L.MODAL_NAME_INPUT).send_keys(self.VALID_NAME)
+        driver.find_element(*L.MODAL_PHONE_INPUT).send_keys(self.VALID_PHONE)
+        driver.find_element(*L.MODAL_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        driver.find_element(*L.MODAL_TEXTAREA_QUESTION).send_keys(self.VALID_QUESTION)
+
+        label = driver.find_element(*L.MODAL_AGREE_LABEL)
+        driver.execute_script("arguments[0].click();", label)
+        submit = driver.find_element(*L.MODAL_BTN_SUBMIT)
+        driver.execute_script("arguments[0].click();", submit)
+
+        success_text = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(L.SUCCESS_TEXT)
+        )
+        assert "Спасибо за ваш запрос" in success_text.text
+        self._close_success_modal()
+
+    @allure.step("Отправить форму 'Задать вопрос' (FAQ)")
+    def submit_faq_question_form(self):
+        driver = self.driver
+        driver.find_element(*L.MODAL_NAME_INPUT).send_keys(self.VALID_NAME)
+        driver.find_element(*L.MODAL_PHONE_INPUT).send_keys(self.VALID_PHONE)
+        driver.find_element(*L.MODAL_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        driver.find_element(*L.MODAL_TEXTAREA_QUESTION).send_keys(self.VALID_QUESTION)
+
+        label = driver.find_element(*L.MODAL_AGREE_LABEL)
+        driver.execute_script("arguments[0].click();", label)
+        submit = driver.find_element(*L.MODAL_BTN_SUBMIT)
+        driver.execute_script("arguments[0].click();", submit)
+
+        success_text = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(L.SUCCESS_TEXT)
+        )
+        assert "Спасибо за ваш запрос" in success_text.text
+        self._close_success_modal()
+
+    @allure.step("Отправить inline-форму 'Присоединяйтесь к Allsports'")
+    def submit_join_form(self):
+        driver = self.driver
+        self._safe_scroll(L.JOIN_SECTION)
+        driver.find_element(*L.JOIN_NAME_INPUT).send_keys(self.VALID_NAME)
+        driver.find_element(*L.JOIN_PHONE_INPUT).send_keys(self.VALID_PHONE)
+        driver.find_element(*L.JOIN_EMAIL_INPUT).send_keys(self.VALID_EMAIL)
+        driver.find_element(*L.JOIN_COMPANY_INPUT).send_keys(self.VALID_COMPANY)
+
+        label = driver.find_element(*L.JOIN_AGREE_LABEL)
+        driver.execute_script("arguments[0].click();", label)
+        submit = driver.find_element(*L.JOIN_SUBMIT_BTN)
+        driver.execute_script("arguments[0].click();", submit)
+
+        success_text = WebDriverWait(driver, 10).until(
+            EC.visibility_of_element_located(L.SUCCESS_TEXT)
+        )
+        assert "Спасибо за ваш запрос" in success_text.text
+        self._close_success_modal()
+
+    @allure.step("Закрыть success-модалку после отправки формы")
+    def _close_success_modal(self):
+        """Кликает по кнопке 'Закрыть' и убеждается, что модалка исчезла."""
+        driver = self.driver
+        close_btn = driver.find_element(*L.SUCCESS_CLOSE_BTN)
+        driver.execute_script("arguments[0].click();", close_btn)
+        WebDriverWait(driver, 10).until_not(
+            EC.visibility_of_element_located(L.SUCCESS_MODAL)
+        )
+
+    # =====================
+    # POLICY LINK CHECKS
+    # =====================
+    @allure.step("Проверить ссылку на политику обработки персональных данных во всех формах")
+    def check_policy_link_in_all_forms(self):
+        """Проверяет, что ссылка на политику корректна, рабочая и открывает нужную страницу во всех формах."""
+        driver = self.driver
+        expected_text = "Политика компании в отношении обработки персональных данных субъектов персональных данных"
+
+        forms_to_check = [
+            ("Промо — Получить предложение", self.open_promo_offer_modal, L.MODAL_POLICY_LINK),
+            ("Промо — Задать вопрос", self.open_promo_question_modal, L.MODAL_POLICY_LINK),
+            ("FAQ — Задать вопрос", self.open_faq_question_modal, L.MODAL_POLICY_LINK),
+            ("Inline — Присоединяйтесь к Allsports", lambda: self._safe_scroll(L.JOIN_SECTION), L.JOIN_POLICY_LINK),
+        ]
+
+        for form_name, open_func, locator in forms_to_check:
+            with allure.step(f"Проверка ссылки политики в форме: {form_name}"):
+                # --- Открываем страницу заново, чтобы не мешали прошлые модалки ---
+                driver.get(L.BASE_URL)
+                time.sleep(1)
+                self.accept_cookie_consent()
+                time.sleep(0.5)
+
+                # --- Открываем соответствующую форму ---
+                open_func()
+
+                # --- Ищем ссылку на политику ---
+                link = WebDriverWait(driver, 10).until(
+                    EC.presence_of_element_located(locator)
+                )
+                href = link.get_attribute("href")
+
+                assert href, f"Ссылка политики отсутствует в форме '{form_name}'"
+                assert href.startswith("https"), f"Некорректный формат ссылки: {href}"
+                assert "/policy/" in href, f"Ссылка не содержит '/policy/': {href}"
+
+                # --- Открываем ссылку в новой вкладке ---
+                driver.execute_script("window.open(arguments[0], '_blank');", href)
+                driver.switch_to.window(driver.window_handles[-1])
+
+                # --- Ждём загрузку и проверяем содержимое ---
+                WebDriverWait(driver, 20).until(lambda d: "policy" in d.current_url.lower())
+                page_text = driver.page_source
+                assert expected_text in page_text, (
+                    f"На странице политики не найден ожидаемый текст.\n"
+                    f"Искали: '{expected_text}'"
+                )
+
+                current_url = driver.current_url
+                assert "allsports.by/ru-by/policy/251010_processing_personal_data" in current_url, (
+                    f"Открыт неверный URL политики ({form_name}): {current_url}"
+                )
+
+                # --- Закрываем вкладку политики и возвращаемся ---
+                driver.close()
+                driver.switch_to.window(driver.window_handles[0])
+                time.sleep(0.5)
+
+                # --- Если осталась открыта модалка — закрываем ---
+                try:
+                    self.click_if_visible(L.MODAL_CLOSE)
+                    time.sleep(0.3)
+                except Exception:
+                    pass

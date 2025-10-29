@@ -33,7 +33,6 @@ class CompaniesLocators:
     MODAL_POLICY_LINK = (By.XPATH, "//a[contains(@href,'policy')]")
     MODAL_PHONE_LINK = (By.XPATH, "//a[contains(@href,'tel:')]")
 
-
     # === BENEFITS SECTION ===
     BENEFIT_SECTION = (By.ID, "benefitSection")
     BENEFIT_TITLE = (By.XPATH, "//*[@id='benefitSection']//h2[normalize-space()='Преимущества']")
@@ -120,3 +119,66 @@ class CompaniesLocators:
     CONTACTS_MAP_CANVAS = (By.CSS_SELECTOR, "#contactsSection canvas.mapboxgl-canvas")
     CONTACTS_MARKER = (By.CSS_SELECTOR, "#contactsSection .mapboxgl-marker")
 
+    # =====================
+    # FORM
+    # =====================
+
+    # ====== HEADER ======
+    HEADER_OFFER_BTN = (By.ID, "offer-btn")  # "Получить предложение"
+    HEADER_ASK_BTN = (By.XPATH,
+                      "//button[contains(@class,'header-controls__offer')][.//span[contains(.,'Задать вопрос')]]")
+
+    # ====== PROMO (кнопки в первом экране) ======
+    PROMO_OFFER_BTN = (By.XPATH,
+                       "//section[contains(@class,'section')][.//span[contains(.,'Получить предложение')]]//button[.//span[contains(.,'Получить предложение')]]")
+    PROMO_ASK_BTN = (By.XPATH,
+                     "//section[contains(@class,'section')][.//span[contains(.,'Задать вопрос')]]//button[.//span[contains(.,'Задать вопрос')]]")
+
+    # ====== FAQ (кнопка внизу FAQ) ======
+    FAQ_ASK_BTN = (By.XPATH, "//button[.//span[contains(.,'Задать вопрос')]]")
+
+    # --- INLINE JOIN FORM ("Присоединяйтесь к Allsports") ---
+    JOIN_SECTION = (By.ID, "getDetailsSection")
+    JOIN_FORM = (By.CSS_SELECTOR, "#getDetailsSection form.get-details__form")
+    JOIN_POLICY_LINK = (By.CSS_SELECTOR, "#getDetailsSection .agreement a")
+    JOIN_SUBMIT_BTN = (By.CSS_SELECTOR, "#getDetailsSection button.get-details__button")  # ✅ Исправленный вариант
+
+    JOIN_NAME_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Ваше имя']")
+    JOIN_PHONE_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='phone']")
+    JOIN_EMAIL_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='email']")
+    JOIN_COMPANY_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Компания']")
+    JOIN_AGREE_LABEL = (By.CSS_SELECTOR, "#getDetailsSection label.checkbox")
+
+    # ====== COMMON MODAL ======
+    MODAL = (By.CSS_SELECTOR, "div.modal")
+    MODAL_TITLE = (By.CSS_SELECTOR, "div.modal .modal-header > div")
+    MODAL_CLOSE = (By.CSS_SELECTOR, "div.modal .modal-header .icon-btn")
+    MODAL_FORM = (By.CSS_SELECTOR, "div.modal form.modal-form")
+    MODAL_SUBMIT_BTN = (By.CSS_SELECTOR, "div.modal .modal-form-control button.btn")
+    MODAL_POLICY_LINK = (By.CSS_SELECTOR, "div.modal .agreement a[href*='policy']")
+    MODAL_AGREE_INPUT = (By.CSS_SELECTOR, "div.modal .agreement label.checkbox > input")
+    MODAL_AGREE_LABEL = (By.CSS_SELECTOR, "div.modal .agreement label.checkbox")
+    MODAL_PHONE_LINK = (By.CSS_SELECTOR, "div.modal a.modal-body__phone")
+
+    # Поля ввода в модалках (универсальные локаторы по заголовкам плейсхолдеров)
+    MODAL_NAME_INPUT = (By.XPATH, "//div[contains(@class,'modal')]//label[.//div[contains(.,'Ваше имя')]]//input")
+    MODAL_PHONE_INPUT = (By.XPATH,
+                         "//div[contains(@class,'modal')]//label[.//div[contains(.,'Телефон')]]//input[@name='phone']")
+    MODAL_EMAIL_INPUT = (By.XPATH,
+                         "//div[contains(@class,'modal')]//label[.//div[contains(.,'Email')]]//input[@name='email' or @type='text']")
+    MODAL_COMPANY_INPUT = (By.XPATH,
+                           "//div[contains(@class,'modal')]//label[.//div[contains(.,'Название компании')]]//input")
+    MODAL_OBJECT_INPUT = (By.XPATH,
+                          "//div[contains(@class,'modal')]//label[.//div[contains(.,'Название объекта')]]//input")
+    MODAL_CITY_INPUT = (By.XPATH, "//div[contains(@class,'modal')]//label[.//div[contains(.,'Город')]]//input")
+    MODAL_TEXTAREA_QUESTION = (By.XPATH,
+                               "//div[contains(@class,'modal')]//label[contains(@class,'textarea')]//textarea")
+
+    # Ошибки под полями в модалках (браузер показывает их после потери фокуса)
+    MODAL_PHONE_ERROR = (By.CSS_SELECTOR, ".input-error__text")
+    MODAL_EMAIL_ERROR = (By.CSS_SELECTOR, ".input-error__text")
+
+    # === SUCCESS MODAL (после отправки формы) ===
+    SUCCESS_MODAL = (By.CSS_SELECTOR, "div.modal")
+    SUCCESS_TEXT = (By.XPATH, "//div[contains(text(),'Спасибо за ваш запрос')]")
+    SUCCESS_CLOSE_BTN = (By.XPATH, "//button//span[text()='Закрыть']")

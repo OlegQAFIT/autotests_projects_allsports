@@ -26,7 +26,6 @@ def test_promo_titles(driver):
     page.check_promo_titles()
 
 
-
 # ===================== BENEFITS =====================
 @allure.feature('Companies Page')
 @allure.severity('Normal')
@@ -175,9 +174,6 @@ def test_footer_presence(driver):
     page.check_footer_presence()
 
 
-
-
-
 # ===================== EXTENDED CHECKS =====================
 @allure.feature('Companies Page')
 @allure.severity('Low')
@@ -289,6 +285,7 @@ def test_faq_form_button(driver):
     page.accept_cookie_consent()
     page.check_faq_form_button()
 
+
 # ===================== VIDEO =====================
 @allure.feature('Companies Page')
 @allure.severity('Normal')
@@ -355,3 +352,178 @@ def test_contacts_map(driver):
     page.open()
     page.accept_cookie_consent()
     page.check_contacts_map()
+
+
+# ===================== FORMS =====================
+@allure.story("Открытие форм из хедера")
+@allure.severity("Critical")
+def test_open_header_offer_modal(driver):
+    """Проверка открытия модалки 'Получить предложение' из хедера."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_header_offer_modal()
+    page.check_modal_common("Получить предложение")
+
+
+@allure.story("Открытие формы 'Задать вопрос' из хедера")
+@allure.severity("Critical")
+def test_open_header_question_modal(driver):
+    """Проверка открытия модалки 'Задать вопрос' из хедера."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_header_question_modal()
+    page.check_modal_common("Задать вопрос")
+
+
+@allure.story("Открытие форм из промо-блока")
+@allure.severity("Critical")
+def test_open_promo_offer_modal(driver):
+    """Проверка открытия модалки 'Получить предложение' из промо-блока."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_offer_modal()
+    page.check_modal_common("Получить предложение")
+
+
+@allure.story("Открытие формы 'Задать вопрос' из промо-блока")
+@allure.severity("Critical")
+def test_open_promo_question_modal(driver):
+    """Проверка открытия модалки 'Задать вопрос' из промо-блока."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_question_modal()
+    page.check_modal_common("Задать вопрос")
+
+
+@allure.story("Открытие формы из блока FAQ")
+@allure.severity("Critical")
+def test_open_faq_question_modal(driver):
+    """Проверка открытия модалки 'Задать вопрос' из блока FAQ."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_faq_question_modal()
+    page.check_modal_common("Задать вопрос")
+
+
+@allure.story("Валидации — телефон и email в модалке")
+@allure.severity("Critical")
+def test_modal_validation_phone_email(driver):
+    """Проверка ошибок валидации для телефона и email."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_offer_modal()
+
+    # Проверяем ошибки валидации
+    page.validate_phone_errors_in_modal()
+    page.validate_email_errors_in_modal()
+
+
+@allure.story("Активация кнопки — 'Получить предложение'")
+@allure.severity("Critical")
+def test_offer_submit_activation(driver):
+    """Проверка логики активации кнопки 'Отправить' в форме 'Получить предложение'."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_offer_modal()
+    page.check_offer_submit_activation()
+
+
+@allure.story("Активация кнопки — 'Задать вопрос'")
+@allure.severity("Critical")
+def test_question_submit_activation(driver):
+    """Проверка активации кнопки 'Отправить' в форме 'Задать вопрос'."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_question_modal()
+    page.check_question_submit_activation()
+
+
+@allure.story("Inline-форма 'Присоединяйтесь к Allsports'")
+@allure.severity("Major")
+def test_join_form_full(driver):
+    """Проверка inline-формы: структура, валидации и активация кнопки."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_join_form_full()
+
+
+# ===================== FORM SUBMISSION SUCCESS TESTS =====================
+@allure.feature("Companies Page")
+@allure.story("Форма — 'Получить предложение' (Промо-блок)")
+@allure.severity("Critical")
+def test_promo_offer_form_submission(driver):
+    """Проверка успешной отправки формы 'Получить предложение' из промо-блока."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_offer_modal()
+    page.submit_promo_offer_form()
+
+
+@allure.feature("Companies Page")
+@allure.story("Форма — 'Задать вопрос' (Промо-блок)")
+@allure.severity("Critical")
+def test_promo_question_form_submission(driver):
+    """Проверка успешной отправки формы 'Задать вопрос' из промо-блока."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_question_modal()
+    page.submit_promo_question_form()
+
+
+@allure.feature("Companies Page")
+@allure.story("Форма — 'Задать вопрос' (FAQ)")
+@allure.severity("Critical")
+def test_faq_question_form_submission(driver):
+    """Проверка успешной отправки формы 'Задать вопрос' из блока FAQ."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_faq_question_modal()
+    page.submit_faq_question_form()
+
+
+@allure.feature("Companies Page")
+@allure.story("Inline-форма — 'Присоединяйтесь к Allsports'")
+@allure.severity("Major")
+def test_join_form_submission(driver):
+    """Проверка успешной отправки inline-формы 'Присоединяйтесь к Allsports'."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.submit_join_form()
+
+
+# ===================== FORM LINKS VALIDITY =====================
+@allure.feature("Companies Page")
+@allure.story("Гиперссылки — политика и телефон")
+@allure.severity("Normal")
+def test_forms_links_validity(driver):
+    """Проверка корректности гиперссылок (policy + tel) в формах."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_promo_offer_modal()
+    page.check_modal_common("Получить предложение")
+
+
+# ===================== POLICY LINK TEST =====================
+@allure.feature("Companies Page")
+@allure.story("Ссылки на политику обработки персональных данных во всех формах")
+@allure.severity("Critical")
+def test_policy_link_in_all_forms(driver):
+    """Проверка, что ссылка на политику корректно работает во всех формах."""
+    page = CompaniesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_policy_link_in_all_forms()

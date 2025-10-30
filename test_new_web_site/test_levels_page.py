@@ -1,205 +1,94 @@
+# -*- coding: utf-8 -*-
 import allure
-
-from pages.new_web_site.levels import LevelPage
-
-
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_header_1(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = LevelPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_send_form_header()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY,
-        send_form.INPUT_CITY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission()
+from pages.new_web_site.levels import LevelsPage
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_header_2(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = LevelPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_send_form_header()
-    send_form.clc_button_become_partner()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_become_partner()
+# === LEVELS BLOCK ===
+@allure.feature('Levels Page')
+@allure.story('Типы подписок — наличие блока и карточек')
+@allure.severity('Normal')
+def test_levels_section_present(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_levels_section_present()
+    page.check_subscription_cards_present()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_join_company(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = LevelPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.fill_form_main(
-        send_form.INPUT_NAME_LEVEL_PAGE,
-        send_form.INPUT_PHONE_LEVEL_PAGE,
-        send_form.INPUT_EMAIL_LEVEL_PAGE,
-        send_form.INPUT_NAME_COMPANY_LEVEL_PAGE)
-    send_form.clc_checkbox_maim()
-    send_form.clc_send_maim()
-    send_form.check_form_submission_join_company_maim()
+@allure.feature('Levels Page')
+@allure.story('Типы подписок — тексты карточек')
+@allure.severity('Normal')
+def test_levels_cards_texts(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_card_texts_regular()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_join_partner(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = LevelPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_join_partner_maim()
-    send_form.fill_form_main(
-        send_form.INPUT_NAME_LEVEL_PAGE,
-        send_form.INPUT_PHONE_LEVEL_PAGE,
-        send_form.INPUT_EMAIL_LEVEL_PAGE,
-        send_form.INPUT_NAME_COMPANY_LEVEL_PAGE)
-    send_form.clc_checkbox_maim()
-    send_form.clc_send_maim()
-    send_form.check_form_submission_join_partner_maim()
+@allure.feature('Levels Page')
+@allure.story('Типы подписок — переходы по ссылкам')
+@allure.severity('Critical')
+def test_levels_links(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_links_regular_cards()
 
 
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_correct_silver_subscription(driver):
-    """
-
-    """
-    level_page = LevelPage(driver)
-    level_page.open()
-    level_page.accept_cookie_consent()
-    level_page.clc_type_subscription()
-    level_page.assert_found_correct_elements_on_page()
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_number_suppliers(driver):
-    """
-
-    """
-    level_page = LevelPage(driver)
-    level_page.open()
-    level_page.accept_cookie_consent()
-    level_page.clc_type_subscription()
-    level_page.assert_change_number_suppliers()
+@allure.feature('Levels Page')
+@allure.story('Архивные типы подписок — модалка и карточки')
+@allure.severity('Normal')
+def test_levels_archive(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_archive_modal()
+    page.check_card_texts_archive()
+    page.close_archive_modal()
 
 
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_number_vid(driver):
-    """
-
-    """
-    level_page = LevelPage(driver)
-    level_page.open()
-    level_page.accept_cookie_consent()
-    level_page.clc_type_subscription()
-    level_page.assert_change_number_vid()
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_link_personal_data_processing_policy(driver):
-    """
-
-    """
-    level_page = LevelPage(driver)
-    level_page.open()
-    level_page.accept_cookie_consent()
-    level_page.clc_type_subscription()
-    level_page.clc_link_personal_data_processing_policy()
-    level_page.switch_to_new_window_with_another_page()
-    level_page.assert_personal_data_processing_policy_page()
+@allure.feature('Levels Page')
+@allure.story('Типы подписок — полный сценарий блока')
+@allure.severity('High')
+def test_levels_full_flow(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_levels_section_present()
+    page.check_card_texts_regular()
+    page.check_links_regular_cards()
+    page.open_archive_modal()
+    page.check_card_texts_archive()
+    page.close_archive_modal()
 
 
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_link_personal_data_processing_policy_header(driver):
-    """
-
-    """
-    level_page = LevelPage(driver)
-    level_page.open()
-    level_page.accept_cookie_consent()
-    level_page.clc_type_subscription()
-    level_page.clc_send_form_header()
-    level_page.clc_link_personal_data_processing_policy_header()
-    level_page.switch_to_new_window_with_another_page()
-    level_page.assert_personal_data_processing_policy_page()
+# === INLINE JOIN FORM ===
+@allure.feature('Levels Page')
+@allure.story('Inline-форма — структура и активация кнопки')
+@allure.severity('Normal')
+def test_join_form_full(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_join_form_full()
 
 
-
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_form_field_errors(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = LevelPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_type_subscription()
-    send_form.fill_form_main_wrong(
-        send_form.INPUT_PHONE_LEVEL_PAGE,
-        send_form.INPUT_EMAIL_LEVEL_PAGE,
-        send_form.INPUT_NAME_LEVEL_PAGE)
-    send_form.assert_found_wrong_errore()
+@allure.feature('Levels Page')
+@allure.story('Inline-форма — ошибки валидации телефона и email')
+@allure.severity('Critical')
+def test_join_form_validation_errors(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.validate_join_phone_errors()
+    page.validate_join_email_errors()
 
 
-# @allure.feature('Send form')
-# @allure.severity('Blocker')
-# @allure.story('Checking the form for sending a message for an offer')
-# def test_form_disabled_buttom_send(driver):
-#     """
-#     Checking the form for sending a message for an offer
-#     """
-#     send_form = LevelPage(driver)
-#     send_form.open()
-#     send_form.accept_cookie_consent()
-#     send_form.clc_type_subscription()
-#     send_form.assert_disabled_buttom_send()
-
-
-
-
-
-
-
-
-
-
+@allure.feature('Levels Page')
+@allure.story('Inline-форма — успешная отправка')
+@allure.severity('Critical')
+def test_join_form_submission(driver):
+    page = LevelsPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.submit_join_form()

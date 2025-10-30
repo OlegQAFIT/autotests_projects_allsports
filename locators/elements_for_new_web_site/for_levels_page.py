@@ -1,42 +1,59 @@
-class LevelPageLocators():
-    INPUT_NAME = "/html/body/div[5]/div/div[2]/form/div[1]/label[1]/div[2]"
-    INPUT_PHONE = "/html/body/div[5]/div/div[2]/form/div[1]/label[2]/div[2]"
-    INPUT_EMAIL = "/html/body/div[5]/div/div[2]/form/div[1]/label[3]/div[2]"
-    INPUT_NAME_COMPANY = "/html/body/div[5]/div/div[2]/form/div[1]/label[4]/div[2]"
-    INPUT_CITY = "/html/body/div[5]/div/div[2]/form/div[1]/label[4]/div[2]"
+# -*- coding: utf-8 -*-
+from selenium.webdriver.common.by import By
 
-    CHECKBOX = "/html/body/div[5]/div/div[2]/form/div[1]/div/div/label"
-    BUTTON_SEND = "/html/body/div[5]/div/div[2]/form/div[2]/button/div/span"
+class LevelsLocators:
+    """Локаторы для страницы https://www.allsports.by/ru-by/levels"""
 
-    BECOME_PARTNER = "(//ul[@class='select-tab']//li[@id='becomePartner'])[1]"
+    BASE_URL = "https://www.allsports.by/ru-by/levels"
 
-    INPUT_NAME_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[1]/div[2]/input'
-    INPUT_PHONE_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[2]/div[2]/input'
-    INPUT_EMAIL_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[3]/div[2]/input'
-    INPUT_NAME_COMPANY_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[4]/div[2]/input'
+    # === HEADER ===
+    HEADER = (By.CSS_SELECTOR, "header.header")
+    HEADER_LOGO = (By.CSS_SELECTOR, ".header-navbar__logo img[alt='allsports']")
+    HEADER_BTN_OFFER = (By.ID, "offer-btn")
+    HEADER_BTN_QUESTION = (By.XPATH, "//button//span[contains(text(),'Задать вопрос')]")
 
-    CHECKBOX_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/div/div/label'
-    BUTTON_SEND_LEVEL_PAGE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/button'
+    # === SUBSCRIPTION LEVELS SECTION ===
+    LEVELS_SECTION = (By.CSS_SELECTOR, "section.level-section-wrapper h2.level-section-title")
+    SUBSCRIPTION_CARDS = (By.CSS_SELECTOR, ".scroll-slider-card__carousel--item, .level-card-wrapper")
+    SUBSCRIPTION_CARD_TITLE = (By.CSS_SELECTOR, ".level-card__main h2.text-20-600")
+    SUBSCRIPTION_CARD_TEXTS = (By.CSS_SELECTOR, ".level-card__main-description-text p.text-body")
+    SUBSCRIPTION_CARD_MISC = (By.CSS_SELECTOR, ".level-card__misc p.text-body")
+    SUBSCRIPTION_LINK_OBJECTS = (By.XPATH, ".//span[contains(text(),'Объекты подписки')]/ancestor::a")
+    SUBSCRIPTION_LINK_TABLE = (By.XPATH, ".//span[contains(text(),'Список объектов (таблица)')]/ancestor::a")
 
-    BECOME_PARTNER_LEVEL_PAGE = '//*[@id="becomePartner"]'
+    # === ARCHIVE LEVELS ===
+    ARCHIVE_BTN = (By.XPATH, "//button//span[contains(text(),'Архивные типы подписок')]/ancestor::button")
+    ARCHIVE_MODAL = (By.CSS_SELECTOR, "div.modal")
+    ARCHIVE_CLOSE = (By.CSS_SELECTOR, "div.modal button.icon-btn")
+    SUBSCRIPTIONS_ARCHIVE_CARDS = (By.CSS_SELECTOR, "div.modal .level-card-wrapper")
+    SUBSCRIPTIONS_ARCHIVE_CARD_TITLE = (By.CSS_SELECTOR, "div.modal .level-card__main h2.text-20-600")
+    SUBSCRIPTIONS_ARCHIVE_CARD_TEXTS = (By.CSS_SELECTOR, "div.modal .level-card__main-description-text p.text-body")
+    SUBSCRIPTIONS_ARCHIVE_CARD_MISC = (By.CSS_SELECTOR, "div.modal .level-card__misc p.text-body")
+    SUBSCRIPTIONS_ARCHIVE_LINK_OBJECTS = (By.XPATH, ".//span[contains(text(),'Объекты подписки')]/ancestor::a")
+    SUBSCRIPTIONS_ARCHIVE_LINK_TABLE = (By.XPATH, ".//span[contains(text(),'Список объектов (таблица)')]/ancestor::a")
 
-    TYPE_SUBSCRIPTIONS = '//*[@id="defaultView"]/main/section[1]/h2'
-    JOIN_WITH_ALLSPORTS = '//*[@id="defaultView"]/main/section[2]/div/div[1]/h2'
+    # === FACILITIES PAGES ===
+    FACILITIES_SELECT_VALUE = (By.CSS_SELECTOR, "span.select-field__value, .select__value-container .select__single-value")
+    FACILITIES_TABLE_TITLE = (By.CSS_SELECTOR, "h1.text-h3, h2.text-h3")
+    FACILITIES_TABLE_ROWS = (By.CSS_SELECTOR, "div.facilities-table__row, table tbody tr")
 
-    PLATINUM_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[1]/p[2]'
-    GOLD = "//li[@id='gold']"
-    GOLD_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[1]/p[2]'
-    REGIN = "//li[@id='region']"
-    REGIN_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[1]/p[2]'
-    SILVER = "//li[@id='silver']"
-    SILVER_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[1]/p[2]'
+    # === INLINE JOIN FORM (Присоединяйтесь к Allsports) ===
+    JOIN_SECTION = (By.ID, "getDetailsSection")
+    JOIN_FORM = (By.CSS_SELECTOR, "#getDetailsSection form.get-details__form")
+    JOIN_NAME_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Ваше имя']")
+    JOIN_PHONE_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='phone']")
+    JOIN_EMAIL_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='email']")
+    JOIN_COMPANY_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Компания']")
+    JOIN_AGREE_LABEL = (By.CSS_SELECTOR, "#getDetailsSection label.checkbox")
+    JOIN_POLICY_LINK = (By.CSS_SELECTOR, "#getDetailsSection .agreement a")
+    JOIN_SUBMIT_BTN = (By.CSS_SELECTOR, "#getDetailsSection button.get-details__button")
+    JOIN_PHONE_ERROR = (By.CSS_SELECTOR, "#getDetailsSection .input-error")
+    JOIN_EMAIL_ERROR = (By.CSS_SELECTOR, "#getDetailsSection .input-error")
 
-    PLATINUM_VID_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[2]/p[2]'
-    GOLD_VID_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[2]/p[2]'
-    REGIN_VID_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[2]/p[2]'
-    SILVER_VID_TEXT = '//*[@id="defaultView"]/main/section[1]/div[2]/div[1]/div/ul/li[2]/p[2]'
+    # === SUCCESS MODAL ===
+    SUCCESS_MODAL = (By.CSS_SELECTOR, "div.modal")
+    SUCCESS_TEXT = (By.XPATH, "//div[contains(text(),'Спасибо за ваш запрос')]")
+    SUCCESS_CLOSE_BTN = (By.XPATH, "//button//span[text()='Закрыть']")
 
-    LINK_PERSONAL_DATE = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/div/div/div/p/a'
-
-    ERROR_TEXT_PHONE_NUMBER = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[2]/div[3]/span'
-    ERROR_TEXT_EMAIL = '//*[@id="defaultView"]/main/section[2]/div/div[1]/div/form/label[3]/div[3]/span'
+    # === COMMON ===
+    COOKIE_ACCEPT_BTN = (By.CSS_SELECTOR, "button.cookie-accept, button[data-test='cookie-accept']")

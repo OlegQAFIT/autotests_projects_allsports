@@ -6,8 +6,8 @@ class LoginLocators:
     PASSWORD_FIELD = "//input[@id='password']"
     SIGNIN_BUTTON = "//button[text()='Signin']"
 
-    LOGIN_TEXT = "alex@allsports.by"
-    PASSWORD_TEXT = "30ba637a-b76c-4155-9da4-09204af0ce79"
+    LOGIN_TEXT = "oleg.fit@gmail.com"
+    PASSWORD_TEXT = "9efbee942864"
 
 
 

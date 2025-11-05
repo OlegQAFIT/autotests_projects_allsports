@@ -1,438 +1,407 @@
+# -*- coding: utf-8 -*-
 import allure
+import pytest
 
 from pages.new_web_site.main_page import MainPage
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_main_page_1(driver):
+# ===================== PROMO BLOCK =====================
+@allure.feature('Main Page')
+@allure.severity('Critical')
+@allure.story('Промо-блок — наличие элементов')
+def test_promo_block_elements(driver):
+    "Проверка наличия заголовков, изображений и кнопок промо-блока."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_promo_block()
+
+
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.story('Промо-блок — корректность текстов')
+def test_promo_titles(driver):
+    "Проверка корректности заголовков промо-блока."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_promo_titles()
+
+
+# ===================== Advantages Allsports  =====================
+
+
+
+# ===================== SUBSCRIPTION TYPES ====================================================================================
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — проверка карточек и ссылок")
+def test_subscription_cards_texts_and_links(driver):
+    """Проверка карточек всех типов подписок (основные и архивные):
+    - наличие карточек;
+    - наличие текста (визиты, спортивные объекты, приостановка);
+    - наличие ссылок 'Объекты подписки' и 'Список объектов (таблица)'.
     """
-    Checking the form for sending a message for an offer
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем обычные карточки
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем архивные карточки
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()
+
+
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — переходы по ссылкам обычных карточек")
+def test_subscription_links_regular_cards(driver):
+    """Проверяет переходы по ссылкам обычных подписок:
+    - 'Объекты подписки' открывает страницу с правильным уровнем (например, 'Region подписка');
+    - 'Список объектов (таблица)' открывает таблицу, которая успешно загружается.
     """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_button_get_offer()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.assert_form()
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page._check_subscription_cards(in_archive=False)
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_main_page_2(driver):
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("Типы подписок — переходы по ссылкам архивных карточек")
+def test_subscription_links_archive_cards(driver):
+    """Проверяет переходы по ссылкам в архивных карточках:
+    - корректность выбранного уровня ('Lite подписка', 'Region подписка' и т.п.);
+    - успешную загрузку таблицы объектов.
     """
-    Checking the form for sending a message for an offer
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Открываем модалку архивных подписок
+    page.open_archive_modal()
+
+    # Проверяем переходы по ссылкам
+    page._check_subscription_cards(in_archive=True)
+
+    # Закрываем модалку
+    page.close_archive_modal()
+
+
+@allure.feature("Main Page")
+@allure.severity("High")
+@allure.story("Типы подписок — полный сценарий проверки блока")
+def test_full_subscription_block_flow(driver):
+    """Полный сценарий проверки блока 'Типы подписок':
+    - карточки обычных и архивных уровней;
+    - клики по обеим ссылкам;
+    - корректный уровень и успешная загрузка таблицы.
     """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_button_get_offer()
-    send_form.clc_button_become_partner()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.assert_form_become_partner()
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_subscription_cards_and_archives()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_header_1(driver):
+@allure.feature("Main Page")
+@allure.severity("Normal")
+@allure.story("Типы подписок — стабильность загрузки таблиц")
+def test_subscription_facilities_tables_load(driver):
+    """Проверяет, что страницы 'Список объектов (таблица)' корректно подгружаются:
+    - таблица видна;
+    - есть хотя бы одна строка данных;
+    - не возникает таймаутов загрузки.
     """
-    Checking the form for sending a message for an offer
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем таблицы обычных карточек
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем таблицы архивных карточек
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()
+
+
+@allure.feature("Main Page")
+@allure.severity("Normal")
+@allure.story("Типы подписок — проверка текстов в карточках")
+def test_subscription_card_texts_valid(driver):
+    """Проверяет, что в карточках содержатся корректные тексты:
+    - упоминается 'визит';
+    - есть 'спорт' или 'объект';
+    - указано о 'приостановке' подписки.
     """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_send_form_header()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.assert_form_become_partner()
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+
+    # Проверяем тексты карточек обычных подписок
+    page._check_subscription_cards(in_archive=False)
+
+    # Проверяем тексты карточек архивных подписок
+    page.open_archive_modal()
+    page._check_subscription_cards(in_archive=True)
+    page.close_archive_modal()
+
+    # ===================== TRUST / FEEDBACK SECTION ====================================================================================
+
+# -*- coding: utf-8 -*-
+import allure
+from pages.new_web_site.companies import CompaniesPage
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_header_2(driver):
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("Нам доверяют — наличие секции и заголовка")
+def test_trust_section_presence(driver):
+    """Проверка наличия секции 'Нам доверяют' и заголовка."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_trust_section()
+
+
+@allure.feature("Main Page")
+@allure.severity("Normal")
+@allure.story("Нам доверяют — тексты отзывов")
+def test_trust_texts(driver):
+    """Проверка текстов отзывов и количества карточек."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_trust_texts()
+
+
+@allure.feature("Main Page")
+@allure.severity("High")
+@allure.story("Нам доверяют — открытие модалки отзыва")
+def test_trust_modal_open(driver):
+    """Проверка открытия и закрытия модалки отзыва."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.open_trust_modal(0)
+    page.close_trust_modal()
+
+
+@allure.feature("Main Page")
+@allure.severity("Normal")
+@allure.story("Нам доверяют — стрелки навигации")
+def test_trust_slider_controls(driver):
+    """Проверка наличия стрелок навигации в слайдере отзывов."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_trust_slider_controls()
+
+
+
+    # ===================== FAQ ====================================================================================
+
+# ===================== ОСНОВНОЙ ТЕСТ ПО ВКЛАДКАМ =====================
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("FAQ — Проверка вкладок, вопросов, ответов и модалки")
+@pytest.mark.parametrize("tab_name", ["Пользователям", "Партнерам", "Компаниям"])
+def test_faq_full_flow_per_tab(driver, tab_name):
     """
-    Checking the form for sending a message for an offer
+    Проверяет:
+    - Переключение вкладок
+    - Наличие вопросов
+    - Раскрытие ответов
+    - Наличие формы "Не нашли ответ?"
+    - Открытие модалки "Задать вопрос"
     """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_send_form_header()
-    send_form.clc_button_become_partner()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.assert_form_become_partner()
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.click_tab(tab_name)
+    page.check_tab_selected(tab_name)
+    page.check_questions_present()
+    page.check_expand_questions()
+    page.check_form_present()
+    page.open_question_modal()
+    page.check_modal_fields()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_ask_question(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_ask_questin()
-    send_form.fill_form_questin(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_QUESTION)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_question()
+# ===================== ИНФОРМАЦИЯ ДЛЯ ПАРТНЁРОВ =====================
+@allure.feature("Main Page")
+@allure.severity("High")
+@allure.story("FAQ — Блок 'Информация для Партнёров'")
+def test_faq_info_block_partners(driver):
+    """Проверяет блок 'Информация для Партнёров' и переход по ссылке."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.click_tab("Партнёрам")
+    page.check_info_block()
+    page.click_partners_link()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_for_company(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_for_company()
-    send_form.clc_get_offer_company()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_or_company()
+# ===================== ИНФОРМАЦИЯ ДЛЯ КОМПАНИЙ =====================
+@allure.feature("Main Page")
+@allure.severity("High")
+@allure.story("FAQ — Блок 'Информация для Компаний'")
+def test_faq_info_block_companies(driver):
+    """Проверяет блок 'Информация для Компаний' и переход по ссылке."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.click_tab("Компаниям")
+    page.check_info_block()
+    page.click_companies_link()
+
+
+# ===================== МОДАЛКА — ПРОВЕРКА ОТКРЫТИЯ/ЗАКРЫТИЯ =====================
+@allure.feature("Main Page")
+@allure.severity("Critical")
+@allure.story("FAQ — Модалка 'Задать вопрос' корректно открывается и закрывается")
+def test_faq_modal_open_close(driver):
+    """Проверяет, что модалка открывается, содержит все поля и корректно закрывается."""
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.click_tab("Пользователям")
+    page.check_form_present()
+    page.check_modal_open_close()
 
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_for_partners(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_get_offer_for_partners()
-    send_form.fill_form(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_EMAIL,
-        send_form.INPUT_NAME_COMPANY)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_for_partners()
+# ===================== VIDEO ==============================================================================================================================
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.story('Видео — наличие iframe')
+def test_video_iframe(driver):
+    "Проверка наличия видео iframe на странице."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_video_iframe()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_question_user(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_question_user()
-    send_form.fill_form_questin(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_QUESTION)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_question_user()
+@allure.feature('Main Page')
+@allure.severity('Low')
+@allure.story('Видео — корректность источника YouTube')
+def test_video_src(driver):
+    "Проверка, что видео подгружается с YouTube."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_video_src()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_question_company(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_question_company()
-    send_form.clc_question_get_offer_company()
-    send_form.fill_form_questin(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_QUESTION)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_question__get_offer_company()
+@allure.feature('Main Page')
+@allure.severity('Low')
+@allure.story('Видео — атрибут allowfullscreen')
+def test_video_allowfullscreen(driver):
+    "Проверка, что iframe имеет атрибут allowfullscreen."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_video_allowfullscreen()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_question_partner(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_question_partner()
-    send_form.clc_question_get_offer_partner()
-    send_form.fill_form_questin(
-        send_form.INPUT_NAME,
-        send_form.INPUT_PHONE,
-        send_form.INPUT_QUESTION)
-    send_form.clc_checkbox()
-    send_form.clc_send_1()
-    send_form.check_form_submission_question__get_offer_partner()
+# ===================== CONTACTS =========================================================================================================
+@allure.feature('Main Page')
+@allure.severity('Critical')
+@allure.story('Контакты — наличие блока')
+def test_contacts_section_present(driver):
+    "Проверка наличия блока контактов на странице."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_contacts_section_present()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_join_company(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.fill_form_main(
-        send_form.INPUT_NAME_MAIN,
-        send_form.INPUT_PHONE_MAIN,
-        send_form.INPUT_EMAIL_MAIN,
-        send_form.INPUT_NAME_COMPANY_MAIN)
-    send_form.clc_checkbox_maim()
-    send_form.clc_send_maim()
-    send_form.check_form_submission_join_company_maim()
+@allure.feature('Main Page')
+@allure.severity('High')
+@allure.story('Контакты — корректность данных')
+def test_contacts_data(driver):
+    "Проверка корректности номеров телефонов, email и расписаний."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_contacts_data()
 
 
-@allure.feature('Send form')
-@allure.severity('Blocker')
-@allure.story('Checking the form for sending a message for an offer')
-def test_submitting_the_form_join_partner(driver):
-    """
-    Checking the form for sending a message for an offer
-    """
-    send_form = MainPage(driver)
-    send_form.open()
-    send_form.accept_cookie_consent()
-    send_form.clc_join_partner_maim()
-    send_form.fill_form_main(
-        send_form.INPUT_NAME_MAIN,
-        send_form.INPUT_PHONE_MAIN,
-        send_form.INPUT_EMAIL_MAIN,
-        send_form.INPUT_NAME_COMPANY_MAIN)
-    send_form.clc_checkbox_maim()
-    send_form.clc_send_maim()
-    send_form.check_form_submission_join_partner_maim()
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.story('Контакты — корректность работы карты')
+def test_contacts_map(driver):
+    "Проверка, что карта отображается и не сломана."
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_contacts_map()
 
 
-#########################################################################################################################################################################################
-#########################################################################################################################################################################################
-#########################################################################################################################################################################################
+# ===================== inline-формы =========================================================================================================
+# Пользователям
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка наличия блока 'Преимущества Allsports'")
+def test_advantages_section_exists(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.verify_advantages_section_exists()
 
-@allure.feature('Header Navigation')
-@allure.severity('Blocker')
-@allure.story('Checking elements on the main page')
-def test_found_elements_on_main_page(driver):
-    """
-    We go to the main page and check that it has locators that relate only to this page and display the text from them
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.assert_found_elements_on_main_page()
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка вкладки 'Пользователям' и модалки 'Задать вопрос'")
+def test_advantages_users_modal(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_tab_users()
 
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка вкладки 'Компаниям' и модалки 'Получить предложение'")
+def test_advantages_companies_modal(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_tab_companies()
 
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_page_for_users(driver):
-    """
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка вкладки 'Партнёрам' и модалки 'Стать партнёром'")
+def test_advantages_partners_modal(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_tab_partners()
 
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_list_objects_for_users()
-    main_page.assert_user_redirect_facilities_page()
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка перехода по ссылке 'Список объектов'")
+def test_facilities_link(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.verify_facilities_link()
 
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка вкладки 'Компаниям' в блоке 'Преимущества Allsports'")
+def test_advantages_companies_tab(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_advantages_companies_tab()
 
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_page_for_companis(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.clc_for_company()
-    main_page.click_on_list_objects_for_companis()
-    main_page.assert_user_redirect_companis_page()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_page_for_partners(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.clc_get_offer_for_partners()
-    main_page.click_on_list_objects_for_partners()
-    main_page.assert_user_redirect_partners_page()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_number_suppliers(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.assert_change_number_suppliers()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_number_vid(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.assert_change_number_vid()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_page_old_site_list_subscription(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_list_objects()
-    main_page.switch_to_new_window_with_old_site()
-    main_page.assert_user_redirect_list_objects_page_old_site()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_correct_platinum_subscription(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_subscription()
-    main_page.assert_found_correct_platinum_subscription()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_correct_gold_subscription(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_gold_level()
-    main_page.click_on_subscription()
-    main_page.assert_found_correct_gold_subscription()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_correct_region_subscription(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_region_level()
-    main_page.click_on_subscription()
-    main_page.assert_found_correct_region_subscription()
-
-
-@allure.feature('')
-@allure.severity('critical')
-@allure.story('')
-def test_redirect_correct_silver_subscription(driver):
-    """
-
-    """
-    main_page = MainPage(driver)
-    main_page.open()
-    main_page.accept_cookie_consent()
-    main_page.click_on_silver_level()
-    main_page.click_on_subscription()
-    main_page.assert_found_correct_silver_subscription()
-
-
-
-
-# @allure.feature('')
-# @allure.severity('critical')
-# @allure.story('')
-# def test_clickable_button_send_form(driver):
-#     """
-#
-#     """
-#     main_page = MainPage(driver)
-#     main_page.open()
-#     main_page.accept_cookie_consent()
-#     main_page.clc_button_get_offer()
-#     main_page.clc_button_get_offer()
-#     main_page.clc_button_get_offer()
-#     main_page.clc_button_get_offer()
-#     main_page.clc_button_get_offer()
-#     main_page.clc_button_get_offer()
-
+@allure.feature('Main Page')
+@allure.severity('Normal')
+@allure.title("Проверка вкладки 'Партнёрам' в блоке 'Преимущества Allsports'")
+def test_advantages_partners_tab(driver):
+    page = MainPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_advantages_partners_tab()

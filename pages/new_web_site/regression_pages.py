@@ -10,21 +10,20 @@ from locators.elements_for_new_web_site.regression_pages_locators import Regress
 
 
 class RegressionPages:
-    """Класс, выполняющий полную регрессионную проверку всех страниц сайта."""
+    """Строгая регрессионная проверка всех страниц сайта с ленивой прокруткой."""
 
     def __init__(self, driver):
         self.driver = driver
 
-    # ======================================================
+    # ==============================
     # 🔹 Общие методы
-    # ======================================================
+    # ==============================
     @allure.step("Открыть страницу {1}")
     def open_page(self, url):
         self.driver.get(url)
 
     @allure.step("Принять cookies (если баннер есть)")
     def accept_cookie_consent(self):
-        """Закрытие cookie-баннера, если он отображается."""
         try:
             cookie_button = (By.CSS_SELECTOR, ".cookie-primary-modal__confirm")
             WebDriverWait(self.driver, 3).until(EC.element_to_be_clickable(cookie_button))
@@ -35,42 +34,42 @@ class RegressionPages:
 
     @allure.step("Проверить статус-код страницы")
     def check_http_status(self, url):
-        """Проверка, что страница возвращает код 200."""
         response = requests.get(url, timeout=10)
         assert response.status_code == 200, f"❌ Страница {url} вернула код {response.status_code}"
 
-    def _scroll_smoothly_through_page(self):
-        """Плавный скролл всей страницы для подгрузки ленивых элементов."""
-        last_height = self.driver.execute_script("return document.body.scrollHeight")
-        for i in range(0, last_height, 400):
-            self.driver.execute_script(f"window.scrollTo(0, {i});")
-            time.sleep(0.2)
-        self.driver.execute_script("window.scrollTo(0, 0);")
-        time.sleep(0.3)
+    # ==============================
+    # 🔹 Улучшенная прокрутка
+    # ==============================
+    def _lazy_scroll(self, step=400, delay=0.3, max_cycles=3):
+        """Ленивая прокрутка всей страницы: 3 цикла вверх-вниз для гарантии подгрузки lazy-контента."""
+        for cycle in range(max_cycles):
+            last_height = self.driver.execute_script("return document.body.scrollHeight")
+            for pos in range(0, last_height, step):
+                self.driver.execute_script(f"window.scrollTo(0, {pos});")
+                time.sleep(delay)
+            # Возвращаемся вверх — помогает подгрузить изображения и iframes
+            self.driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(delay)
+        time.sleep(1)
 
     @allure.step("Проверить элемент на странице")
     def check_element_visible(self, locator):
-        """Проверка элемента с автопрокруткой, повторными попытками и мягким падением."""
+        """Жёсткая проверка: если элемент не найден даже после ленивой прокрутки — тест падает."""
         for attempt in range(3):
             try:
-                element = WebDriverWait(self.driver, 5).until(
+                element = WebDriverWait(self.driver, 6).until(
                     EC.presence_of_element_located(locator)
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                WebDriverWait(self.driver, 5).until(EC.visibility_of_element_located(locator))
+                WebDriverWait(self.driver, 6).until(EC.visibility_of_element_located(locator))
                 return element
             except Exception:
-                self._scroll_smoothly_through_page()
-
-        # если не найден после трёх попыток — логируем, но не падаем
-        allure.attach(body=f"{locator}", name="Не найден элемент", attachment_type=allure.attachment_type.TEXT)
-        self.take_screenshot(f"missing_{locator[1].replace('/', '_')[:50]}")
-        print(f"[WARN] Элемент {locator} не найден после нескольких попыток")
-        return None
+                self._lazy_scroll()
+        self.take_screenshot(f"missing_{locator[1].replace('/', '_')[:40]}")
+        raise AssertionError(f"❌ Элемент {locator} не найден после нескольких циклов прокрутки")
 
     @allure.step("Проверить ошибки JavaScript")
     def check_js_errors(self):
-        """Проверка отсутствия ошибок JavaScript уровня SEVERE."""
         try:
             logs = self.driver.get_log("browser")
             severe = [entry for entry in logs if entry["level"] == "SEVERE"]
@@ -79,49 +78,54 @@ class RegressionPages:
             pass
 
     def take_screenshot(self, name):
-        """Создать скриншот."""
         os.makedirs("screenshots", exist_ok=True)
         file_path = f"screenshots/{name}_{int(time.time())}.png"
         self.driver.save_screenshot(file_path)
         allure.attach.file(file_path, name=name, attachment_type=allure.attachment_type.PNG)
 
-    # ======================================================
+    # ==============================
     # 🔹 Основной регрессионный сценарий
-    # ======================================================
+    # ==============================
     @allure.step("Выполнить полную регрессию сайта")
     def run_full_regression(self):
-        """Основной метод, который проходит по всем страницам и проверяет их работу."""
+        """Проходит по всем страницам, выполняет реальную ленивую прокрутку и проверку элементов."""
+        # страницы без скролла
+        no_scroll_pages = [
+            "policy/251010_processing_personal_data",
+            "license/241009_license",
+            "individual_license/241009_license",
+            "rule/250731_rule",
+            "facilities-table",
+        ]
+
         for page_key, data in L.PAGES.items():
             url = data["url"]
             locators = data["locators"]
+            skip_scroll = any(skip in url for skip in no_scroll_pages)
 
             with allure.step(f"Проверка страницы: {page_key} — {url}"):
                 try:
-                    # 1️⃣ Проверка кода 200
+                    # 1️⃣ Проверяем код ответа
                     self.check_http_status(url)
 
-                    # 2️⃣ Открытие страницы
+                    # 2️⃣ Открываем страницу
                     self.open_page(url)
 
                     # 3️⃣ Принять cookies
                     self.accept_cookie_consent()
 
-                    # 4️⃣ Прокрутить страницу
-                    self._scroll_smoothly_through_page()
+                    # 4️⃣ Ленивая прокрутка для подгрузки контента
+                    if not skip_scroll:
+                        self._lazy_scroll()
+                    else:
+                        print(f"[INFO] Пропускаем прокрутку для {url}")
 
-                    # 5️⃣ Проверить элементы
-                    missing = []
+                    # 5️⃣ Проверка элементов
                     for locator in locators:
-                        if not self.check_element_visible(locator):
-                            missing.append(locator)
+                        self.check_element_visible(locator)
 
-                    # 6️⃣ Проверка JS ошибок
+                    # 6️⃣ Проверка JS-ошибок
                     self.check_js_errors()
-
-                    # 7️⃣ Отчёт, если что-то не найдено
-                    if missing:
-                        allure.attach(str(missing), "Отсутствующие элементы", allure.attachment_type.TEXT)
-                        print(f"[WARN] На странице {url} отсутствуют элементы: {missing}")
 
                 except Exception as e:
                     self.take_screenshot(page_key)

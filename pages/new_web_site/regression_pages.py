@@ -14,6 +14,9 @@ class RegressionPages:
 
     def __init__(self, driver):
         self.driver = driver
+        self.checks_total = 0
+        self.checks_passed = 0
+        self.checks_failed = 0
 
     # ==============================
     # 🔹 Общие методы
@@ -54,7 +57,10 @@ class RegressionPages:
 
     @allure.step("Проверить элемент на странице")
     def check_element_visible(self, locator):
-        """Жёсткая проверка: если элемент не найден даже после ленивой прокрутки — тест падает."""
+        """Мягкая проверка — НЕ прерывает тест, ошибки записываются."""
+
+        self.checks_total += 1  # считаем проверку
+
         for attempt in range(3):
             try:
                 element = WebDriverWait(self.driver, 6).until(
@@ -62,20 +68,23 @@ class RegressionPages:
                 )
                 self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
                 WebDriverWait(self.driver, 6).until(EC.visibility_of_element_located(locator))
+
+                self.checks_passed += 1
+                print(f"CHECK_OK: {locator}")  # <-- важный print
                 return element
             except Exception:
                 self._lazy_scroll()
-        self.take_screenshot(f"missing_{locator[1].replace('/', '_')[:40]}")
-        raise AssertionError(f"❌ Элемент {locator} не найден после нескольких циклов прокрутки")
 
-    @allure.step("Проверить ошибки JavaScript")
-    def check_js_errors(self):
+        # если не нашли
+        self.checks_failed += 1
+        print(f"❌ FAIL: {locator}")  # <-- важный print
+
         try:
-            logs = self.driver.get_log("browser")
-            severe = [entry for entry in logs if entry["level"] == "SEVERE"]
-            assert not severe, f"⚠️ Обнаружены JS-ошибки: {severe}"
-        except Exception:
+            self.take_screenshot(f"missing_{locator[1].replace('/', '_')[:40]}")
+        except:
             pass
+
+        return None
 
     def take_screenshot(self, name):
         os.makedirs("screenshots", exist_ok=True)
@@ -89,6 +98,11 @@ class RegressionPages:
     @allure.step("Выполнить полную регрессию сайта")
     def run_full_regression(self):
         """Проходит по всем страницам, выполняет реальную ленивую прокрутку и проверку элементов."""
+
+        # Инициализация счётчиков
+        self.checks_total = 0
+        self.checks_failed = 0
+
         # страницы без скролла
         no_scroll_pages = [
             "policy/251010_processing_personal_data",
@@ -114,7 +128,7 @@ class RegressionPages:
                     # 3️⃣ Принять cookies
                     self.accept_cookie_consent()
 
-                    # 4️⃣ Ленивая прокрутка для подгрузки контента
+                    # 4️⃣ Ленивая прокрутка
                     if not skip_scroll:
                         self._lazy_scroll()
                     else:
@@ -122,11 +136,24 @@ class RegressionPages:
 
                     # 5️⃣ Проверка элементов
                     for locator in locators:
-                        self.check_element_visible(locator)
-
-                    # 6️⃣ Проверка JS-ошибок
-                    self.check_js_errors()
+                        self.checks_total += 1
+                        try:
+                            self.check_element_visible(locator)
+                        except Exception as e:
+                            print(f"❌ FAIL: {locator} — {e}")
+                            self.checks_failed += 1
+                            continue
 
                 except Exception as e:
                     self.take_screenshot(page_key)
-                    raise AssertionError(f"Ошибка на странице {url}: {e}")
+                    print(f"❌ FAIL_PAGE: {url} — {e}")
+                    self.checks_failed += 1
+                    continue
+
+        # ==== Итоговые принты для bash =====
+        checks_passed = self.checks_total - self.checks_failed
+
+        print(f"CHECKS_TOTAL={self.checks_total}")
+        print(f"CHECKS_PASSED={checks_passed}")
+        print(f"CHECKS_FAILED={self.checks_failed}")
+

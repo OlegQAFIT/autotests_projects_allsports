@@ -59,6 +59,6 @@ class HeaderLocators:
     BUTTON_SEND_QUESTION = (By.XPATH, "//form//button[contains(.,'Отправить')]")
 
     ERROR_NAME = "//div[contains(@class, 'input-error') and contains(text(), 'Введите имя')]"
-    ERROR_EMAIL = "/html/body/div[5]/div/div[2]/form/div[1]/label[3]/div[3]/span"
+    ERROR_EMAIL = "//label[contains(@class, 'input')]//div[@class='input-error']/span"
     ERROR_PHONE = (By.XPATH, "//label[contains(., 'Телефон')]//span[contains(text(),'Неверный формат номера')]")
 

@@ -50,7 +50,7 @@ class CompaniesLocators:
     COOP_PREV = (By.CSS_SELECTOR, "#cooperationSection .scroll-slider-control__prev")
 
     # === FEEDBACK SECTION ===
-    FEEDBACK_SECTION = (By.ID, "feedbackSection")
+    FEEDBACK_SECTION = (By.XPATH, "//*[@id='partnersLogoSection']")
     FEEDBACK_TITLE = (By.XPATH, "//*[@id='feedbackSection']//h2[normalize-space()='Нам доверяют']")
     FEEDBACK_ITEMS = (By.CSS_SELECTOR, "#feedbackSection li.item")
     FEEDBACK_COMPANY_LOGOS = (By.CSS_SELECTOR, "#feedbackSection li.item picture img")

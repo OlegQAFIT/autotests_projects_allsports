@@ -1,4 +1,6 @@
 import re
+import time
+
 import requests
 import allure
 from selenium.webdriver.common.by import By
@@ -140,6 +142,56 @@ class ContactsPage(BasePage, ContactsPageLocators):
             self.fills_fild("//input[contains(@placeholder, 'Компания') or contains(@placeholder, 'компания')]",
                             company)
 
+    @allure.step("Заполнить стандартные поля формы (Имя / Телефон / E-mail / Компания)")
+    def fill_form_standardd(self, name, phone, email, company):
+        """
+        Универсальное заполнение формы на вкладках:
+          - 'Подключить компанию'
+          - 'Стать партнёром'
+        """
+
+        # --- Имя ---
+        self.fills_fild(self.INPUT_NAME, name)
+
+        # --- Телефон ---
+        self.fills_fild(self.INPUT_PHONE, phone)
+
+        # --- Email ---
+        self.fills_fild(self.INPUT_EMAIL, email)
+
+        # После ввода email нужно вызвать blur — иначе форма считает email невалидным
+        self.driver.execute_script("document.activeElement.blur();")
+        time.sleep(0.15)
+
+        # --- Компания / Название объекта ---
+        # Локатор выбираем динамически
+        company_locator = None
+
+        # 1. Явный локатор, если он у тебя существует в locators
+        if hasattr(self, "INPUT_COMPANY") and self.is_element_exist(self.INPUT_COMPANY):
+            company_locator = self.INPUT_COMPANY
+
+        # 2. Если нет — ищем input по placeholder
+        if not company_locator:
+            company_xpath = (
+                "//input[contains(@placeholder, 'Название объекта')]"
+                " | //input[contains(@placeholder, 'Компания')]"
+                " | //input[contains(@placeholder, 'объект')]"
+            )
+            if self.is_element_exist(company_xpath):
+                company_locator = company_xpath
+
+        # 3. Safety fallback (страховка)
+        if not company_locator:
+            raise AssertionError("Поле 'Компания' не найдено. Проверь локаторы.")
+
+        # Заполняем поле
+        self.fills_fild(company_locator, company)
+
+        # Ещё один blur — нужно для фронтовой валидации
+        self.driver.execute_script("document.activeElement.blur();")
+        time.sleep(0.15)
+
     @allure.step("Нажать чекбокс согласия (обязательно)")
     def clc_checkbox(self, should_check=True):
         # Вёрстка: .agreement .checkbox > input[type='checkbox']
@@ -240,11 +292,67 @@ class ContactsPage(BasePage, ContactsPageLocators):
 
     @allure.step("Отправить форму 'Стать партнёром' валидными данными")
     def submit_form_valid_become_partner(self):
+
+        # Переключаемся на вкладку
         self.switch_to_become_partner()
-        self.fill_form_standard(self.text_name, self.text_phone_valid, self.text_email_valid, self.text_company)
+
+        # Шаг 1 — заполняем форму
+        self.fill_form_standardd(
+            self.text_name,
+            self.text_phone_valid,
+            self.text_email_valid,
+            self.text_company
+        )
+
+        # Шаг 2 — blur всех полей (обязательно!)
+        self.driver.execute_script("document.activeElement.blur();")
+        time.sleep(0.2)
+
+        # Шаг 3 — скроллим к чекбоксу и кнопке
+        self._safe_scroll(self.CHECKBOX)
+        time.sleep(0.2)
+
+        # Шаг 4 — кликаем чекбокс
         self.clc_checkbox(True)
+
+        # Шаг 5 — пауза для обновления стейта кнопки
+        time.sleep(0.4)
+
+        # Шаг 6 — повторно скроллим к кнопке, иначе она может быть "полускрытой"
+        self._safe_scroll(self.BUTTON_SEND_ANY)
+        time.sleep(0.2)
+
+        # Шаг 7 — проверяем, что кнопка активна
         self.check_button_state_active()
+
+        # Шаг 8 — отправляем
         self.clc_send()
+
+    def _safe_scroll(self, locator, y_offset=-150):
+        """
+        Безопасно скроллит к элементу, даже если он лениво подгружается
+        или находится за пределами viewport.
+        """
+
+        # Определяем тип локатора
+        if isinstance(locator, tuple):
+            by, value = locator
+        else:
+            by, value = By.XPATH, locator
+
+        # Ждём появления
+        element = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((by, value))
+        )
+
+        # Скроллим
+        self.driver.execute_script(
+            "arguments[0].scrollIntoView({block: 'center'});"
+            "window.scrollBy(0, arguments[1]);",
+            element,
+            y_offset
+        )
+        return element
 
     # ==== Отправка: негативные сценарии (обе формы) ====
 
@@ -324,6 +432,62 @@ class ContactsPage(BasePage, ContactsPageLocators):
             return btn.get_attribute("disabled") is None
         except Exception:
             return False
+
+    @allure.step("Попытаться отправить форму c невалидными данными (универсально, без сабмита)")
+    def submit_form_invaliddd(self, for_partner=False, email=False, phone=False, empty=False, no_agree=False):
+        """
+        Универсальный метод для негативных сценариев обеих форм (get-offer / become-partner).
+        ВАЖНО: В этом варианте метод НЕ нажимает кнопку отправки!
+               Он только вызывает валидацию и проверяет ошибки.
+        """
+
+        # Переключение между вкладками
+        if for_partner:
+            self.switch_to_become_partner()
+        else:
+            self.switch_to_get_offer()
+
+        # Подготовка тестовых данных
+        name = "" if empty else self.text_name
+        ph = "" if empty else (self.text_phone_invalid if phone else self.text_phone_valid)
+        em = "" if empty else (self.text_email_invalid if email else self.text_email_valid)
+        company = "" if empty else self.text_company
+
+        # Заполняем поля
+        self.fill_form_standard(name, ph, em, company)
+
+        # --- Валидация email ---
+        if email:
+            self._blur_field(self.INPUT_PHONE)
+            self.assert_email_error()
+            return  # ❗ прекращаем выполнение — НЕ отправляем форму
+
+        # --- Валидация телефона ---
+        if phone:
+            self._blur_field(self.INPUT_EMAIL)
+            self.assert_phone_error()
+            return  # ❗ прекращаем выполнение — НЕ отправляем форму
+
+        # --- Проверка пустых полей ---
+        if empty:
+            self.check_button_state_disabled()
+            return
+
+        # --- Работа с чекбоксом ---
+        if no_agree:
+            self.clc_checkbox(False)
+            self.check_button_state_disabled()
+            return
+
+        # Если вызвали метод без флагов — базовое поведение (тоже НЕ отправляем)
+        self.assert_any_validation_error()
+
+    def _blur_field(self, locator):
+        """Безопасно уводим фокус с поля, чтобы вызвать валидацию."""
+        try:
+            self.driver.find_element(By.XPATH, locator).click()
+        except Exception:
+            self.driver.execute_script("document.activeElement.blur();")
 
     # ==== Проверки обязательных условий ====
 

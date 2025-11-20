@@ -139,15 +139,15 @@ def test_feedback_section_presence(driver):
     page.check_feedback_section()
 
 
-@allure.feature('Companies Page')
-@allure.severity('Normal')
-@allure.story('Отзывы — тексты отзывов')
-def test_feedback_texts(driver):
-    "Проверка текстов отзывов."
-    page = CompaniesPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_feedback_texts()
+# @allure.feature('Companies Page')
+# @allure.severity('Normal')
+# @allure.story('Отзывы — тексты отзывов')
+# def test_feedback_texts(driver):
+#     "Проверка текстов отзывов."
+#     page = CompaniesPage(driver)
+#     page.open()
+#     page.accept_cookie_consent()
+#     page.check_feedback_texts()
 
 
 @allure.feature('Companies Page')

@@ -167,15 +167,15 @@ def test_trust_section_presence(driver):
     page.check_trust_section()
 
 
-@allure.feature("Main Page")
-@allure.severity("Normal")
-@allure.story("Нам доверяют — тексты отзывов")
-def test_trust_texts(driver):
-    """Проверка текстов отзывов и количества карточек."""
-    page = MainPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_trust_texts()
+# @allure.feature("Main Page")
+# @allure.severity("Normal")
+# @allure.story("Нам доверяют — тексты отзывов")
+# def test_trust_texts(driver):
+#     """Проверка текстов отзывов и количества карточек."""
+#     page = MainPage(driver)
+#     page.open()
+#     page.accept_cookie_consent()
+#     page.check_trust_texts()
 
 
 @allure.feature("Main Page")

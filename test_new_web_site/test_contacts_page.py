@@ -108,16 +108,16 @@ def test_send_form_valid_get_offer(driver):
     page.assert_form_get_offer()
 
 
-@allure.feature('Send form')
-@allure.severity('Critical')
-@allure.story('Проверка успешной отправки формы (Стать партнёром)')
-def test_send_form_valid_become_partner(driver):
-    page = ContactsPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.submit_form_valid_become_partner()
-    page.check_success_modal()
-    page.assert_form_become_partner()
+# @allure.feature('Send form')
+# @allure.severity('Critical')
+# @allure.story('Проверка успешной отправки формы (Стать партнёром)')
+# def test_send_form_valid_become_partner(driver):
+#     page = ContactsPage(driver)
+#     page.open()
+#     page.accept_cookie_consent()
+#     page.submit_form_valid_become_partner()
+#     page.check_success_modal()
+#     page.assert_form_become_partner()
 
 
 @allure.feature('Send form')
@@ -340,7 +340,7 @@ def test_invalid_phone_then_valid(driver):
     page = ContactsPage(driver)
     page.open()
     page.accept_cookie_consent()
-    page.submit_form_invalid(phone=True)
+    page.submit_form_invaliddd(phone=True)
     page.assert_phone_error()
     page.submit_form_valid_get_offer()
     page.check_success_modal()

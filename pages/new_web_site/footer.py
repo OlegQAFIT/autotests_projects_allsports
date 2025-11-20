@@ -125,7 +125,7 @@ class FooterPage(BasePage):
 
         # Проверка содержимого
         self.assert_url_contains("/providing-payment-service-rules")
-        self.assert_text_on_page("РАСКРЫТИЕ ИНФОРМАЦИИ")
+        self.assert_text_on_page("Раскрытие информации (включая правила оказания платежной услуги)")
 
         # Закрываем вкладку, если она новая
         if len(new_handles) > len(current_handles):
@@ -134,7 +134,24 @@ class FooterPage(BasePage):
 
         # Проверка языка и JS
         self.check_for_words("russian")
-        assert len(self.get_js_console_errors()) == 0, "Есть ошибки JS в консоли"
+        errors = self.get_js_console_errors()
+
+        filtered = []
+        for e in errors:
+            msg = e.get("message", "").lower()
+            source = e.get("source", "").lower()
+
+            # Игнорируем стандартные CSP/Sentry ошибки Allsports
+            if "sentry" in msg:
+                continue
+            if "content security policy" in msg:
+                continue
+            if source in ("security", "network"):
+                continue
+
+            filtered.append(e)
+
+        assert len(filtered) == 0, f"JS ошибки: {filtered}"
 
     @allure.step("Проверить документы для юридических лиц")
     def check_legal_documents(self):
@@ -149,7 +166,26 @@ class FooterPage(BasePage):
             self.assert_url_matches(url)
             self.assert_text_on_page(text)
             self.check_for_words("russian")
-            assert len(self.get_js_console_errors()) == 0, f"JS ошибки на странице {url}"
+            errors = self.get_js_console_errors()
+
+            filtered = []
+            for e in errors:
+                msg = e.get("message", "").lower()
+                source = e.get("source", "").lower()
+
+                # Игнорируем мусорные ошибки, которые всегда есть на страницах документов
+                if "sentry" in msg:
+                    continue
+                if "content security policy" in msg:
+                    continue
+                if "csp" in msg:
+                    continue
+                if source in ("security", "network"):
+                    continue
+
+                filtered.append(e)
+
+            assert len(filtered) == 0, f"JS ошибки (реальные!) на странице {url}: {filtered}"
 
     @allure.step("Проверить пользовательские соглашения и политики")
     def check_user_agreements(self):

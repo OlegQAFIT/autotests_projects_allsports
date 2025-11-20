@@ -215,15 +215,19 @@ class HeaderPage(BasePage):
 
     @allure.step("Проверить наличие и корректность телефонного номера в модалке")
     def check_offer_phone(self):
-        tel = (By.XPATH, "//a[contains(@href, 'tel:+375 44 771 09 47')]")
+        tel = (By.CSS_SELECTOR, "a.modal-body__phone")
 
-        # Скроллим именно к элементу, передавая tuple, а не строку
-        self.scroll_to_element(tel)
-
-        # После скролла ждём появления ссылки и проверяем содержимое
+        # Ждём, пока телефон появится и станет кликабельным
         self.wait_for_visible(tel, timeout=10)
+
+        # Убеждаемся, что элемент есть
         self.assert_element_present(tel)
-        self.assert_text_on_page("+375 44 771 09 47")
+
+        # Получаем текст внутри ссылки
+        phone_text = self.driver.find_element(*tel).text.strip()
+        assert phone_text == "+375 44 771 09 47", (
+            f"Ожидался номер '+375 44 771 09 47', а на странице: '{phone_text}'"
+        )
 
     # ----- Валидации (Offer) -----
 

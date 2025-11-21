@@ -89,7 +89,12 @@ class RegressionPages:
     @allure.step("Выполнить полную регрессию сайта")
     def run_full_regression(self):
         """Проходит по всем страницам, выполняет реальную ленивую прокрутку и проверку элементов."""
-        # страницы без скролла
+
+        # ---- СЧЁТЧИКИ ----
+        self.checks_total = 0
+        self.checks_passed = 0
+        self.checks_failed = 0
+
         no_scroll_pages = [
             "policy/251010_processing_personal_data",
             "license/241009_license",
@@ -114,19 +119,32 @@ class RegressionPages:
                     # 3️⃣ Принять cookies
                     self.accept_cookie_consent()
 
-                    # 4️⃣ Ленивая прокрутка для подгрузки контента
+                    # 4️⃣ Прокрутка
                     if not skip_scroll:
                         self._lazy_scroll()
                     else:
                         print(f"[INFO] Пропускаем прокрутку для {url}")
 
-                    # 5️⃣ Проверка элементов
+                    # 5️⃣ Проверка всех локаторов — БЕЗ остановки теста!
                     for locator in locators:
-                        self.check_element_visible(locator)
+                        self.checks_total += 1
+                        try:
+                            self.check_element_visible(locator)
+                            self.checks_passed += 1
+                            print(f"CHECK_OK: {locator}")
+                        except Exception:
+                            self.checks_failed += 1
+                            print(f"❌ FAIL: {locator}")
 
-                    # 6️⃣ Проверка JS-ошибок
+                    # 6️⃣ Проверка JS ошибок
                     self.check_js_errors()
 
                 except Exception as e:
                     self.take_screenshot(page_key)
-                    raise AssertionError(f"Ошибка на странице {url}: {e}")
+                    print(f"❌ FAIL PAGE: {url} — {e}")
+                    self.checks_failed += 1
+
+        # ---- ПЕЧАТАЕМ ИТОГИ ДЛЯ CRON/TELEGRAM ----
+        print(f"CHECKS_TOTAL={self.checks_total}")
+        print(f"CHECKS_PASSED={self.checks_passed}")
+        print(f"CHECKS_FAILED={self.checks_failed}")

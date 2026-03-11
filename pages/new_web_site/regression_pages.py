@@ -35,6 +35,16 @@ class RegressionPages:
             )
         return url
 
+    def _record_failure(self, page_key, url, reason, locator='-'):
+        self.failed_items.append(
+            {
+                "page": page_key,
+                "url": self._resolve_url(url),
+                "locator": str(locator),
+                "reason": str(reason),
+            }
+        )
+
     # ==============================
     # 🔹 Общие методы
     # ==============================
@@ -93,10 +103,9 @@ class RegressionPages:
     def check_js_errors(self):
         try:
             logs = self.driver.get_log("browser")
-            severe = [entry for entry in logs if entry["level"] == "SEVERE"]
-            assert not severe, f"⚠️ Обнаружены JS-ошибки: {severe}"
+            return [entry for entry in logs if entry.get("level") == "SEVERE"]
         except Exception:
-            pass
+            return []
 
     def take_screenshot(self, name):
         os.makedirs("screenshots", exist_ok=True)
@@ -115,6 +124,7 @@ class RegressionPages:
         self.checks_total = 0
         self.checks_passed = 0
         self.checks_failed = 0
+        self.failed_items = []
 
         no_scroll_pages = [
             "policy/251010_processing_personal_data",
@@ -153,22 +163,50 @@ class RegressionPages:
                             self.check_element_visible(locator)
                             self.checks_passed += 1
                             print(f"CHECK_OK: {locator}")
-                        except Exception:
+                        except Exception as e:
                             self.checks_failed += 1
-                            print(f"❌ FAIL: {locator}")
+                            self._record_failure(page_key, url, e, locator=locator)
+                            print(f"❌ FAIL: {locator} | reason={e}")
 
                     # 6️⃣ Проверка JS ошибок
-                    self.check_js_errors()
+                    severe_logs = self.check_js_errors()
+                    if severe_logs:
+                        self.checks_failed += 1
+                        js_error = f"SEVERE console errors: {severe_logs[:3]}"
+                        self._record_failure(page_key, url, js_error, locator='[JS_CONSOLE]')
+                        print(f"❌ FAIL JS: {js_error}")
 
                 except Exception as e:
                     self.take_screenshot(page_key)
                     print(f"❌ FAIL PAGE: {url} — {e}")
                     self.checks_failed += 1
+                    self._record_failure(page_key, url, e, locator='[PAGE]')
 
-        # ---- ПЕЧАТАЕМ ИТОГИ ДЛЯ CRON/TELEGRAM ----
-        print(f"CHECKS_TOTAL={self.checks_total}")
-        print(f"CHECKS_PASSED={self.checks_passed}")
-        print(f"CHECKS_FAILED={self.checks_failed}")
+        summary_lines = [
+            "=== FINAL REGRESSION SUMMARY ===",
+            f"CHECKS_TOTAL={self.checks_total}",
+            f"CHECKS_PASSED={self.checks_passed}",
+            f"CHECKS_FAILED={self.checks_failed}",
+        ]
+
+        if self.failed_items:
+            summary_lines.append("FAILED_ITEMS:")
+            for idx, item in enumerate(self.failed_items, 1):
+                summary_lines.append(
+                    f"{idx}. page={item['page']} | url={item['url']} | "
+                    f"locator={item['locator']} | reason={item['reason']}"
+                )
+        else:
+            summary_lines.append("FAILED_ITEMS: none")
+
+        summary_text = "\n".join(summary_lines)
+        print(summary_text)
+        allure.attach(
+            summary_text,
+            name="regression-final-summary",
+            attachment_type=allure.attachment_type.TEXT,
+        )
+
         assert self.checks_failed == 0, (
             f"Регрессия завершилась с ошибками: failed={self.checks_failed}, "
             f"passed={self.checks_passed}, total={self.checks_total}"

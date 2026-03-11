@@ -153,8 +153,6 @@ class RegressionPages:
                     # 4️⃣ Прокрутка
                     if not skip_scroll:
                         self._lazy_scroll()
-                    else:
-                        print(f"[INFO] Пропускаем прокрутку для {url}")
 
                     # 5️⃣ Проверка всех локаторов — БЕЗ остановки теста!
                     for locator in locators:
@@ -162,11 +160,9 @@ class RegressionPages:
                         try:
                             self.check_element_visible(locator)
                             self.checks_passed += 1
-                            print(f"CHECK_OK: {locator}")
                         except Exception as e:
                             self.checks_failed += 1
                             self._record_failure(page_key, url, e, locator=locator)
-                            print(f"❌ FAIL: {locator} | reason={e}")
 
                     # 6️⃣ Проверка JS ошибок
                     severe_logs = self.check_js_errors()
@@ -174,11 +170,9 @@ class RegressionPages:
                         self.checks_failed += 1
                         js_error = f"SEVERE console errors: {severe_logs[:3]}"
                         self._record_failure(page_key, url, js_error, locator='[JS_CONSOLE]')
-                        print(f"❌ FAIL JS: {js_error}")
 
                 except Exception as e:
                     self.take_screenshot(page_key)
-                    print(f"❌ FAIL PAGE: {url} — {e}")
                     self.checks_failed += 1
                     self._record_failure(page_key, url, e, locator='[PAGE]')
 

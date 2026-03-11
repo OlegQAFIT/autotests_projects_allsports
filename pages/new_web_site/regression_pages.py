@@ -3,6 +3,7 @@ import os
 import time
 import allure
 import requests
+from urllib.parse import urlparse, urlunparse
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -14,13 +15,32 @@ class RegressionPages:
 
     def __init__(self, driver):
         self.driver = driver
+        self.base_url = getattr(driver, 'base_url', '').rstrip('/')
+
+    def _resolve_url(self, url: str) -> str:
+        if not self.base_url:
+            return url
+        parsed_target = urlparse(url)
+        parsed_base = urlparse(self.base_url)
+        if parsed_target.scheme and parsed_target.netloc and parsed_base.scheme and parsed_base.netloc:
+            return urlunparse(
+                (
+                    parsed_base.scheme,
+                    parsed_base.netloc,
+                    parsed_target.path,
+                    parsed_target.params,
+                    parsed_target.query,
+                    parsed_target.fragment,
+                )
+            )
+        return url
 
     # ==============================
     # 🔹 Общие методы
     # ==============================
     @allure.step("Открыть страницу {1}")
     def open_page(self, url):
-        self.driver.get(url)
+        self.driver.get(self._resolve_url(url))
 
     @allure.step("Принять cookies (если баннер есть)")
     def accept_cookie_consent(self):
@@ -34,8 +54,9 @@ class RegressionPages:
 
     @allure.step("Проверить статус-код страницы")
     def check_http_status(self, url):
-        response = requests.get(url, timeout=10)
-        assert response.status_code == 200, f"❌ Страница {url} вернула код {response.status_code}"
+        resolved_url = self._resolve_url(url)
+        response = requests.get(resolved_url, timeout=10)
+        assert response.status_code == 200, f"❌ Страница {resolved_url} вернула код {response.status_code}"
 
     # ==============================
     # 🔹 Улучшенная прокрутка
@@ -148,3 +169,7 @@ class RegressionPages:
         print(f"CHECKS_TOTAL={self.checks_total}")
         print(f"CHECKS_PASSED={self.checks_passed}")
         print(f"CHECKS_FAILED={self.checks_failed}")
+        assert self.checks_failed == 0, (
+            f"Регрессия завершилась с ошибками: failed={self.checks_failed}, "
+            f"passed={self.checks_passed}, total={self.checks_total}"
+        )

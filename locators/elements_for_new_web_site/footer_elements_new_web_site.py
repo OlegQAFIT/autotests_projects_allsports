@@ -3,7 +3,7 @@ from selenium.webdriver.common.by import By
 
 
 class FooterLocators:
-    BASE_URL = "https://www.allsports.by/"
+    BASE_URL = "/ru-by"
 
     # --- Контактная информация ---
     PHONE = (By.XPATH, "//footer//a[contains(@href, 'tel') and contains(translate(., '  ', ' '), '+375')]")
@@ -30,11 +30,11 @@ class FooterLocators:
     NAV_USER_AGR = (By.XPATH, "//footer//a[contains(@href, '/user-agreements')]")
 
     # --- Тексты и URL-адреса ---
-    COMPANIES_URL = "https://www.allsports.by/ru-by/companies"
-    PARTNERS_URL = "https://www.allsports.by/ru-by/partners"
-    FACILITIES_URL = "https://www.allsports.by/ru-by/facilities"
-    LEVELS_URL = "https://www.allsports.by/ru-by/levels"
-    CONTACTS_URL = "https://www.allsports.by/ru-by/contacts"
+    COMPANIES_URL = "/ru-by/companies"
+    PARTNERS_URL = "/ru-by/partners"
+    FACILITIES_URL = "/ru-by/facilities"
+    LEVELS_URL = "/ru-by/levels"
+    CONTACTS_URL = "/ru-by/contacts"
 
     TEXT_COMPANIES_H1 = "Компаниям"
     TEXT_PARTNERS_H1 = "Партнерам"
@@ -48,12 +48,12 @@ class FooterLocators:
 
 
     # --- Документы ---
-    POLICY_PD = "https://www.allsports.by/ru-by/policy/251010_processing_personal_data"
-    LICENSE_INTERMEDIARY = "https://www.allsports.by/ru-by/license/241009_license"
-    USER_AGREEMENTS = "https://www.allsports.by/ru-by/user-agreements"
-    INDIVIDUAL_LICENSE = "https://www.allsports.by/ru-by/individual_license/241009_license"
-    RULE_ACCESS = "https://www.allsports.by/ru-by/rule/250731_rule"
-    COOKIE_POLICY = "https://www.allsports.by/ru-by/cookie/cookie-policy"
+    POLICY_PD = "/ru-by/policy/251010_processing_personal_data"
+    LICENSE_INTERMEDIARY = "/ru-by/license/241009_license"
+    USER_AGREEMENTS = "/ru-by/user-agreements"
+    INDIVIDUAL_LICENSE = "/ru-by/individual_license/241009_license"
+    RULE_ACCESS = "/ru-by/rule/250731_rule"
+    COOKIE_POLICY = "/ru-by/cookie/cookie-policy"
 
     TEXT_DOC_PD = "Политика компании в отношении обработки персональных данных"
     TEXT_DOC_INTERMEDIARY = "Договор возмездного оказания посреднических услуг"

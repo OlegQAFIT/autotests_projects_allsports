@@ -71,10 +71,6 @@ class BasePage:
     WebElement - действия
     """
 
-    # Получение значения атрибута элемента
-    def get_attribute(self, attribute_name):
-        return self.element.get_attribute(attribute_name)
-
     # Получение текста элемента
     def get_text(self):
         return self.element.text
@@ -372,38 +368,6 @@ class BasePage:
             return False
 
     def is_element_visible(self, locator, timeout=5):
-        """
-        Проверяет, что элемент видим на странице (displayed = True).
-        Возвращает True/False без падения теста.
-        """
-        try:
-            if isinstance(locator, tuple):
-                by, value = locator
-            else:
-                by, value = By.XPATH, locator
-
-            element = WebDriverWait(self.driver, timeout).until(
-                EC.presence_of_element_located((by, value))
-            )
-            return element.is_displayed()
-        except Exception:
-            return False
-
-        def _safe_scroll(self, locator):
-            """Безопасно скроллит к элементу, если он существует."""
-            try:
-                element = WebDriverWait(self.driver, 5).until(
-                    EC.presence_of_element_located(locator)
-                )
-                self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
-                time.sleep(0.5)
-            except Exception:
-                # fallback: плавный скролл к низу страницы
-                for _ in range(3):
-                    self.driver.execute_script("window.scrollBy(0, 800);")
-                    time.sleep(0.5)
-
-    def is_element_visible(self, locator, timeout=5):
         """Проверяет, что элемент видим на странице."""
         try:
             if isinstance(locator, tuple):
@@ -567,8 +531,12 @@ class BasePage:
 
     # Получение значения атрибута элемента
     def get_attribute(self, locator, attribute_name):
-        element = self.driver.find_element(By.XPATH, locator)
-        element.get_attribute(attribute_name)
+        if isinstance(locator, tuple):
+            by, value = locator
+        else:
+            by, value = By.XPATH, locator
+        element = self.driver.find_element(by, value)
+        return element.get_attribute(attribute_name)
 
     # Ожидание отображения элемента
     def wait_for_element_is_displayed(self, locator):
@@ -660,12 +628,19 @@ class BasePage:
             assert False, f"Элемент {locator} отсутствует на странице"
 
     # Проверка отсутствия элемента на странице
-    def assert_element_not_present(self, locator):
+    def assert_element_not_present(self, locator, timeout=3):
         try:
-            self.wait_for_visible(locator)
+            if isinstance(locator, tuple):
+                by, value = locator
+            else:
+                by, value = By.XPATH, locator
+
+            WebDriverWait(self.driver, timeout).until(
+                EC.presence_of_element_located((by, value))
+            )
             assert False, f"Элемент {locator} присутствует на странице"
-        except Exception as e:
-            pass
+        except TimeoutException:
+            return
 
     # Проверка текста элемента на равенство ожидаемому тексту
     def assert_element_text_equal(self, locator, expected_text):

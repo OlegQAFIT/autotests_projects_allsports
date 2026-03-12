@@ -18,11 +18,11 @@ class HeaderLocators:
     CONTACTS = (By.XPATH, "//header//a[@href='/ru-by/contacts']")
 
     # --- URL и тексты для проверок ---
-    URL_FACILITIES = "https://www.allsports.by/ru-by/facilities"
-    URL_LEVELS = "https://www.allsports.by/ru-by/levels"
-    URL_COMPANIES = "https://www.allsports.by/ru-by/companies"
-    URL_PARTNERS = "https://www.allsports.by/ru-by/partners"
-    URL_CONTACTS = "https://www.allsports.by/ru-by/contacts"
+    URL_FACILITIES = "/ru-by/facilities"
+    URL_LEVELS = "/ru-by/levels"
+    URL_COMPANIES = "/ru-by/companies"
+    URL_PARTNERS = "/ru-by/partners"
+    URL_CONTACTS = "/ru-by/contacts"
 
     TEXT_FACILITIES = "Объекты"
     TEXT_LEVELS = "Типы подписок"
@@ -61,4 +61,3 @@ class HeaderLocators:
     ERROR_NAME = "//div[contains(@class, 'input-error') and contains(text(), 'Введите имя')]"
     ERROR_EMAIL = "//label[contains(@class, 'input')]//div[@class='input-error']/span"
     ERROR_PHONE = (By.XPATH, "//label[contains(., 'Телефон')]//span[contains(text(),'Неверный формат номера')]")
-

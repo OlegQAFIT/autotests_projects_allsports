@@ -1,6 +1,7 @@
 import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
+from helpers.supplier_panel_data import role_has_documents
 from locators.supplier_panel.for_registration_of_visits_pade_locators import RegistrationVisitsLocators
 from helpers.add_visit import login_and_create_visit as external_login_and_create_visit
 
@@ -49,22 +50,21 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         self.hard_click(self.SIGNIN_BUTTON)
 
     @allure.step("Found elements")
-    def assert_found_elements_on_registrarion_visitspage_ru(self):
+    def assert_found_elements_on_registrarion_visitspage_ru(self, role="reception"):
         elements_to_check = [
             (self.LOGO_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
             (self.TEXT_ADMINISTRATOR_LOCATOR, 'Администратор'),
             (self.SHORT_INSTRUCTION_LOCATOR, 'Краткая инструкция:'),
-            (self.FIRST_INSTRUCTION_LOCATOR, 'Нажмите кнопку “Новые визиты”.'),
+            (self.FIRST_INSTRUCTION_LOCATOR, 'Нажмите кнопку «Проверить новые визиты».'),
             (self.SECOND_INSTRUCTION_LOCATOR, 'Для подтверждения посещения нажмите кнопку “Принять”.'),
             (self.THIRD_INSTRUCTION_LOCATOR,
              'Ответьте на вопрос о схожести посетителя с фото (Ответ не влияет на подтверждение визита).'),
-            (self.BUTTON_NEW_VISITS_LOCATOR, 'Новые визиты'),
+            (self.BUTTON_NEW_VISITS_LOCATOR, 'Проверить новые визиты'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR, 'История визитов'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR, 'Визиты на исправлении'),
             (self.SIDEBAR_FACILITY_DETAILS_LOCATOR, 'Описание обьекта'),
             (self.SIDEBAR_CONTACTS_LOCATOR, 'Контакты'),
-            (self.SIDEBAR_DOCUMENTS_LOCATOR, 'Документы'),
             (self.BUTTON_LOGOUT_LOCATOR, 'Выйти'),
         ]
 
@@ -72,29 +72,40 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
+        has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR)
+        expected_documents = role_has_documents(role)
+        assert has_documents == expected_documents, (
+            f"Ожидалась доступность вкладки Документы={expected_documents}, фактически={has_documents}"
+        )
+
     @allure.step("Found elements")
-    def assert_found_elements_on_registrarion_visitspage_en(self):
+    def assert_found_elements_on_registrarion_visitspage_en(self, role="reception"):
         elements_to_check = [
             (self.LOGO_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
             (self.TEXT_ADMINISTRATOR_LOCATOR_EN, 'Administrator'),
             (self.SHORT_INSTRUCTION_LOCATOR_EN, 'Short instruction:'),
-            (self.FIRST_INSTRUCTION_LOCATOR, 'Press the “New visits” button.'),
+            (self.FIRST_INSTRUCTION_LOCATOR, "Press the 'Check New Visits' button."),
             (self.SECOND_INSTRUCTION_LOCATOR, 'To confirm the visit, press the “Accept” button.'),
             (self.THIRD_INSTRUCTION_LOCATOR,
              "Answer the question about the visitor's resemblance to the photo (The answer does not affect the visit confirmation)."),
-            (self.BUTTON_NEW_VISITS_LOCATOR_EN, 'New visits'),
+            (self.BUTTON_NEW_VISITS_LOCATOR_EN, 'Check new visits'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN, 'Visit history'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR_EN, 'Visits under correction'),
             (self.SIDEBAR_FACILITY_DETAILS_LOCATOR_EN, 'Facility details'),
             (self.SIDEBAR_CONTACTS_LOCATOR_EN, 'Contacts'),
-            (self.SIDEBAR_DOCUMENTS_LOCATOR_EN, 'Documents'),
             (self.BUTTON_LOGOUT_LOCATOR_EN, 'Logout'),
         ]
 
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+        has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR_EN)
+        expected_documents = role_has_documents(role)
+        assert has_documents == expected_documents, (
+            f"Expected Documents tab visibility={expected_documents}, actual={has_documents}"
+        )
 
     @allure.step("Found elements")
     def assert_found_elements_on_confirm_visit_modal(self):
@@ -207,3 +218,32 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     @allure.step("Save reject visit")
     def click_save_reject_visit_en(self):
         self.hard_click(self.CLICK_BUTTON_SAVE_EN)
+
+    @allure.step("Assert sidebar visibility by role")
+    def assert_sidebar_visibility_by_role(self, role):
+        mandatory_tabs = [
+            self.SIDEBAR_REGISTRATION_VISITS_LOCATOR,
+            self.SIDEBAR_VISITS_HISTORY_LOCATOR,
+            self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR,
+            self.SIDEBAR_FACILITY_DETAILS_LOCATOR,
+            self.SIDEBAR_CONTACTS_LOCATOR,
+        ]
+        for locator in mandatory_tabs:
+            assert self.is_element_visible(locator), f"Обязательная вкладка отсутствует: {locator}"
+
+        has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR)
+        expected_documents = role_has_documents(role)
+        assert has_documents == expected_documents, (
+            f"Ожидалась доступность вкладки Документы={expected_documents}, фактически={has_documents}"
+        )
+
+    @allure.step("Logout from supplier panel")
+    def logout_supplier_panel(self):
+        if self.is_element_visible(self.BUTTON_LOGOUT_LOCATOR):
+            self.hard_click(self.BUTTON_LOGOUT_LOCATOR)
+        else:
+            self.hard_click(self.BUTTON_LOGOUT_LOCATOR_EN)
+
+        assert self.is_element_visible("//button[normalize-space()='Продолжить']") or self.is_element_visible(
+            "//button[normalize-space()='Continue']"
+        ), "После logout не открылась страница логина"

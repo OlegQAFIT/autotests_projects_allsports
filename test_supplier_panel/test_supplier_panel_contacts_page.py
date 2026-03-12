@@ -3,7 +3,7 @@ import allure
 
 
 @allure.feature('Contacts Page')
-@allure.severity('Normal')
+@allure.severity('normal')
 @allure.story('Checking elements on contacts page')
 def test_checking_elements_on_contacts_page_supplier_panel_ru(driver):
     """
@@ -17,7 +17,7 @@ def test_checking_elements_on_contacts_page_supplier_panel_ru(driver):
 
 
 @allure.feature('Contacts Page')
-@allure.severity('Normal')
+@allure.severity('normal')
 @allure.story('Checking elements on contacts page')
 def test_checking_elements_on_contacts_page_supplier_panel_en(driver):
     """
@@ -32,7 +32,7 @@ def test_checking_elements_on_contacts_page_supplier_panel_en(driver):
 
 
 @allure.feature('Contacts Page')
-@allure.severity('Normal')
+@allure.severity('normal')
 @allure.story('Checking text on contacts page')
 def test_checking_text_on_contacts_page_supplier_panel_ru(driver):
     """
@@ -46,7 +46,7 @@ def test_checking_text_on_contacts_page_supplier_panel_ru(driver):
 
 
 @allure.feature('Contacts Page')
-@allure.severity('Normal')
+@allure.severity('normal')
 @allure.story('Checking links on contacts page')
 def test_checking_link_on_contacts_page_supplier_panel_ru(driver):
     """

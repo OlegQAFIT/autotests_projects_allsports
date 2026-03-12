@@ -25,11 +25,9 @@ def login_and_create_visit(phone_number, sms_code, gym_token, attraction_id):
 
     response = requests.post(LOGIN_URL, headers=headers, data=payload)
 
-    if response.status_code == 200:
-        print('LOGIN IS OK')
-    else:
-        print('LOGIN IS BROKEN. SEE RESPONSE')
-        print(response.json())
+    assert response.status_code == 200, (
+        f"LOGIN API failed. status={response.status_code}, response={response.text}"
+    )
 
     payload = json.dumps({
       "token": gym_token,
@@ -45,11 +43,9 @@ def login_and_create_visit(phone_number, sms_code, gym_token, attraction_id):
 
     response = requests.post(CREATE_VISIT_URL, headers=headers, data=payload)
 
-    if response.status_code == 201:
-        print('Visit is created!!!')
-    else:
-        print('Visit is NOT created!!! SEE RESPONSE')
-        print(response.json())
+    assert response.status_code == 201, (
+        f"CREATE VISIT API failed. status={response.status_code}, response={response.text}"
+    )
 
 def test_login_and_create_visit():
     phone_number = "+375000000088"

@@ -1,36 +1,39 @@
 import allure
+import pytest
 from pages.supplier_panel.registration_visits_page import SupplierPanelRegistrationVisits
 
 
 @allure.feature('Панель поставщика')
-@allure.severity('Критическая')
+@allure.severity('critical')
 @allure.story('Проверка элементов на панели поставщика')
-def test_checking_elements_supplier_panel_ru(driver):
+@pytest.mark.parametrize("role", ["reception", "finance"])
+def test_checking_elements_supplier_panel_ru(driver, role):
     """
     Тест для проверки элементов на панели поставщика на русском языке.
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
-    registration_visits_supplier_panel.login_supplier_panel()
-    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_ru()
+    registration_visits_supplier_panel.login_supplier_panel(role=role)
+    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_ru(role=role)
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Checking Elements on Supplier Panel')
-def test_checking_elements_supplier_panel_en(driver):
+@pytest.mark.parametrize("role", ["reception", "finance"])
+def test_checking_elements_supplier_panel_en(driver, role):
     """
     Test to check elements on the Supplier Panel in English.
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
-    registration_visits_supplier_panel.login_supplier_panel()
+    registration_visits_supplier_panel.login_supplier_panel(role=role)
     registration_visits_supplier_panel.select_language()
-    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en()
+    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en(role=role)
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Elements with Visit in Russian')
 def test_elements_with_visit_ru(driver):
     """
@@ -44,7 +47,7 @@ def test_elements_with_visit_ru(driver):
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Elements with Visit in English')
 def test_elements_with_visit_en(driver):
     """
@@ -58,7 +61,7 @@ def test_elements_with_visit_en(driver):
 
 
 @allure.feature('Панель поставщика')
-@allure.severity('Критическая')
+@allure.severity('critical')
 @allure.story('Элементы при отмене визита на русском')
 def test_elements_when_cancel_visit_ru(driver):
     """
@@ -72,7 +75,7 @@ def test_elements_when_cancel_visit_ru(driver):
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Elements when canceling a visit in English')
 def test_elements_when_cancel_visit_en(driver):
     """
@@ -87,7 +90,7 @@ def test_elements_when_cancel_visit_en(driver):
 
 
 @allure.feature('Панель поставщика')
-@allure.severity('Критическая')
+@allure.severity('critical')
 @allure.story('Отклонение визита на русском')
 def test_reject_visit_ru(driver):
     """
@@ -103,7 +106,7 @@ def test_reject_visit_ru(driver):
 
 
 @allure.feature('Панель поставщика')
-@allure.severity('Критическая')
+@allure.severity('critical')
 @allure.story('Подтверждение визита на русском')
 def test_confirm_visit_elements_ru(driver):
     """
@@ -118,7 +121,7 @@ def test_confirm_visit_elements_ru(driver):
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Confirming a visit in English')
 def test_confirm_visit_elements_en(driver):
     """
@@ -133,7 +136,7 @@ def test_confirm_visit_elements_en(driver):
 
 
 @allure.feature('Supplier Panel')
-@allure.severity('Critical')
+@allure.severity('critical')
 @allure.story('Rejecting a visit in English')
 def test_reject_visit_en(driver):
     """

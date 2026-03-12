@@ -2,8 +2,8 @@ from locators.supplier_panel.for_facility_details_locators import FacilityDetail
 import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
+from helpers.supplier_panel_data import get_expected_facility_text
 import time
-from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -80,18 +80,23 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
         select.select_by_visible_text("English (en)")
 
     @allure.step("Found elements")
-    def assert_found_text_on_facility_details(self):
+    def assert_found_text_on_facility_details(self, role="reception"):
+        expected = get_expected_facility_text(role)
         elements_to_check = [
-            (self.TEXT_FACILITY_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
-            (self.TEXT_ADDRESS_LOCATOR, 'г. Минск, ул. Малинина, д. 35А'),
-            (self.TEXT_CONTACT_PHONE_LOCATOR, '+375000000000;+375123456789'),
-            (self.TEXT_DESCRIPTION_LOCATOR, 'Полностью укомплектованный тренажерный зал. В дополнение к указанным услугам, актуальный список услуг смотрите на сайте.'),
-            (self.TEXT_WEBSITE_LOCATOR, 'https://mayert.com/nihil-sed-pariatur-eos-et-reprehenderit-ut.html'),
+            (self.TEXT_FACILITY_NAME_LOCATOR, expected["name"]),
+            (self.TEXT_ADDRESS_LOCATOR, expected["address"]),
+            (self.TEXT_CONTACT_PHONE_LOCATOR, expected["phone"]),
+            (self.TEXT_DESCRIPTION_LOCATOR, expected["description"]),
+            (self.TEXT_WEBSITE_LOCATOR, expected["website"]),
         ]
 
         for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+            actual_value = " ".join(self.find_element_text(element_locator).split())
+            normalized_expected = " ".join(expected_value.split())
+            assert actual_value == normalized_expected, (
+                f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. "
+                f"Ожидаем: '{normalized_expected}', Фактически: '{actual_value}'"
+            )
 
     @allure.step("Found elements")
     def assert_found_button_on_facility_details_ru(self):
@@ -117,16 +122,12 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
 
     @allure.step("Assert clickable button")
     def assert_clickable_button(self):
-        # Пример использования метода is_button_clickable
-        if self.is_button_clickable(self.BUTTON_REFRESH_INFO_LOCATOR_RU):
-            print("Кнопка 'Обновить информацию' кликабельна")
-        else:
-            print("Кнопка 'Обновить информацию' не кликабельна")
-
-        if self.is_button_clickable(self.BUTTON_CHANGE_DATA_LOCATOR_RU):
-            print("Кнопка 'Изменить данные' кликабельна")
-        else:
-            print("Кнопка 'Изменить данные' не кликабельна")
+        assert self.is_button_clickable(self.BUTTON_REFRESH_INFO_LOCATOR_RU), (
+            "Кнопка 'Обновить информацию' не кликабельна"
+        )
+        assert self.is_button_clickable(self.BUTTON_CHANGE_DATA_LOCATOR_RU), (
+            "Кнопка 'Изменить данные' не кликабельна"
+        )
 
     @allure.step("Found elements")
     def assert_found_elements_modal_on_facility_details_en(self):

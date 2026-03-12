@@ -195,9 +195,9 @@ def test_checking_elements_on_page_supplier_panel_en(driver):
 #     visits_history_supplier_panel.assert_found_elements_modal_correction_page_ru()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Last Visit Validation')
 def test_checking_last_declined_visits_supplier_panel_ru(driver):
     """
     Проверка последнего по дате визита
@@ -210,9 +210,9 @@ def test_checking_last_declined_visits_supplier_panel_ru(driver):
     visits_history_supplier_panel.found_last_visit()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Last Visit Validation')
 def test_checking_last_timeout_visits_supplier_panel_ru(driver):
     """
     Проверка последнего по дате визита
@@ -225,9 +225,9 @@ def test_checking_last_timeout_visits_supplier_panel_ru(driver):
     visits_history_supplier_panel.found_last_visit()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Last Visit Validation')
 def test_checking_last_accepted_visits_supplier_panel_ru(driver):
     """
     Проверка последнего по дате визита
@@ -239,9 +239,9 @@ def test_checking_last_accepted_visits_supplier_panel_ru(driver):
     visits_history_supplier_panel.found_last_visit()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Last Visit Validation')
 def test_checking_last_all_visits_supplier_panel_ru(driver):
     """
     Проверка последнего по дате визита
@@ -254,9 +254,9 @@ def test_checking_last_all_visits_supplier_panel_ru(driver):
     visits_history_supplier_panel.found_last_visit()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Summary Validation')
 def test_checking_sum_all_visits_supplier_panel_ru(driver):
     """
     Проверка суммы визитов и общей суммы
@@ -269,9 +269,9 @@ def test_checking_sum_all_visits_supplier_panel_ru(driver):
     visits_history_supplier_panel.sum_and_assert_visit()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Correction Modal Validation')
 def test_open_last_visits_and_open_correction_table_supplier_panel_ru(driver):
     """
     Проверка елементов с модального окна корректироваок на русском
@@ -285,9 +285,9 @@ def test_open_last_visits_and_open_correction_table_supplier_panel_ru(driver):
     visits_history_supplier_panel.assert_found_elements_modal_correction_table_page_ru()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Correction Modal Validation')
 def test_open_last_visits_and_open_correction_table_supplier_panel_en(driver):
     """
     Проверка елементов с модального окна корректироваок на анлийском
@@ -302,9 +302,9 @@ def test_open_last_visits_and_open_correction_table_supplier_panel_en(driver):
     visits_history_supplier_panel.assert_found_elements_modal_correction_table_page_en()
 
 
-@allure.feature('')
-@allure.severity('')
-@allure.story('')
+@allure.feature('Supplier Panel Visit History')
+@allure.severity('critical')
+@allure.story('Historical Edit Restriction')
 def test_check_no_edit_button_last_month_supplier_panel(driver):
     """
     Проверка, что нельзя отправить визит на корректировку за прошлый месяц

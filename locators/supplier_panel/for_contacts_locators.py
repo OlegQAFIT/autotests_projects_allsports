@@ -17,7 +17,7 @@ class ContactsLocators():
     HOURS_LOCATOR_EN = "//h3[text()='Support availability hours']"
 
     # Текст блоков
-    TEXT_PHONE_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[2]/div[1]/a'
-    TEXT2_PHONE_LOCATOR = '//*[@id="app"]/div/div/main/div[1]/header/div[2]/a'
-    TEXT_EMAIL_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[2]/div[2]/a'
-    TEXT_HOURS_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[2]/div[3]'
+    TEXT_PHONE_LOCATOR = "//h3[text()='Телефон' or text()='Phone']/following-sibling::a[1]"
+    TEXT2_PHONE_LOCATOR = "(//a[contains(@class,'header-support_phone')])[1]"
+    TEXT_EMAIL_LOCATOR = "//h3[text()='Электронная почта' or text()='E-mail']/following-sibling::a[1]"
+    TEXT_HOURS_LOCATOR = "//h3[text()='Режим работы' or text()='Support availability hours']/following-sibling::*[1]"

@@ -1,13 +1,14 @@
 import allure
 from helpers import BasePage
+from helpers.supplier_panel_data import get_role_credentials
 
 class LoginLocators:
     LOGIN_FIELD = "//input[@id='email']"
     PASSWORD_FIELD = "//input[@id='password']"
     SIGNIN_BUTTON = "//button[text()='Signin']"
 
-    LOGIN_TEXT = "oleg.fit@gmail.com"
-    PASSWORD_TEXT = "9efbee942864"
+    LOGIN_TEXT = "auttest@gmail.com"
+    PASSWORD_TEXT = "secret"
 
 
 
@@ -38,10 +39,26 @@ class LoginPageSupplierPanel(BasePage, LoginLocators):
     def __init__(self, driver):
         self.driver = driver
 
+    def _remove_notification_modal_if_present(self):
+        self.driver.execute_script(
+            "const m=document.querySelector('.modal-container'); if (m) m.remove();"
+        )
+
     @allure.step("Login with credentials")
-    def login_supplier_panel(self):
-        self.fill(self.LOGIN_FIELD_SUPPLER_PANEL, self.LOGIN_TEXT_SUPPLER_PANEL)
+    def login_supplier_panel(self, role="reception", login=None, password=None):
+        if login is None or password is None:
+            role_login, role_password = get_role_credentials(role)
+            login = login or role_login
+            password = password or role_password
+
+        self._remove_notification_modal_if_present()
+        self.fill(self.LOGIN_FIELD_SUPPLER_PANEL, login)
         self.hard_click(self.SIGNIN_BUTTON_SUPPLER_PANEL)
-        self.fill(self.PASSWORD_FIELD_SUPPLER_PANEL, self.PASSWORD_TEXT_SUPPLER_PANEL)
+        self.fill(self.PASSWORD_FIELD_SUPPLER_PANEL, password)
         self.hard_click(self.SIGNIN_BUTTON_SUPPLER_PANEL)
 
+    def login_supplier_panel_reception(self):
+        self.login_supplier_panel(role="reception")
+
+    def login_supplier_panel_finance(self):
+        self.login_supplier_panel(role="finance")

@@ -3,7 +3,6 @@ import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
 import time
-from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -51,9 +50,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "tr"))
         )
-        page_source = self.driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        elements = soup.find_all('tr', attrs={'data-row-status': 'green'})
+        elements = self.driver.find_elements(By.CSS_SELECTOR, "tr[data-row-status='green']")
         total_count = len(elements)
         print(f"Значения: {total_count}")
         return total_count
@@ -64,12 +61,14 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             EC.visibility_of_all_elements_located((By.TAG_NAME, "tr"))
         )
         total_price = 0
-        soup = BeautifulSoup(self.driver.page_source, "html.parser")
-        for row in soup.find_all("tr"):
-            price_cell = row.find("td", {"data-cell": "Price"})
-            if price_cell:
-                price_text = price_cell.get_text(strip=True)
-                price_value = float(price_text.replace(",", ".").split()[0])  # Преобразование строки цены в число
+        price_cells = self.driver.find_elements(
+            By.CSS_SELECTOR,
+            "td[data-cell='Price'], td[data-cell='Стоимость']",
+        )
+        for price_cell in price_cells:
+            price_text = price_cell.text.strip()
+            if price_text:
+                price_value = float(price_text.replace(",", ".").split()[0])
                 total_price += price_value
 
         print("Общая сумма цен всех визитов:", total_price, "BYN")
@@ -79,9 +78,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "tr"))
         )
-        page_source = self.driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        elements = soup.find_all('tr', attrs={'data-row-status': 'red'})
+        elements = self.driver.find_elements(By.CSS_SELECTOR, "tr[data-row-status='red']")
         total_count = len(elements)
         print(f"Значения: {total_count}")
         return total_count
@@ -91,9 +88,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "tr"))
         )
-        page_source = self.driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        elements = soup.find_all('tr', attrs={'data-row-status': 'yellow'})
+        elements = self.driver.find_elements(By.CSS_SELECTOR, "tr[data-row-status='yellow']")
         total_count = len(elements)
         print(f"Значения: {total_count}")
         return total_count
@@ -103,9 +98,10 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.TAG_NAME, "tr"))
         )
-        page_source = self.driver.page_source
-        soup = BeautifulSoup(page_source, 'html.parser')
-        elements = soup.find_all('tr', attrs={'data-row-status': ['yellow', 'red', 'green']})
+        elements = self.driver.find_elements(
+            By.CSS_SELECTOR,
+            "tr[data-row-status='yellow'], tr[data-row-status='red'], tr[data-row-status='green']",
+        )
         total_count = len(elements)
         print(f"Значения: {total_count}")
         return total_count
@@ -207,27 +203,21 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "dp__instance_calendar"))
         )
-        page_html = self.driver.page_source
-        soup = BeautifulSoup(page_html, 'html.parser')
-        selected_month_elements = soup.find_all(attrs={'aria-selected': 'true'})
+        selected_month_elements = self.driver.find_elements(By.CSS_SELECTOR, "[aria-selected='true']")
+        assert selected_month_elements, "Не найден выбранный месяц в календаре"
 
         for selected_month_element in selected_month_elements:
-            selected_month_text = selected_month_element.get_text(strip=True)
-            print("Текущий месяц:", selected_month_text)
-            previous_months = selected_month_element.find_previous_siblings(attrs={'aria-disabled': 'false'})
-            if previous_months:
-                print("Предыдущие месяцы без задизейбленного состояния:")
-                for month in previous_months:
-                    print(month.get_text(strip=True))
-            else:
-                print("Нет предыдущих месяцев без задизейбленного состояния.")
-            following_months = selected_month_element.find_next_siblings(attrs={'aria-selected': 'false'})
-            if following_months:
-                print("Следующие месяцы с задизейбленным состоянием:")
-                for month in following_months:
-                    print(month.get_text(strip=True))
-            else:
-                print("Нет следующих месяцев с задизейбленным состоянием.")
+            selected_month_text = selected_month_element.text.strip()
+            assert selected_month_text, "Текст выбранного месяца пустой"
+            previous_months = selected_month_element.find_elements(
+                By.XPATH, "preceding-sibling::*[@aria-disabled='false']"
+            )
+            following_months = selected_month_element.find_elements(
+                By.XPATH, "following-sibling::*[@aria-selected='false']"
+            )
+            assert len(previous_months) + len(following_months) > 0, (
+                "Календарь не содержит соседние месяцы для выбранного значения"
+            )
 
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_ru(self):
@@ -313,6 +303,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
         )
         rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+        assert rows, "В таблице истории визитов нет записей"
 
         latest_visit = None
         latest_date = None
@@ -333,10 +324,10 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             data['Статус'] = latest_visit.find_element(By.CSS_SELECTOR, 'td span.cell_status').get_attribute(
                 'data-cell-status')
             data['Стоимость'] = latest_visit.find_element(By.CSS_SELECTOR, 'td[data-cell="Стоимость"]').text
-
-            print(data)
+            assert all(data.values()), f"В последнем визите есть пустые поля: {data}"
+            return data
         else:
-            print("Записей не найдено.")
+            assert False, "Не удалось определить последний визит"
 
     def sum_and_assert_visit(self):
         WebDriverWait(self.driver, 10).until(
@@ -384,6 +375,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
         )
         rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+        assert rows, "Нет визитов для открытия модального окна корректировки"
 
         latest_visit = None
         latest_date = None
@@ -397,11 +389,11 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
                 latest_visit = row
 
         if latest_visit is not None:
-            # Нажатие на кнопку
             button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
             button.click()
+            return
         else:
-            print("Записей не найдено.")
+            assert False, "Последний визит не найден"
 
 
     def open_last_visit_correction_en(self):
@@ -409,6 +401,7 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             EC.presence_of_element_located((By.CSS_SELECTOR, 'table tbody'))
         )
         rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+        assert rows, "Нет визитов для открытия модального окна корректировки (EN)"
 
         latest_visit = None
         latest_date = None
@@ -422,11 +415,11 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
                 latest_visit = row
 
         if latest_visit is not None:
-            # Нажатие на кнопку
             button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
             button.click()
+            return
         else:
-            print("Записей не найдено.")
+            assert False, "Последний визит не найден (EN)"
 
 
     @allure.step("Found elements")
@@ -467,6 +460,6 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         )
         try:
             self.driver.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
-            print("Кнопка найдена.")
+            assert False, "Найдена кнопка отправки на корректировку за прошлый период"
         except NoSuchElementException:
-            print("Кнопка не найдена.")
+            return

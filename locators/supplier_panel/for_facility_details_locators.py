@@ -27,12 +27,12 @@ class FacilityDetailsLocators():
 
 
     # Текста в блоках
-    TEXT_FACILITY_NAME_LOCATOR = "//p[text()='Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО']"
-    TEXT_DESCRIPTION_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/p[2]'
+    TEXT_FACILITY_NAME_LOCATOR = "//h2[text()='Название объекта:' or text()='Facility name:']/following-sibling::p[1]"
+    TEXT_DESCRIPTION_LOCATOR = "//h2[text()='Описание:' or text()='Description:']/following-sibling::*[1]"
     # TEXT_VISITING_RULES_LOCATOR = "//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/a[2]"
-    TEXT_ADDRESS_LOCATOR = "//p[text()='г. Минск, ул. Малинина, д. 35А']"
-    TEXT_CONTACT_PHONE_LOCATOR = "//p[text()='+375000000000;+375123456789']"
-    TEXT_WEBSITE_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div[1]/a[2]'
+    TEXT_ADDRESS_LOCATOR = "//h2[text()='Адрес:' or text()='Address:']/following-sibling::p[1]"
+    TEXT_CONTACT_PHONE_LOCATOR = "//h2[text()='Контактный телефон:' or text()='Contact phone:']/following-sibling::p[1]"
+    TEXT_WEBSITE_LOCATOR = "//h2[text()='Веб-сайт:' or text()='Website:']/following-sibling::a[1]"
     # TEXT_WORKING_HOURS_LOCATOR = "//h2[text()='Working hours:']"
     TEXT_KINDS_OF_SERVICE_LOCATOR = "//p[text()='Теннис SG, Посещение SGP, Посещение SGP D']"
 
@@ -51,5 +51,4 @@ class FacilityDetailsLocators():
     TEXT_INFO_LOCATOR_RU = "//p[@class='contact-support_hint' and text()='Для того, чтобы изменить данные вам необходимо связаться с тех. поддержкой:']"
     PHONE_NUMBER_LOCATOR = "//div[@class='contacts-item'][1]/a[@class='header-support_phone']"
     EMAIL_LOCATOR = "//div[@class='contacts-item'][2]/a[@class='header-support_phone']"
-
 

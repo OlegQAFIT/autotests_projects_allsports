@@ -3,7 +3,6 @@ import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
 import time
-from bs4 import BeautifulSoup
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -114,24 +113,18 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
         WebDriverWait(self.driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "dp__instance_calendar"))
         )
-        page_html = self.driver.page_source
-        soup = BeautifulSoup(page_html, 'html.parser')
-        selected_month_elements = soup.find_all(attrs={'aria-selected': 'true'})
+        selected_month_elements = self.driver.find_elements(By.CSS_SELECTOR, "[aria-selected='true']")
+        assert selected_month_elements, "Не найден выбранный месяц в календаре"
 
         for selected_month_element in selected_month_elements:
-            selected_month_text = selected_month_element.get_text(strip=True)
-            print("Текущий месяц:", selected_month_text)
-            previous_months = selected_month_element.find_previous_siblings(attrs={'aria-disabled': 'false'})
-            if previous_months:
-                print("Предыдущие месяцы без задизейбленного состояния:")
-                for month in previous_months:
-                    print(month.get_text(strip=True))
-            else:
-                print("Нет предыдущих месяцев без задизейбленного состояния.")
-            following_months = selected_month_element.find_next_siblings(attrs={'aria-selected': 'false'})
-            if following_months:
-                print("Следующие месяцы с задизейбленным состоянием:")
-                for month in following_months:
-                    print(month.get_text(strip=True))
-            else:
-                print("Нет следующих месяцев с задизейбленным состоянием.")
+            selected_month_text = selected_month_element.text.strip()
+            assert selected_month_text, "Текст выбранного месяца пустой"
+            previous_months = selected_month_element.find_elements(
+                By.XPATH, "preceding-sibling::*[@aria-disabled='false']"
+            )
+            following_months = selected_month_element.find_elements(
+                By.XPATH, "following-sibling::*[@aria-selected='false']"
+            )
+            assert len(previous_months) + len(following_months) > 0, (
+                "Календарь не содержит соседние месяцы для выбранного значения"
+            )

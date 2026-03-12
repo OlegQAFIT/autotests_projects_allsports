@@ -167,8 +167,8 @@ class BasePage:
             element.click()
             element.clear()
             element.send_keys(text)
-        except Exception as e:
-            print(f"Ошибка при взаимодействии с элементом: {e}")
+        except (TimeoutException, NoSuchElementException, ElementClickInterceptedException, WebDriverException) as e:
+            raise AssertionError(f"Ошибка при взаимодействии с элементом {locator}: {e}") from e
         return text
 
     def click_if_visible(self, locator, timeout=3):

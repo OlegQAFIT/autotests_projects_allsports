@@ -13,10 +13,13 @@ class LoginPageLocators():
     CHANGE_LANGUAGE_DROPDOWN = "//select[@class='language-switcher_list']"
     DROPDOWN_LANGUAGE_EN = "//div[@class='language-switcher']//span[text()='en']"
     DROPDOWN_LANGUAGE_RU = "//select[@class='language-switcher_list']/option[@value='ru']"
+    NOTIFICATION_MODAL_TITLE_RU = "//h2[text()='Пожалуйста, предоставьте доступ для отправки уведомлений.']"
+    NOTIFICATION_MODAL_TITLE_EN = "//h2[text()='Please, provide access for sending notifications.']"
+    ALLOW_NOTIFICATIONS_BUTTON_RU = "//button[normalize-space()='Запросить разрешения']"
+    ALLOW_NOTIFICATIONS_BUTTON_EN = "//button[normalize-space()='Request permissions']"
 
     SIGNIN_BUTTON_SUPPLER_PANEL = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and contains(@class, 'w-50')]"
 
-    LOGIN_TEXT_SUPPLER_PANEL = "test@allsports.by"
     WRONG_LOGIN_TEXT_SUPPLER_PANEL = "atrohov199206@gmail.com"
     WRONG_PASSWORD_TEXT_SUPPLER_PANEL = "secret"
     WRONG_PASSWORD_FORMAT_TEXT_SUPPLER_PANEL = "secret12"
@@ -25,10 +28,6 @@ class LoginPageLocators():
     LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN = "//p[@class='info-banner_message' and text()='Invalid password']"
 
     LOCATOR_TEXT_ERRORE_WRONG_USER = "//p[@data-v-fe06182b and contains(@class, 'info-banner_message')]"
-    LOCATOR_TEXT_ERRORE_WRONG_PASSWORD = "//p[@class='info-banner_message' and text()='Неверный пароль']"
-
-
-
     WRONG_TEXT_SUPPLER_PANEL = "test@allsports@gmail.com"
     LOCATOR_TEXT_ERRORE_WRONG_FORMAT = "//span[@class='input_error' and @title='Check that the entered data is correct.']"
 

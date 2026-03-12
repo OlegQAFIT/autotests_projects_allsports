@@ -2,6 +2,7 @@ from locators.supplier_panel.for_contacts_locators import ContactsLocators
 import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
+from helpers.supplier_panel_data import get_expected_contacts_text
 from selenium.webdriver.support.ui import Select
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -56,11 +57,12 @@ class SupplierPanelContacts(LoginPageSupplierPanel, ContactsLocators, BasePage):
 
     @allure.step("Found elements")
     def assert_found_text_on_facility_details(self):
+        expected = get_expected_contacts_text()
         elements_to_check = [
-            (self.TEXT_PHONE_LOCATOR, '375445253892'),
-            (self.TEXT2_PHONE_LOCATOR, '375445253892'),
-            (self.TEXT_EMAIL_LOCATOR, 'alex@allsports.by'),
-            (self.TEXT_HOURS_LOCATOR, 'Режим работы\nЕжедневно 08:00-19:00'),
+            (self.TEXT_PHONE_LOCATOR, expected["phone"]),
+            (self.TEXT2_PHONE_LOCATOR, expected["phone"]),
+            (self.TEXT_EMAIL_LOCATOR, expected["email"]),
+            (self.TEXT_HOURS_LOCATOR, expected["hours_ru"]),
         ]
 
         for element_locator, expected_value in elements_to_check:
@@ -73,10 +75,11 @@ class SupplierPanelContacts(LoginPageSupplierPanel, ContactsLocators, BasePage):
             EC.presence_of_element_located((By.CLASS_NAME, "social-media"))
         )
         social_media_links = self.driver.find_elements(By.CLASS_NAME, "social-media_link")
+        assert social_media_links, "Не найдены ссылки соцсетей в блоке контактов"
 
         for link in social_media_links:
             href = link.get_attribute("href")
-            if href:
-                print("Ссылка:", href, "- Работает и корректна")
-            else:
-                print("Ссылка не найдена")
+            assert href, "У одной из ссылок соцсетей отсутствует href"
+            assert href.startswith(("http://", "https://", "viber://", "tg://")), (
+                f"Некорректная схема ссылки соцсетей: {href}"
+            )

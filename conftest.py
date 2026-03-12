@@ -53,7 +53,12 @@ def pytest_addoption(parser):
 def _rewrite_url(url: str, base_url: str) -> str:
     parsed_target = urlparse(url)
     parsed_base = urlparse(base_url)
+    rewrite_allowed_hosts = {"www.allsports.by", "allsports.by"}
+
     if parsed_target.scheme and parsed_target.netloc:
+        # Не переписываем внешние домены (supplier panel, journal и т.д.).
+        if parsed_target.netloc not in rewrite_allowed_hosts:
+            return url
         return urlunparse(
             (
                 parsed_base.scheme,

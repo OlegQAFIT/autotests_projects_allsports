@@ -40,9 +40,9 @@ def test_checking_elements_on_facility_details_page_supplier_panel(driver):
     """
     facility_details_supplier_panel = SupplierPanelFacilityDetails(driver)
     facility_details_supplier_panel.open_sp()
-    facility_details_supplier_panel.login_supplier_panel()
+    facility_details_supplier_panel.login_supplier_panel(role="reception")
     facility_details_supplier_panel.click_facility_details()
-    facility_details_supplier_panel.assert_found_text_on_facility_details()
+    facility_details_supplier_panel.assert_found_text_on_facility_details(role="reception")
 
 
 @allure.feature('Supplier Panel Facility Details')
@@ -117,3 +117,17 @@ def test_checking_modal_on_facility_details_page_supplier_panel_ru(driver):
     facility_details_supplier_panel.click_facility_details()
     facility_details_supplier_panel.click_change_button_ru()
     facility_details_supplier_panel.assert_found_elements_modal_on_facility_details_ru()
+
+
+@allure.feature('Supplier Panel Facility Details')
+@allure.severity('critical')
+@allure.story('Exact text validation for finance role')
+def test_checking_exact_text_on_facility_details_page_supplier_panel_finance(driver):
+    """
+    Проверка точных текстов в разделе "Описание обьекта" для роли финансиста.
+    """
+    facility_details_supplier_panel = SupplierPanelFacilityDetails(driver)
+    facility_details_supplier_panel.open_sp()
+    facility_details_supplier_panel.login_supplier_panel(role="finance")
+    facility_details_supplier_panel.click_facility_details()
+    facility_details_supplier_panel.assert_found_text_on_facility_details(role="finance")

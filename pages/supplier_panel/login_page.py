@@ -1,6 +1,7 @@
 import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
+from helpers.supplier_panel_data import get_role_credentials
 from locators.supplier_panel.for_login_page_locators import LoginPageLocators
 from selenium.webdriver.support.ui import Select
 
@@ -100,8 +101,9 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
     @allure.step("Login password field validation")
-    def login_password_field_validation_supplier_panel(self):
-        self.fill(self.LOGIN_FIELD_SUPPLER_PANEL, self.LOGIN_TEXT_SUPPLER_PANEL)
+    def login_password_field_validation_supplier_panel(self, role="reception"):
+        login, _ = get_role_credentials(role)
+        self.fill(self.LOGIN_FIELD_SUPPLER_PANEL, login)
         self.hard_click(self.SIGNIN_BUTTON_SUPPLER_PANEL)
         self.fill(self.PASSWORD_FIELD_SUPPLER_PANEL, self.WRONG_PASSWORD_FORMAT_TEXT_SUPPLER_PANEL)
         self.hard_click(self.SIGNIN_BUTTON_SUPPLER_PANEL)
@@ -125,3 +127,12 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+    @allure.step("Assert notification modal on login page")
+    def assert_notification_modal_present(self):
+        assert self.is_element_visible(self.NOTIFICATION_MODAL_TITLE_RU) or self.is_element_visible(
+            self.NOTIFICATION_MODAL_TITLE_EN
+        ), "Не найден модальный баннер разрешений уведомлений"
+        assert self.is_element_visible(self.ALLOW_NOTIFICATIONS_BUTTON_RU) or self.is_element_visible(
+            self.ALLOW_NOTIFICATIONS_BUTTON_EN
+        ), "Не найдена кнопка запроса разрешений уведомлений"

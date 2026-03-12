@@ -41,8 +41,16 @@ class RegistrationVisitsLocators():
     FIRST_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[1]'
     SECOND_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[2]'
     THIRD_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[3]'
-    BUTTON_NEW_VISITS_LOCATOR = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and .//div[contains(@class, 'btn-content_slot') and text()='Новые визиты']]"
-    BUTTON_NEW_VISITS_LOCATOR_EN = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and .//div[contains(@class, 'btn-content_slot') and text()='New visits']]"
+    BUTTON_NEW_VISITS_LOCATOR = (
+        "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') "
+        "and .//div[contains(@class, 'btn-content_slot') and "
+        "(normalize-space()='Проверить новые визиты' or normalize-space()='Новые визиты')]]"
+    )
+    BUTTON_NEW_VISITS_LOCATOR_EN = (
+        "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') "
+        "and .//div[contains(@class, 'btn-content_slot') and "
+        "(normalize-space()='Check new visits' or normalize-space()='New visits')]]"
+    )
 
     # REGISTRATION OF VISITS PAGE когда пришел визит
     SUPPLIER_NAME_LOCATOR = '//div[@class="row pb-3 pb-sm-4"]/h2[text()="Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО"]'
@@ -65,8 +73,14 @@ class RegistrationVisitsLocators():
     CLICK_BUTTON_SAVE_EN = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and contains(@class, 'modal-controls_control') and .//div[contains(@class, 'btn-content_slot') and text()='Save']]"
     BUTTON_CLOSE_MODAL_REJECT = "//a[@class='icon-container' and @href='#']/*[@id='close-icon']"
     #  CONFIRM VISIT шаги когда подтверждаем визиты
-    ACCEPT_BUTTON_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div/div/div/div[2]/div[1]/div[4]/div/button[2]'
-    ACCEPT_BUTTON_LOCATOR_EN = '//*[@id="app"]/div/div/main/div[2]/div/div/div/div/div[2]/div[1]/div[4]/div/button[2]/div/div'
+    ACCEPT_BUTTON_LOCATOR = (
+        "//button[contains(@class, 'btn') and contains(@class, 'btn__primary') "
+        "and .//div[contains(@class, 'btn-content_slot') and normalize-space()='Принять']]"
+    )
+    ACCEPT_BUTTON_LOCATOR_EN = (
+        "//button[contains(@class, 'btn') and contains(@class, 'btn__primary') "
+        "and .//div[contains(@class, 'btn-content_slot') and normalize-space()='Accept']]"
+    )
     TEXT_QUESTION_ACCEPT_LOCATOR = "//div[@class='modal-header_title']/h2[text()='Является ли клиент человеком на фото?']"
     TEXT_QUESTION_ACCEPT_LOCATOR_EN = "//div[@class='modal-header_title']/h2[text()='Is the visitor the person in the photo?']"
     BUTTON_LOOKS_LIKE_LOCATOR = "//div[@class='modal-controls']//button[@class='btn btn__primary btn-base modal-controls_control']/div[@class='btn-content']/div[@class='btn-content_slot' and text()='Похож']"

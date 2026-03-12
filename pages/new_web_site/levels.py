@@ -5,7 +5,7 @@ import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from helpers.base import BasePage
 from locators.elements_for_new_web_site.for_levels_page import LevelsLocators as L
 
@@ -21,14 +21,12 @@ class LevelsPage(BasePage):
         """Открывает страницу уровней подписок и дожидается загрузки контента."""
         self.driver.get(L.BASE_URL)
 
-        # Небольшая пауза, чтобы баннер успел отрисоваться
-        time.sleep(2)
+        WebDriverWait(self.driver, 10).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
 
         # Сначала пытаемся закрыть cookie-модалку
-        try:
-            self.accept_cookie_consent()
-        except Exception as e:
-            print(f"[DEBUG] Cookie accept failed (можно игнорировать, если баннера нет): {e}")
+        self.accept_cookie_consent()
 
         # Теперь ждём появления основного заголовка или контента страницы
         try:
@@ -37,10 +35,12 @@ class LevelsPage(BasePage):
                     (By.XPATH, "//*[self::h1 or self::h2][contains(.,'Типы подписок')]")
                 )
             )
-        except Exception:
+        except TimeoutException:
             # на случай ленивой подгрузки — скролл и повторная проверка
             self.driver.execute_script("window.scrollBy(0, 800);")
-            time.sleep(1.5)
+            WebDriverWait(self.driver, 10).until(
+                lambda d: d.execute_script("return document.readyState") == "complete"
+            )
             WebDriverWait(self.driver, 15).until(
                 lambda d: "Типы подписок" in d.page_source
             )
@@ -59,11 +59,13 @@ class LevelsPage(BasePage):
             self.driver.execute_script(
                 "arguments[0].dispatchEvent(new MouseEvent('click', {bubbles:true,cancelable:true,view:window}));", btn
             )
-            time.sleep(1)
+            WebDriverWait(self.driver, 5).until(
+                EC.invisibility_of_element_located((By.CSS_SELECTOR, ".cookie-primary-modal"))
+            )
             print("[DEBUG] Cookie-модалка успешно закрыта.")
         except TimeoutException:
             print("[DEBUG] Cookie-баннер не найден — пропускаем.")
-        except Exception as e:
+        except WebDriverException as e:
             print(f"[DEBUG] Ошибка при попытке закрыть cookie-баннер: {e}")
 
     # =====================
@@ -85,15 +87,17 @@ class LevelsPage(BasePage):
         (и не перекрывался фиксированным хедером или баннером).
         """
         try:
-            element = self.driver.find_element(*locator)
+            element = WebDriverWait(self.driver, 10).until(
+                EC.presence_of_element_located(locator)
+            )
             self.driver.execute_script(
                 "arguments[0].scrollIntoView({block: 'center'}); window.scrollBy(0, -arguments[1]);",
                 element,
                 offset
             )
-            time.sleep(0.5)
+            WebDriverWait(self.driver, 5).until(lambda d: element.is_displayed())
             print(f"[DEBUG] Прокрутка к элементу: {locator}")
-        except Exception as e:
+        except (NoSuchElementException, TimeoutException, WebDriverException) as e:
             print(f"[DEBUG] ⚠️ Не удалось проскроллить к элементу {locator}: {e}")
 
 
@@ -191,7 +195,10 @@ class LevelsPage(BasePage):
         phone.clear()
         phone.send_keys("1234")
         email_field.click()
-        time.sleep(0.6)
+        WebDriverWait(self.driver, 5).until(
+            lambda d: d.find_elements(By.CSS_SELECTOR, "div.input-error span.input-error__text")
+            or d.find_elements(By.CSS_SELECTOR, "p.input__help-text")
+        )
 
         # Ищем текст ошибки (span внутри div.input-error)
         err_text = ""
@@ -199,7 +206,7 @@ class LevelsPage(BasePage):
             err_text = self.driver.find_element(
                 By.CSS_SELECTOR, "div.input-error span.input-error__text"
             ).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         # Ищем help-текст, если ошибка не появилась
@@ -208,7 +215,7 @@ class LevelsPage(BasePage):
             help_text = self.driver.find_element(
                 By.CSS_SELECTOR, "p.input__help-text"
             ).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         combined = f"{err_text} {help_text}".lower()
@@ -220,14 +227,17 @@ class LevelsPage(BasePage):
         phone.clear()
         phone.send_keys("привет")
         email_field.click()
-        time.sleep(0.6)
+        WebDriverWait(self.driver, 5).until(
+            lambda d: d.find_elements(By.CSS_SELECTOR, "div.input-error span.input-error__text")
+            or d.find_elements(By.CSS_SELECTOR, "p.input__help-text")
+        )
 
         err_text2 = ""
         try:
             err_text2 = self.driver.find_element(
                 By.CSS_SELECTOR, "div.input-error span.input-error__text"
             ).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         help_text2 = ""
@@ -235,7 +245,7 @@ class LevelsPage(BasePage):
             help_text2 = self.driver.find_element(
                 By.CSS_SELECTOR, "p.input__help-text"
             ).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         combined2 = f"{err_text2} {help_text2}".lower()
@@ -264,14 +274,14 @@ class LevelsPage(BasePage):
             WebDriverWait(self.driver, 5).until(
                 EC.text_to_be_present_in_element(error_locator, "Поле содержит")
             )
-        except Exception:
+        except TimeoutException:
             # Если текст другой (например, “Неверный email”), не падаем, читаем актуальный текст
             pass
 
         err1 = ""
         try:
             err1 = self.driver.find_element(*error_locator).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         assert any(word in err1.lower() for word in [
@@ -284,7 +294,9 @@ class LevelsPage(BasePage):
             "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));",
             email
         )
-        time.sleep(0.3)
+        WebDriverWait(self.driver, 5).until(
+            lambda d: (email.get_attribute("value") or "") == ""
+        )
 
         # === Проверка 2: 'qwert@@' ===
         email.send_keys("qwert@@")
@@ -294,13 +306,13 @@ class LevelsPage(BasePage):
             WebDriverWait(self.driver, 5).until(
                 EC.text_to_be_present_in_element(error_locator, "Адрес")
             )
-        except Exception:
+        except TimeoutException:
             pass
 
         err2 = ""
         try:
             err2 = self.driver.find_element(*error_locator).text.strip()
-        except Exception:
+        except NoSuchElementException:
             pass
 
         assert any(word in err2.lower() for word in [

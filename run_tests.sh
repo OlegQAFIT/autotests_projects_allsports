@@ -27,13 +27,14 @@ REPORT_ZIP="allure_report_${NOW}.zip"
 
 # ===== ЗАПУСК ТЕСТОВ =====
 TEST_EXIT=0
-if ! "$PYTEST" \
+set +e
+"$PYTEST" \
     test_new_web_site/test_regression_pages.py \
     -m schedule \
     --alluredir=allure-results \
-    > "$LOG_FILE" 2>&1; then
-    TEST_EXIT=$?
-fi
+    > "$LOG_FILE" 2>&1
+TEST_EXIT=$?
+set -e
 
 # ===== ALLURE =====
 if [ -x "$ALLURE" ]; then

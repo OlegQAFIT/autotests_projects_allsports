@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 import time
 import allure
-from selenium.common import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -29,10 +29,7 @@ class MainPage(BasePage):
 
     @allure.step("Принять cookies (если баннер есть)")
     def accept_cookie_consent(self):
-        try:
-            self.click_if_visible(("css selector", ".cookie-primary-modal__confirm"))
-        except Exception:
-            pass
+        self.click_if_visible(("css selector", ".cookie-primary-modal__confirm"))
 
     def _safe_scroll(self, locator):
         """Безопасно скроллит к элементу, даже если он лениво подгружается или не виден сразу."""
@@ -44,7 +41,7 @@ class MainPage(BasePage):
                 "arguments[0].scrollIntoView({block: 'center'});", element
             )
             time.sleep(0.4)
-        except Exception:
+        except TimeoutException:
             for _ in range(5):
                 self.driver.execute_script("window.scrollBy(0, 800);")
                 time.sleep(0.6)
@@ -252,7 +249,7 @@ class MainPage(BasePage):
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", close_btn)
             time.sleep(0.2)
             driver.execute_script("arguments[0].click();", close_btn)
-        except Exception as e:
+        except (TimeoutException, WebDriverException) as e:
             allure.attach(driver.page_source, "HTML_перед_закрытием.html", allure.attachment_type.HTML)
             raise AssertionError(f"❌ Кнопка закрытия модалки не найдена или не кликнута: {e}")
 
@@ -342,7 +339,7 @@ class MainPage(BasePage):
                     )
                 )
                 assert answer.text.strip(), f"❌ Ответ пуст у вопроса №{i}: {title.text}"
-            except Exception:
+            except TimeoutException:
                 raise AssertionError(f"❌ Не удалось раскрыть вопрос '{title.text}'")
 
     # =====================
@@ -487,7 +484,7 @@ class MainPage(BasePage):
                 WebDriverWait(self.driver, 10).until(
                     EC.presence_of_element_located(locator)
                 )
-            except Exception:
+            except TimeoutException:
                 html_snapshot = self.driver.page_source
                 print(f"[DEBUG] Элемент не найден: {locator}\nHTML:\n{html_snapshot[:800]}...\n")
                 raise AssertionError(f"❌ Элемент {locator} отсутствует в модалке")
@@ -611,7 +608,9 @@ class MainPage(BasePage):
         """Проверяет наличие карты внизу страницы, корректную загрузку и наличие маркера."""
         # --- Скроллим страницу в самый низ ---
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(1.5)  # даем прогрузиться динамическому контенту (Mapbox)
+        WebDriverWait(self.driver, 20).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
 
         # --- Дожидаемся появления карты ---
         try:
@@ -743,7 +742,7 @@ class MainPage(BasePage):
         try:
             section = self.driver.find_element(By.XPATH, "//section[contains(@class,'advantages')]")
             self.driver.execute_script("arguments[0].scrollIntoView({block:'center'});", section)
-        except Exception:
+        except NoSuchElementException:
             self.driver.execute_script("window.scrollBy(0, document.body.scrollHeight * 0.4);")
         time.sleep(1)
 
@@ -976,4 +975,3 @@ class MainPage(BasePage):
         assert "partners" in self.driver.current_url, "❌ Не произошёл переход на страницу 'Партнёрам'"
 
         print("✅ Вкладка 'Партнёрам' и переход по ссылке проверены успешно.")
-

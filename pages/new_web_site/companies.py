@@ -4,7 +4,7 @@ import allure
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, WebDriverException
 from helpers.base import BasePage
 from locators.elements_for_new_web_site.for_companies_page import CompaniesLocators as L
 
@@ -20,10 +20,7 @@ class CompaniesPage(BasePage):
 
     @allure.step("Принять cookies (если баннер есть)")
     def accept_cookie_consent(self):
-        try:
-            self.click_if_visible(("css selector", ".cookie-primary-modal__confirm"))
-        except Exception:
-            pass
+        self.click_if_visible(("css selector", ".cookie-primary-modal__confirm"))
 
     def _safe_scroll(self, locator):
         """Безопасно скроллит к элементу, даже если он лениво подгружается или не виден сразу."""
@@ -35,7 +32,7 @@ class CompaniesPage(BasePage):
                 "arguments[0].scrollIntoView({block: 'center'});", element
             )
             time.sleep(0.4)
-        except Exception:
+        except TimeoutException:
             for _ in range(5):
                 self.driver.execute_script("window.scrollBy(0, 800);")
                 time.sleep(0.6)
@@ -410,7 +407,7 @@ class CompaniesPage(BasePage):
             logs = self.driver.get_log("browser")
             js_errors = [l for l in logs if "error" in l["level"].lower()]
             assert not js_errors, f"Обнаружены ошибки JS: {js_errors}"
-        except Exception:
+        except WebDriverException:
             pass
 
     @allure.step("Проверить наличие блока 'Часто задаваемые вопросы'")
@@ -447,7 +444,7 @@ class CompaniesPage(BasePage):
             # Кликаем по контейнеру вопроса
             try:
                 title_container.click()
-            except Exception:
+            except WebDriverException:
                 # Если стандартный click() не сработал — создаём JS-событие click
                 self.driver.execute_script(
                     "arguments[0].dispatchEvent(new MouseEvent('click', {bubbles:true}));",
@@ -462,7 +459,7 @@ class CompaniesPage(BasePage):
                 )
                 assert answer_el.is_displayed(), f"Ответ не раскрылся для вопроса: {question_text}"
                 allure.attach(answer_el.text, f"Ответ: {question_text}")
-            except Exception:
+            except TimeoutException:
                 html_snapshot = self.driver.page_source
                 print(f"[DEBUG HTML SNAPSHOT for '{question_text}']\n{html_snapshot[:600]}...\n")
                 assert False, f"Не удалось раскрыть вопрос '{question_text}'"
@@ -524,7 +521,7 @@ class CompaniesPage(BasePage):
             # Кликаем по контейнеру вопроса
             try:
                 title_container.click()
-            except Exception:
+            except WebDriverException:
                 # Если стандартный click() не сработал — создаём JS-событие click
                 self.driver.execute_script(
                     "arguments[0].dispatchEvent(new MouseEvent('click', {bubbles:true}));",
@@ -539,7 +536,7 @@ class CompaniesPage(BasePage):
                 )
                 assert answer_el.is_displayed(), f"Ответ не раскрылся для вопроса: {question_text}"
                 allure.attach(answer_el.text, f"Ответ: {question_text}")
-            except Exception:
+            except TimeoutException:
                 html_snapshot = self.driver.page_source
                 print(f"[DEBUG HTML SNAPSHOT for '{question_text}']\n{html_snapshot[:600]}...\n")
                 assert False, f"Не удалось раскрыть вопрос '{question_text}'"
@@ -591,7 +588,7 @@ class CompaniesPage(BasePage):
             self.driver.execute_script(
                 "arguments[0].scrollTo(0, arguments[0].scrollHeight);", modal
             )
-        except Exception:
+        except (NoSuchElementException, WebDriverException):
             pass
 
     def _blur(self):
@@ -935,7 +932,9 @@ class CompaniesPage(BasePage):
         """Проверяет наличие карты внизу страницы, корректную загрузку и наличие маркера."""
         # --- Скроллим страницу в самый низ ---
         self.driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        time.sleep(1.5)  # даем прогрузиться динамическому контенту (Mapbox)
+        WebDriverWait(self.driver, 20).until(
+            lambda d: d.execute_script("return document.readyState") == "complete"
+        )
 
         # --- Дожидаемся появления карты ---
         try:
@@ -1115,11 +1114,8 @@ class CompaniesPage(BasePage):
                 time.sleep(0.5)
 
                 # --- Если осталась открыта модалка — закрываем ---
-                try:
-                    self.click_if_visible(L.MODAL_CLOSE)
-                    time.sleep(0.3)
-                except Exception:
-                    pass
+                self.click_if_visible(L.MODAL_CLOSE)
+                time.sleep(0.3)
 # ===================== SUBSCRIPTION BLOCK ========================================================================
 
     # =====================
@@ -1132,7 +1128,7 @@ class CompaniesPage(BasePage):
         # Принудительно прокручиваем страницу к блоку с карточками
         try:
             self._safe_scroll((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
-        except Exception:
+        except (TimeoutException, WebDriverException):
             self.driver.execute_script("window.scrollBy(0, 1500);")
             time.sleep(1.5)
 
@@ -1153,7 +1149,7 @@ class CompaniesPage(BasePage):
         # Принудительно скроллим вниз до блока подписок (важно для ленивой подгрузки)
         try:
             self._safe_scroll((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
-        except Exception:
+        except (TimeoutException, WebDriverException):
             driver.execute_script("window.scrollBy(0, 1200);")
             time.sleep(1.5)
 
@@ -1289,7 +1285,7 @@ class CompaniesPage(BasePage):
                 EC.presence_of_element_located((By.XPATH, "//h2[contains(text(),'Типы подписок')]"))
             )
             driver.execute_script("arguments[0].scrollIntoView({block:'center'});", section)
-        except Exception:
+        except TimeoutException:
             driver.execute_script("window.scrollBy(0, 1000);")
             time.sleep(1)
 
@@ -1328,9 +1324,6 @@ class CompaniesPage(BasePage):
             EC.invisibility_of_element_located(L.SUBSCRIPTIONS_ARCHIVE_MODAL)
         )
         time.sleep(0.6)
-
-
-
 
 
 

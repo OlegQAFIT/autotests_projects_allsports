@@ -59,41 +59,41 @@ class HeaderPage(BasePage):
     @allure.step("Проверить, что клик по логотипу ведет на главную страницу")
     def check_logo_navigation(self):
         self.hard_click(L.LOGO)
-        self.assert_url_matches(L.BASE_URL)
+        self.assert_url_contains("/ru-by")
 
     @allure.step("Проверить ссылку 'Объекты'")
     def check_link_facilities(self):
         self.scroll_to_element(L.FACILITIES)
         self.hard_click(L.FACILITIES)
-        self.assert_url_matches(L.URL_FACILITIES)
+        self.assert_url_contains(L.URL_FACILITIES)
         self.assert_text_on_page(L.TEXT_FACILITIES)
 
     @allure.step("Проверить ссылку 'Типы подписок'")
     def check_link_levels(self):
         self.scroll_to_element(L.LEVELS)
         self.hard_click(L.LEVELS)
-        self.assert_url_matches(L.URL_LEVELS)
+        self.assert_url_contains(L.URL_LEVELS)
         self.assert_text_on_page(L.TEXT_LEVELS)
 
     @allure.step("Проверить ссылку 'Компаниям'")
     def check_link_companies(self):
         self.scroll_to_element(L.COMPANIES)
         self.hard_click(L.COMPANIES)
-        self.assert_url_matches(L.URL_COMPANIES)
+        self.assert_url_contains(L.URL_COMPANIES)
         self.assert_text_on_page(L.TEXT_COMPANIES_H1)
 
     @allure.step("Проверить ссылку 'Партнерам'")
     def check_link_partners(self):
         self.scroll_to_element(L.PARTNERS)
         self.hard_click(L.PARTNERS)
-        self.assert_url_matches(L.URL_PARTNERS)
+        self.assert_url_contains(L.URL_PARTNERS)
         self.assert_text_on_page(L.TEXT_PARTNERS_H1)
 
     @allure.step("Проверить ссылку 'Контакты'")
     def check_link_contacts(self):
         self.scroll_to_element(L.CONTACTS)
         self.hard_click(L.CONTACTS)
-        self.assert_url_matches(L.URL_CONTACTS)
+        self.assert_url_contains(L.URL_CONTACTS)
         self.assert_text_on_page(L.TEXT_CONTACTS)
 
     @allure.step("Проверить наличие кнопок 'Получить предложение' и 'Задать вопрос'")

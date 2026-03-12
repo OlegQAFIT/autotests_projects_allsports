@@ -1,4 +1,5 @@
 import allure
+import pytest
 from pages.new_web_site.contacts import ContactsPage
 
 
@@ -98,6 +99,7 @@ def test_check_google_map(driver):
 @allure.feature('Send form')
 @allure.severity('Critical')
 @allure.story('Проверка успешной отправки формы (Подключить компанию)')
+@pytest.mark.live_api
 def test_send_form_valid_get_offer(driver):
     page = ContactsPage(driver)
     page.open()
@@ -322,6 +324,7 @@ def test_all_email_links_found(driver):
 @allure.feature('Validation')
 @allure.severity('Critical')
 @allure.story('Проверка: невалидный email, затем валидный (get-offer)')
+@pytest.mark.live_api
 def test_invalid_email_then_valid(driver):
     page = ContactsPage(driver)
     page.open()
@@ -336,11 +339,12 @@ def test_invalid_email_then_valid(driver):
 @allure.feature('Validation')
 @allure.severity('Critical')
 @allure.story('Проверка: невалидный телефон, затем валидный (get-offer)')
+@pytest.mark.live_api
 def test_invalid_phone_then_valid(driver):
     page = ContactsPage(driver)
     page.open()
     page.accept_cookie_consent()
-    page.submit_form_invaliddd(phone=True)
+    page.submit_form_invalid(phone=True)
     page.assert_phone_error()
     page.submit_form_valid_get_offer()
     page.check_success_modal()
@@ -383,6 +387,7 @@ def test_presence_of_all_form_fields(driver):
 @allure.feature('E2E')
 @allure.severity('Blocker')
 @allure.story('Полный путь пользователя: проверка инфо + отправка формы (get-offer)')
+@pytest.mark.live_api
 def test_e2e_contacts_page_flow(driver):
     page = ContactsPage(driver)
     page.open()

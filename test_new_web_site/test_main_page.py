@@ -151,11 +151,6 @@ def test_subscription_card_texts_valid(driver):
 
     # ===================== TRUST / FEEDBACK SECTION ====================================================================================
 
-# -*- coding: utf-8 -*-
-import allure
-from pages.new_web_site.companies import CompaniesPage
-
-
 @allure.feature("Main Page")
 @allure.severity("Critical")
 @allure.story("Нам доверяют — наличие секции и заголовка")

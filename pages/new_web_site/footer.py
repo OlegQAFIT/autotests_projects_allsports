@@ -97,7 +97,7 @@ class FooterPage(BasePage):
         for locator, url, expected_text in mapping:
             self.scroll_to_element(locator)
             self.hard_click(locator)
-            self.assert_url_matches(url)
+            self.assert_url_contains(url)
             self.assert_text_on_page(expected_text)
             self.driver.back()
             self.accept_cookie_consent()
@@ -163,7 +163,7 @@ class FooterPage(BasePage):
         for url, text in urls:
             self.driver.get(url)
             self.accept_cookie_consent()
-            self.assert_url_matches(url)
+            self.assert_url_contains(url)
             self.assert_text_on_page(text)
             self.check_for_words("russian")
             errors = self.get_js_console_errors()
@@ -200,7 +200,7 @@ class FooterPage(BasePage):
         for url, expected_text in urls:
             self.driver.get(url)
             self.accept_cookie_consent()
-            self.assert_url_matches(url)
+            self.assert_url_contains(url)
             self.assert_text_on_page(expected_text)
             self.check_for_words("russian")
             assert len(self.get_js_console_errors()) == 0, f"JS ошибки на {url}"

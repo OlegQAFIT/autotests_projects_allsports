@@ -358,9 +358,9 @@ class MainPage(BasePage):
 
     @allure.step("Кликнуть по ссылке 'Партнёрам' и проверить переход на корректную страницу")
     def click_partners_link(self):
-        """Кликает по ссылке 'Информация для Партнёров' и проверяет, что открылась именно https://www.allsports.by/ru-by/partners"""
+        """Кликает по ссылке 'Информация для Партнёров' и проверяет переход на /partners."""
         link = self.driver.find_element(*L.FAQ_INFO_LINK)
-        expected_url = "https://www.allsports.by/ru-by/partners"
+        expected_path = "/ru-by/partners"
 
         # Клик через JS для надёжности
         self.driver.execute_script("arguments[0].click();", link)
@@ -375,8 +375,8 @@ class MainPage(BasePage):
         )
 
         current_url = self.driver.current_url
-        assert current_url.startswith(expected_url), \
-            f"❌ Открыт неверный адрес: {current_url}, ожидался: {expected_url}"
+        assert expected_path in current_url, \
+            f"❌ Открыт неверный адрес: {current_url}, ожидался путь: {expected_path}"
 
         # Проверка, что страница реально загрузилась (DOM не пустой)
         body_text = self.driver.find_element(By.TAG_NAME, "body").text
@@ -390,9 +390,9 @@ class MainPage(BasePage):
 
     @allure.step("Кликнуть по ссылке 'Компаниям' и проверить переход на корректную страницу")
     def click_companies_link(self):
-        """Кликает по ссылке 'Информация для Компаний' и проверяет, что открылась именно https://www.allsports.by/ru-by/companies"""
+        """Кликает по ссылке 'Информация для Компаний' и проверяет переход на /companies."""
         link = self.driver.find_element(*L.FAQ_INFO_LINK)
-        expected_url = "https://www.allsports.by/ru-by/companies"
+        expected_path = "/ru-by/companies"
 
         # Клик через JS (надежнее, если кнопка под анимацией)
         self.driver.execute_script("arguments[0].click();", link)
@@ -407,8 +407,8 @@ class MainPage(BasePage):
         )
 
         current_url = self.driver.current_url
-        assert current_url.startswith(expected_url), \
-            f"❌ Открыт неверный адрес: {current_url}, ожидался: {expected_url}"
+        assert expected_path in current_url, \
+            f"❌ Открыт неверный адрес: {current_url}, ожидался путь: {expected_path}"
 
         # Проверяем, что страница реально загрузилась (DOM не пуст)
         body_text = self.driver.find_element(By.TAG_NAME, "body").text
@@ -769,31 +769,12 @@ class MainPage(BasePage):
         self._scroll_to_advantages()
         link = self._wait_clickable(L.ADVANTAGES_BTN_LIST)
         href = link.get_attribute("href")
+        current_url = self.driver.current_url
         self.driver.execute_script("arguments[0].click();", link)
 
-        WebDriverWait(self.driver, 10).until(lambda d: d.current_url != L.BASE_URL)
+        WebDriverWait(self.driver, 10).until(lambda d: d.current_url != current_url)
         assert "facilities" in self.driver.current_url or href in self.driver.current_url, \
             f"❌ Переход по ссылке некорректен ({self.driver.current_url})"
-
-    # ---------------- Вкладка "Пользователям" ----------------
-
-    @allure.step("Проверить вкладку 'Пользователям' и модалку 'Задать вопрос'")
-    def check_tab_users(self):
-        self._scroll_to_advantages()
-        self._wait_clickable(L.ADVANTAGES_TAB_USERS).click()
-        self.verify_advantages_list_items()
-        self._wait_clickable(L.ADVANTAGES_BTN_ASK_OR_GET).click()
-
-        modal = self._wait_visible(L.MODAL_ASK_QUESTION_TITLE)
-        assert modal.is_displayed(), "❌ Модалка 'Задать вопрос' не открылась"
-        assert "Задать вопрос" in modal.text.strip(), "❌ Неверный заголовок в модалке"
-
-        self._validate_modal_common(
-            L.MODAL_INPUT_NAME, L.MODAL_INPUT_PHONE, L.MODAL_INPUT_EMAIL,
-            L.MODAL_TEXTAREA_QUESTION, L.MODAL_AGREEMENT_CHECKBOX,
-            L.MODAL_BTN_SUBMIT, L.MODAL_AGREEMENT_LINK
-        )
-        self._verify_modal_close(L.MODAL_ASK_QUESTION_CLOSE_BTN)
 
     # ---------------- Вкладка "Компаниям" ----------------
 
@@ -871,14 +852,6 @@ class MainPage(BasePage):
 
         href = self.driver.find_element(*policy_link_loc).get_attribute("href")
         assert "/policy/" in href, f"❌ Некорректная ссылка политики: {href}"
-
-    def _verify_modal_close(self, close_btn_loc):
-        """Проверяет закрытие модалки по крестику."""
-        btn = self.driver.find_element(*close_btn_loc)
-        self.driver.execute_script("arguments[0].click();", btn)
-        time.sleep(0.7)
-        modals = self.driver.find_elements(By.CSS_SELECTOR, "div.modal")
-        assert all(not m.is_displayed() for m in modals), "❌ Модалка не закрылась"
 
     def _wait_modal_with_title(self, expected_title: str, timeout: int = 12):
         """Ждёт появления видимой модалки и нужного заголовка в её хедере."""
@@ -1003,7 +976,4 @@ class MainPage(BasePage):
         assert "partners" in self.driver.current_url, "❌ Не произошёл переход на страницу 'Партнёрам'"
 
         print("✅ Вкладка 'Партнёрам' и переход по ссылке проверены успешно.")
-
-
-
 

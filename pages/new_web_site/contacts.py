@@ -3,6 +3,7 @@ import time
 
 import requests
 import allure
+from urllib.parse import urlparse
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import WebDriverException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
@@ -39,7 +40,7 @@ class ContactsPage(BasePage, ContactsPageLocators):
 
     @allure.step("Открыть страницу Контакты")
     def open(self):
-        self.driver.get("https://www.allsports.by/ru-by/contacts")
+        self.driver.get(self.BASE_PATH)
 
     @allure.step("Принять cookies (если показано)")
     def accept_cookie_consent(self):
@@ -433,55 +434,6 @@ class ContactsPage(BasePage, ContactsPageLocators):
         except Exception:
             return False
 
-    @allure.step("Попытаться отправить форму c невалидными данными (универсально, без сабмита)")
-    def submit_form_invaliddd(self, for_partner=False, email=False, phone=False, empty=False, no_agree=False):
-        """
-        Универсальный метод для негативных сценариев обеих форм (get-offer / become-partner).
-        ВАЖНО: В этом варианте метод НЕ нажимает кнопку отправки!
-               Он только вызывает валидацию и проверяет ошибки.
-        """
-
-        # Переключение между вкладками
-        if for_partner:
-            self.switch_to_become_partner()
-        else:
-            self.switch_to_get_offer()
-
-        # Подготовка тестовых данных
-        name = "" if empty else self.text_name
-        ph = "" if empty else (self.text_phone_invalid if phone else self.text_phone_valid)
-        em = "" if empty else (self.text_email_invalid if email else self.text_email_valid)
-        company = "" if empty else self.text_company
-
-        # Заполняем поля
-        self.fill_form_standard(name, ph, em, company)
-
-        # --- Валидация email ---
-        if email:
-            self._blur_field(self.INPUT_PHONE)
-            self.assert_email_error()
-            return  # ❗ прекращаем выполнение — НЕ отправляем форму
-
-        # --- Валидация телефона ---
-        if phone:
-            self._blur_field(self.INPUT_EMAIL)
-            self.assert_phone_error()
-            return  # ❗ прекращаем выполнение — НЕ отправляем форму
-
-        # --- Проверка пустых полей ---
-        if empty:
-            self.check_button_state_disabled()
-            return
-
-        # --- Работа с чекбоксом ---
-        if no_agree:
-            self.clc_checkbox(False)
-            self.check_button_state_disabled()
-            return
-
-        # Если вызвали метод без флагов — базовое поведение (тоже НЕ отправляем)
-        self.assert_any_validation_error()
-
     def _blur_field(self, locator):
         """Безопасно уводим фокус с поля, чтобы вызвать валидацию."""
         try:
@@ -515,12 +467,14 @@ class ContactsPage(BasePage, ContactsPageLocators):
     # ==== API-подтверждение отправки (как на MainPage) ====
 
     def _api_post(self, url: str, payload: dict, expected_status_code=204):
+        parsed_base = urlparse(getattr(self.driver, "base_url", "https://www.allsports.by/ru-by"))
+        origin = f"{parsed_base.scheme}://{parsed_base.netloc}"
         headers = {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
             'Cookie': 'allsports_agr=%7B%22technical%22%3Atrue%2C%22analytical%22%3Afalse%7D; country=ru-by',
-            'Referer': 'https://www.allsports.by/ru-by',
-            'Origin': 'https://www.allsports.by',
+            'Referer': f'{origin}/ru-by',
+            'Origin': origin,
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36'
         }
         response = requests.post(url, headers=headers, json=payload)
@@ -530,7 +484,8 @@ class ContactsPage(BasePage, ContactsPageLocators):
 
     @allure.step("Проверить серверный статус после отправки 'Подключить компанию'")
     def assert_form_get_offer(self, expected_status_code=204):
-        url = 'https://www.allsports.by/api/www/2.0.0/contact/get_offer'
+        parsed_base = urlparse(getattr(self.driver, "base_url", "https://www.allsports.by/ru-by"))
+        url = f'{parsed_base.scheme}://{parsed_base.netloc}/api/www/2.0.0/contact/get_offer'
         payload = {
             'companyName': self.text_company,
             'name': self.text_name,
@@ -544,7 +499,8 @@ class ContactsPage(BasePage, ContactsPageLocators):
 
     @allure.step("Проверить серверный статус после отправки 'Стать партнёром'")
     def assert_form_become_partner(self, expected_status_code=204):
-        url = 'https://www.allsports.by/api/www/2.0.0/contact/become_partner'
+        parsed_base = urlparse(getattr(self.driver, "base_url", "https://www.allsports.by/ru-by"))
+        url = f'{parsed_base.scheme}://{parsed_base.netloc}/api/www/2.0.0/contact/become_partner'
         payload = {
             'companyName': self.text_company,
             'name': self.text_name,
@@ -685,3 +641,4 @@ class ContactsPage(BasePage, ContactsPageLocators):
     @allure.step("Проверить наличие ссылки 'Правила оказания услуг'")
     def check_footer_rules_link_present(self):
         self.assert_element_present(self.FOOTER_RULES_LINK)
+    BASE_PATH = "/ru-by/contacts"

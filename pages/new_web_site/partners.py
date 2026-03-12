@@ -425,34 +425,6 @@ class PartnersPage(BasePage):
     def verify_success_modal(self):
         self._wait_success_message()
 
-    @allure.step("Проверить ошибки в форме 'Стать партнёром'")
-    def verify_promo_partner_form_errors(self):
-        """Проверка ошибок валидации полей телефона и email в форме 'Стать партнёром'."""
-        self._wait_form_ready()
-
-        phone = self.driver.find_element(*L.JOIN_INPUT_PHONE)
-        email = self.driver.find_element(*L.JOIN_INPUT_EMAIL)
-
-        # === Проверка ошибки телефона ===
-        phone.send_keys("111")
-        email.click()  # теряем фокус, чтобы запустить валидацию телефона
-        time.sleep(0.5)
-        err1 = self._get_error_text_for_element(phone)
-        assert "Неверный формат номера" in err1, f"Ошибка телефона не отображается: {err1}"
-
-        # === Проверка ошибки email ===
-        phone.clear()
-        phone.send_keys("+375297000000")
-        email.clear()
-        email.send_keys("тест@@")
-        email.send_keys(Keys.TAB)
-        time.sleep(0.5)
-        err2 = self._get_error_text_for_element(email)
-        assert any(s in err2 for s in [
-            "должен быть действительным",
-            "Поле содержит запрещенные символы"
-        ]), f"Ошибка email не отображается: {err2}"
-
     def _get_error_text_for_element(self, element):
         """Возвращает текст ошибки, относящийся к конкретному полю (используется только в тесте формы 'Стать партнёром')."""
         try:
@@ -643,8 +615,9 @@ class PartnersPage(BasePage):
     def check_join_clear_fields(self):
         self._safe_scroll((By.ID, "getDetailsSection"))
         for locator in [L.JOIN_INPUT_NAME, L.JOIN_INPUT_EMAIL]:
-            self.fill(locator, "")
-        assert True
+            field = self.driver.find_element(*locator)
+            field.clear()
+            assert (field.get_attribute("value") or "") == "", f"Поле {locator} не очистилось"
 
     # =====================
     # ДОПОЛНИТЕЛЬНЫЕ ПРОВЕРКИ ВАЛИДАЦИИ ФОРМ

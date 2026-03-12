@@ -21,7 +21,7 @@ SUPPLIER_ACCOUNTS = {
 
 
 ROLE_DOCUMENTS_ACCESS = {
-    "reception": _as_bool(os.getenv("SUPPLIER_RECEPTION_HAS_DOCUMENTS"), False),
+    "reception": _as_bool(os.getenv("SUPPLIER_RECEPTION_HAS_DOCUMENTS"), True),
     "finance": _as_bool(os.getenv("SUPPLIER_FINANCE_HAS_DOCUMENTS"), True),
 }
 

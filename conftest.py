@@ -1,3 +1,4 @@
+import logging
 import os
 from urllib.parse import urlparse, urlunparse
 
@@ -14,6 +15,9 @@ from selenium.webdriver.firefox.options import Options as FirefoxOption
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+
+logging.getLogger('dotenv.main').setLevel(logging.ERROR)
+
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager

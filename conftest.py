@@ -39,22 +39,11 @@ def pytest_addoption(parser):
         help='base URL for UI tests, e.g. https://staging.example.com/ru-by',
     )
     parser.addoption(
-        '--allow-prod',
-        action='store_true',
-        default=False,
-        help='allow running tests against production host',
-    )
-    parser.addoption(
         '--live-api',
         action='store_true',
         default=False,
         help='enable real API POST checks (disabled by default)',
     )
-
-
-def _is_production_url(url: str) -> bool:
-    production_hosts = {'www.allsports.by', 'allsports.by'}
-    return urlparse(url).netloc in production_hosts
 
 
 def _rewrite_url(url: str, base_url: str) -> str:
@@ -162,14 +151,7 @@ def driver(request):
     browser = request.config.getoption('--b')
     headless = request.config.getoption('--headless')
     base_url = request.config.getoption('--base-url').rstrip('/')
-    allow_prod = request.config.getoption('--allow-prod')
     live_api = request.config.getoption('--live-api')
-
-    if _is_production_url(base_url) and not allow_prod:
-        pytest.exit(
-            'Refusing to run against production by default. '
-            'Use --allow-prod to confirm production run.'
-        )
 
     if browser == 'chrome':
         web_driver = create_chrome(headless)

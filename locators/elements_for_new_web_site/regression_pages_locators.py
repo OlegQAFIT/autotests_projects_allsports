@@ -21,7 +21,12 @@ class RegressionLocators:
         },
         "facilities": {
             "url": "https://www.allsports.by/ru-by/facilities",
-            "locators": [(By.XPATH, '//*[@id="map"]/div[2]/canvas')],
+            "locators": [
+                (By.CSS_SELECTOR, "#map .mapboxgl-canvas"),
+                (By.CSS_SELECTOR, ".facilities-filter-bar"),
+                (By.CSS_SELECTOR, ".facilities-list"),
+                (By.CSS_SELECTOR, ".facilities__objects-table"),
+            ],
         },
         "levels": {
             "url": "https://www.allsports.by/ru-by/levels",

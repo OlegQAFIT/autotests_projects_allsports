@@ -24,8 +24,11 @@ class LoginPageLocators():
     WRONG_PASSWORD_TEXT_SUPPLER_PANEL = "secret"
     WRONG_PASSWORD_FORMAT_TEXT_SUPPLER_PANEL = "secret12"
     LOCATOR_TEXT_ERRORE_WRONG_EMAIL = "//p[text()='Выбранное значение для email не найдено в списке.']"
-    LOCATOR_TEXT_ERRORE_WRONG_PASSWORD = "//p[@class='info-banner_message' and text()='Неверный пароль']"
-    LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN = "//p[@class='info-banner_message' and text()='Invalid password']"
+    LOCATOR_TEXT_ERRORE_WRONG_PASSWORD = (
+        "//*[contains(@class,'info-banner_message') and "
+        "(contains(normalize-space(),'Неверный пароль') or contains(normalize-space(),'Invalid password'))]"
+    )
+    LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN = LOCATOR_TEXT_ERRORE_WRONG_PASSWORD
 
     LOCATOR_TEXT_ERRORE_WRONG_USER = "//p[@data-v-fe06182b and contains(@class, 'info-banner_message')]"
     WRONG_TEXT_SUPPLER_PANEL = "test@allsports@gmail.com"

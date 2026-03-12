@@ -2,7 +2,7 @@ from locators.supplier_panel.for_facility_details_locators import FacilityDetail
 import allure
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
-from helpers.supplier_panel_data import get_expected_facility_text
+from helpers.supplier_panel_data import get_expected_contacts_text, get_expected_facility_text
 import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -131,26 +131,36 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
 
     @allure.step("Found elements")
     def assert_found_elements_modal_on_facility_details_en(self):
+        contacts = get_expected_contacts_text()
         elements_to_check = [
             (self.CHANGE_DATA_LOCATOR_EN, 'Change data'),
             (self.TEXT_INFO_LOCATOR_EN, 'In order to change the data you need to contact technical support:'),
-            (self.PHONE_NUMBER_LOCATOR, '375445253892'),
-            (self.EMAIL_LOCATOR, 'alex@allsports.by'),
+            (self.PHONE_NUMBER_LOCATOR, contacts["phone"]),
+            (self.EMAIL_LOCATOR, contacts["email"]),
         ]
 
         for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+            actual_value = " ".join(self.find_element_text(element_locator).split())
+            normalized_expected = " ".join(expected_value.split())
+            assert actual_value == normalized_expected, (
+                f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. "
+                f"Ожидаем: '{normalized_expected}', Фактически: '{actual_value}'"
+            )
 
     @allure.step("Found elements")
     def assert_found_elements_modal_on_facility_details_ru(self):
+        contacts = get_expected_contacts_text()
         elements_to_check = [
             (self.CHANGE_DATA_LOCATOR_RU, 'Изменить данные'),
             (self.TEXT_INFO_LOCATOR_RU, 'Для того, чтобы изменить данные вам необходимо связаться с тех. поддержкой:'),
-            (self.PHONE_NUMBER_LOCATOR, '375445253892'),
-            (self.EMAIL_LOCATOR, 'alex@allsports.by'),
+            (self.PHONE_NUMBER_LOCATOR, contacts["phone"]),
+            (self.EMAIL_LOCATOR, contacts["email"]),
         ]
 
         for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+            actual_value = " ".join(self.find_element_text(element_locator).split())
+            normalized_expected = " ".join(expected_value.split())
+            assert actual_value == normalized_expected, (
+                f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. "
+                f"Ожидаем: '{normalized_expected}', Фактически: '{actual_value}'"
+            )

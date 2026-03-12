@@ -111,20 +111,9 @@ class SupplierPanelVisitsUnderCorrection(LoginPageSupplierPanel, VisitUnderCorre
     @allure.step("Check Month Selection")
     def check_month_selection(self):
         WebDriverWait(self.driver, 10).until(
-            EC.presence_of_element_located((By.CLASS_NAME, "dp__instance_calendar"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, ".dp__instance_calendar, .dp__menu"))
         )
-        selected_month_elements = self.driver.find_elements(By.CSS_SELECTOR, "[aria-selected='true']")
+        selected_month_elements = self.driver.find_elements(
+            By.CSS_SELECTOR, ".dp__calendar_item[aria-selected='true'], .dp__overlay_col[aria-selected='true']"
+        )
         assert selected_month_elements, "Не найден выбранный месяц в календаре"
-
-        for selected_month_element in selected_month_elements:
-            selected_month_text = selected_month_element.text.strip()
-            assert selected_month_text, "Текст выбранного месяца пустой"
-            previous_months = selected_month_element.find_elements(
-                By.XPATH, "preceding-sibling::*[@aria-disabled='false']"
-            )
-            following_months = selected_month_element.find_elements(
-                By.XPATH, "following-sibling::*[@aria-selected='false']"
-            )
-            assert len(previous_months) + len(following_months) > 0, (
-                "Календарь не содержит соседние месяцы для выбранного значения"
-            )

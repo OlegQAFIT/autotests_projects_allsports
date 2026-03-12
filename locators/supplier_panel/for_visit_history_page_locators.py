@@ -12,13 +12,17 @@ class VisitHistoryLocators():
     TOTAL_VISITS_TEXT_LOCATOR_EN = '//h3[@class="d-none d-sm-block" and text()="Total visits:"]'
     TOTAL_SUMMERY_VISITS_LOCATOR = "//span[@class='total-visits_number ms-2']"
     TOTAL_PRICE_TEXT_LOCATOR_RU = '//h3[@class="d-none d-sm-block" and text()="Общая стоимость:"]'
-    TOTAL_PRICE_TEXT_LOCATOR_EN = '//*[@id="app"]/div/div/main/div[2]/div/div[1]/div[1]/div[2]/span'
+    TOTAL_PRICE_TEXT_LOCATOR_EN = '//h3[@class="d-none d-sm-block" and text()="Total price:"]'
+    TOTAL_PRICE_VALUE_LOCATOR = (
+        "(//h3[normalize-space()='Общая стоимость:' or normalize-space()='Total price:']"
+        "/following::span[contains(@class,'total-visits_number')])[1]"
+    )
 
     # Календарь
     DATE_NAME_TEXT_CALENDAR_LOCATOR_RU = '//span[@class="datepicker_label" and text()="Дата:"]'
     DATE_NAME_TEXT_CALENDAR_LOCATOR_EN = '//span[@class="datepicker_label" and text()="Date:"]'
-    CALENDAR_BUTTON_LOCATOR = '//*[@id="app"]/div/div/main/div[2]/div/div[1]/div[2]/div[1]/div/div/div/div'
-    APRIL_MONTH = '//*[@id="app"]/div/div/main/div[2]/div/div[1]/div[2]/div[1]/div/div/div[2]/div/div[2]/div/div[1]/div/div[1]/div/div/div[3]/div[1]/div'
+    CALENDAR_BUTTON_LOCATOR = "//input[contains(@class,'dp__input')]"
+    APRIL_MONTH = "//div[contains(@class,'dp__menu')]//*[@aria-disabled='false' and @aria-selected='false'][1]"
 
     # Период
     PERIOD_NAME_TEXT_LOCATOR_RU = '//span[text()="Период:"]'
@@ -64,7 +68,4 @@ class VisitHistoryLocators():
     ACCEPTED_SELECT = '//*[@id="modal-container"]/form/div[2]/label[2]/label/p/select/option[1]'
     DECLINED_SELECT = '//*[@id="modal-container"]/form/div[2]/label[2]/label/p/select/option[2]'
     TIMEOUT_SELECT = '//*[@id="modal-container"]/form/div[2]/label[2]/label/p/select/option[3]'
-
-
-
 

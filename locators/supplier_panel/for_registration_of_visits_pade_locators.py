@@ -41,26 +41,25 @@ class RegistrationVisitsLocators():
     FIRST_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[1]'
     SECOND_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[2]'
     THIRD_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[3]'
+    FOURTH_INSTRUCTION_LOCATOR = '//ol[@class="ps-4"]/li[4]'
     BUTTON_NEW_VISITS_LOCATOR = (
-        "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') "
-        "and .//div[contains(@class, 'btn-content_slot') and "
-        "(normalize-space()='Проверить новые визиты' or normalize-space()='Новые визиты')]]"
+        "//button[normalize-space()='Проверить новые визиты' or normalize-space()='Новые визиты' "
+        "or .//*[normalize-space()='Проверить новые визиты'] or .//*[normalize-space()='Новые визиты']]"
     )
     BUTTON_NEW_VISITS_LOCATOR_EN = (
-        "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') "
-        "and .//div[contains(@class, 'btn-content_slot') and "
-        "(normalize-space()='Check new visits' or normalize-space()='New visits')]]"
+        "//button[normalize-space()='Check new visits' or normalize-space()='New visits' "
+        "or .//*[normalize-space()='Check new visits'] or .//*[normalize-space()='New visits']]"
     )
 
     # REGISTRATION OF VISITS PAGE когда пришел визит
-    SUPPLIER_NAME_LOCATOR = '//div[@class="row pb-3 pb-sm-4"]/h2[text()="Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО"]'
+    SUPPLIER_NAME_LOCATOR = "//div[contains(@class,'row') and contains(@class,'pb-3')]/h2"
     NAME_USER_LOCATOR = '//div[@class="row visit-info-item"][1]/p[@class="col-6 visit-info-item_body"]'
     LEVEL_USER_LOCATOR = '//div[@class="row visit-info-item"][2]/p[@class="col-6 visit-info-item_body"]'
     ATTRACTION_USER_LOCATOR = '//div[@class="row visit-info-item"][3]/p[@class="col-6 visit-info-item_body"]'
 
     # REJECT VISIT шаги когда отклоняем визит
-    DECLINE_BUTTON_LOCATOR = "//div[@class='btn-content']/div[@class='btn-content_slot' and text()='Отклонить']"
-    DECLINE_BUTTON_LOCATOR_EN = "//div[@class='btn-content']/div[@class='btn-content_slot' and text()='Decline']"
+    DECLINE_BUTTON_LOCATOR = "//button[.//*[normalize-space()='Отклонить']]"
+    DECLINE_BUTTON_LOCATOR_EN = "//button[.//*[normalize-space()='Decline']]"
     REJECT_VISIT_TEXT_LOCATOR = "//h2[@class='d-none d-sm-block' and text()='Отклонить визит']"
     REJECT_VISIT_TEXT_LOCATOR_EN = "//h2[@class='d-none d-sm-block' and text()='Reject the visit']"
     REASON_TEXT_LOCATOR = "//span[text()='Причина']"
@@ -74,12 +73,10 @@ class RegistrationVisitsLocators():
     BUTTON_CLOSE_MODAL_REJECT = "//a[@class='icon-container' and @href='#']/*[@id='close-icon']"
     #  CONFIRM VISIT шаги когда подтверждаем визиты
     ACCEPT_BUTTON_LOCATOR = (
-        "//button[contains(@class, 'btn') and contains(@class, 'btn__primary') "
-        "and .//div[contains(@class, 'btn-content_slot') and normalize-space()='Принять']]"
+        "//button[.//*[normalize-space()='Принять']]"
     )
     ACCEPT_BUTTON_LOCATOR_EN = (
-        "//button[contains(@class, 'btn') and contains(@class, 'btn__primary') "
-        "and .//div[contains(@class, 'btn-content_slot') and normalize-space()='Accept']]"
+        "//button[.//*[normalize-space()='Accept']]"
     )
     TEXT_QUESTION_ACCEPT_LOCATOR = "//div[@class='modal-header_title']/h2[text()='Является ли клиент человеком на фото?']"
     TEXT_QUESTION_ACCEPT_LOCATOR_EN = "//div[@class='modal-header_title']/h2[text()='Is the visitor the person in the photo?']"

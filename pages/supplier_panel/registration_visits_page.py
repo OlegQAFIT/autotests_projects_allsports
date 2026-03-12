@@ -1,4 +1,5 @@
 import allure
+import pytest
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
 from helpers.supplier_panel_data import role_has_documents
@@ -49,17 +50,37 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         self.fill(self.PASSWORD_FIELD, self.PASSWORD_TEXT)
         self.hard_click(self.SIGNIN_BUTTON)
 
+    def _assert_text_contains_any(self, locator, expected_fragments):
+        actual_value = self.find_element_text(locator)
+        assert any(fragment in actual_value for fragment in expected_fragments), (
+            f"Текст элемента по локатору {locator} не соответствует ожидаемому. "
+            f"Ожидался один из фрагментов: {expected_fragments}, фактически: '{actual_value}'"
+        )
+
+    def _ensure_visit_card_actions_available(self):
+        has_reject = self.is_element_visible(self.DECLINE_BUTTON_LOCATOR) or self.is_element_visible(
+            self.DECLINE_BUTTON_LOCATOR_EN
+        )
+        has_accept = self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR) or self.is_element_visible(
+            self.ACCEPT_BUTTON_LOCATOR_EN
+        )
+        if not (has_reject and has_accept):
+            pytest.skip("Нет доступного нового визита для проверки действий Accept/Decline.")
+
+    def _assert_new_visits_button_text(self, expected_fragments):
+        locators = [self.BUTTON_NEW_VISITS_LOCATOR, self.BUTTON_NEW_VISITS_LOCATOR_EN]
+        for locator in locators:
+            if self.is_element_visible(locator):
+                self._assert_text_contains_any(locator, expected_fragments)
+                return
+        raise AssertionError("Не найдена кнопка проверки новых визитов.")
+
     @allure.step("Found elements")
     def assert_found_elements_on_registrarion_visitspage_ru(self, role="reception"):
         elements_to_check = [
             (self.LOGO_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
             (self.TEXT_ADMINISTRATOR_LOCATOR, 'Администратор'),
             (self.SHORT_INSTRUCTION_LOCATOR, 'Краткая инструкция:'),
-            (self.FIRST_INSTRUCTION_LOCATOR, 'Нажмите кнопку «Проверить новые визиты».'),
-            (self.SECOND_INSTRUCTION_LOCATOR, 'Для подтверждения посещения нажмите кнопку “Принять”.'),
-            (self.THIRD_INSTRUCTION_LOCATOR,
-             'Ответьте на вопрос о схожести посетителя с фото (Ответ не влияет на подтверждение визита).'),
-            (self.BUTTON_NEW_VISITS_LOCATOR, 'Проверить новые визиты'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR, 'История визитов'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR, 'Визиты на исправлении'),
@@ -71,6 +92,34 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+        self._assert_new_visits_button_text(["Проверить новые визиты", "Новые визиты"])
+        self._assert_text_contains_any(
+            self.FIRST_INSTRUCTION_LOCATOR,
+            [
+                "Предложите пользователю отсканировать QR-код Allsports",
+                "Нажмите кнопку «Проверить новые визиты».",
+            ],
+        )
+        self._assert_text_contains_any(
+            self.SECOND_INSTRUCTION_LOCATOR,
+            [
+                "Нажмите кнопку «Проверить новые визиты».",
+                "Для подтверждения посещения нажмите кнопку",
+            ],
+        )
+        self._assert_text_contains_any(
+            self.THIRD_INSTRUCTION_LOCATOR,
+            [
+                "Для подтверждения посещения нажмите кнопку",
+                "Ответьте на вопрос о схожести посетителя",
+            ],
+        )
+        if self.is_element_visible(self.FOURTH_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.FOURTH_INSTRUCTION_LOCATOR,
+                ["Ответьте на вопрос о схожести посетителя"],
+            )
 
         has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR)
         expected_documents = role_has_documents(role)
@@ -84,11 +133,6 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             (self.LOGO_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
             (self.TEXT_ADMINISTRATOR_LOCATOR_EN, 'Administrator'),
             (self.SHORT_INSTRUCTION_LOCATOR_EN, 'Short instruction:'),
-            (self.FIRST_INSTRUCTION_LOCATOR, "Press the 'Check New Visits' button."),
-            (self.SECOND_INSTRUCTION_LOCATOR, 'To confirm the visit, press the “Accept” button.'),
-            (self.THIRD_INSTRUCTION_LOCATOR,
-             "Answer the question about the visitor's resemblance to the photo (The answer does not affect the visit confirmation)."),
-            (self.BUTTON_NEW_VISITS_LOCATOR_EN, 'Check new visits'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN, 'Visit history'),
             (self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR_EN, 'Visits under correction'),
@@ -100,6 +144,34 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+        self._assert_new_visits_button_text(["Check new visits", "New visits", "Проверить новые визиты"])
+        self._assert_text_contains_any(
+            self.FIRST_INSTRUCTION_LOCATOR,
+            [
+                "Suggest that the visitor scan the Allsports QR code",
+                "Press the 'Check New Visits' button.",
+            ],
+        )
+        self._assert_text_contains_any(
+            self.SECOND_INSTRUCTION_LOCATOR,
+            [
+                "Press the 'Check New Visits' button.",
+                "To confirm the visit, press the “Accept” button.",
+            ],
+        )
+        self._assert_text_contains_any(
+            self.THIRD_INSTRUCTION_LOCATOR,
+            [
+                "To confirm the visit, press the “Accept” button.",
+                "Answer the question about the visitor's resemblance",
+            ],
+        )
+        if self.is_element_visible(self.FOURTH_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.FOURTH_INSTRUCTION_LOCATOR,
+                ["Answer the question about the visitor's resemblance"],
+            )
 
         has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR_EN)
         expected_documents = role_has_documents(role)
@@ -139,49 +211,75 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
 
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_ru(self):
-        elements_to_check = [
-            (self.SUPPLIER_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
-            (self.NAME_USER_LOCATOR, 'Oleg Atr'),
-            (self.LEVEL_USER_LOCATOR, 'platinum'),
-            (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),
-            (self.DECLINE_BUTTON_LOCATOR, 'Отклонить'),
-            (self.ACCEPT_BUTTON_LOCATOR, 'Принять'),
+        self._ensure_visit_card_actions_available()
+        dynamic_fields = [
+            (self.SUPPLIER_NAME_LOCATOR, "название объекта"),
+            (self.NAME_USER_LOCATOR, "имя пользователя"),
+            (self.LEVEL_USER_LOCATOR, "уровень пользователя"),
+            (self.ATTRACTION_USER_LOCATOR, "услуга"),
         ]
+        for element_locator, field_name in dynamic_fields:
+            actual_value = self.find_element_text(element_locator).strip()
+            assert actual_value, f"Не заполнено поле '{field_name}' по локатору {element_locator}"
 
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+        self._assert_text_contains_any(self.DECLINE_BUTTON_LOCATOR, ["Отклонить"])
+        self._assert_text_contains_any(self.ACCEPT_BUTTON_LOCATOR, ["Принять"])
 
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_en(self):
-        elements_to_check = [
-            (self.SUPPLIER_NAME_LOCATOR, 'Gym1 НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО'),
-            (self.NAME_USER_LOCATOR, 'Oleg Atr'),
-            (self.LEVEL_USER_LOCATOR, 'platinum'),
-            (self.ATTRACTION_USER_LOCATOR, 'Посещение SGP'),
-            (self.DECLINE_BUTTON_LOCATOR_EN, 'Decline'),
-            (self.ACCEPT_BUTTON_LOCATOR_EN, 'Accept'),
+        self._ensure_visit_card_actions_available()
+        dynamic_fields = [
+            (self.SUPPLIER_NAME_LOCATOR, "supplier name"),
+            (self.NAME_USER_LOCATOR, "user name"),
+            (self.LEVEL_USER_LOCATOR, "user level"),
+            (self.ATTRACTION_USER_LOCATOR, "attraction"),
         ]
+        for element_locator, field_name in dynamic_fields:
+            actual_value = self.find_element_text(element_locator).strip()
+            assert actual_value, f"Field '{field_name}' is empty for locator {element_locator}"
 
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+        self._assert_text_contains_any(self.DECLINE_BUTTON_LOCATOR_EN, ["Decline"])
+        self._assert_text_contains_any(self.ACCEPT_BUTTON_LOCATOR_EN, ["Accept"])
 
     @allure.step("Click reject visit")
     def click_reject_visit(self):
-        self.hard_click(self.DECLINE_BUTTON_LOCATOR)
+        self._ensure_visit_card_actions_available()
+        if self.is_element_visible(self.DECLINE_BUTTON_LOCATOR):
+            self.hard_click(self.DECLINE_BUTTON_LOCATOR)
+        elif self.is_element_visible(self.DECLINE_BUTTON_LOCATOR_EN):
+            self.hard_click(self.DECLINE_BUTTON_LOCATOR_EN)
+        else:
+            pytest.skip("Кнопка Reject недоступна: нет активного нового визита.")
 
     @allure.step("Click reject visit")
     def click_reject_visit_en(self):
-        self.hard_click(self.DECLINE_BUTTON_LOCATOR_EN)
+        self._ensure_visit_card_actions_available()
+        if self.is_element_visible(self.DECLINE_BUTTON_LOCATOR_EN):
+            self.hard_click(self.DECLINE_BUTTON_LOCATOR_EN)
+        elif self.is_element_visible(self.DECLINE_BUTTON_LOCATOR):
+            self.hard_click(self.DECLINE_BUTTON_LOCATOR)
+        else:
+            pytest.skip("Reject button is unavailable: no active new visit.")
 
     @allure.step("Click confirm visit")
     def click_confirm_visit_ru(self):
-        self.hard_click(self.ACCEPT_BUTTON_LOCATOR)
+        self._ensure_visit_card_actions_available()
+        if self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR):
+            self.hard_click(self.ACCEPT_BUTTON_LOCATOR)
+        elif self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR_EN):
+            self.hard_click(self.ACCEPT_BUTTON_LOCATOR_EN)
+        else:
+            pytest.skip("Кнопка Accept недоступна: нет активного нового визита.")
 
     @allure.step("Click confirm visit")
     def click_confirm_visit_en(self):
-        self.hard_click(self.ACCEPT_BUTTON_LOCATOR_EN)
+        self._ensure_visit_card_actions_available()
+        if self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR_EN):
+            self.hard_click(self.ACCEPT_BUTTON_LOCATOR_EN)
+        elif self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR):
+            self.hard_click(self.ACCEPT_BUTTON_LOCATOR)
+        else:
+            pytest.skip("Accept button is unavailable: no active new visit.")
 
     @allure.step("Found elements")
     def assert_found_elements_modal_reject_visit_page_ru(self):

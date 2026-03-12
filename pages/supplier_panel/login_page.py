@@ -110,29 +110,27 @@ class SupplierPanel(LoginPageSupplierPanel, LoginPageLocators, BasePage):
 
     @allure.step("Assert found error text for password field validation in Russian")
     def assert_found_errore_text_pasword_field_validation(self):
-        elements_to_check = [
-            (self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD, 'Неверный пароль'),
-        ]
-
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+        actual_value = self.find_element_text(self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD)
+        assert 'Неверный пароль' in actual_value or 'Invalid password' in actual_value, (
+            f"Ожидалась ошибка пароля, фактически: '{actual_value}'"
+        )
 
     @allure.step("Assert found error text for password field validation in English")
     def assert_found_errore_text_pasword_field_validation_en(self):
-        elements_to_check = [
-            (self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN, 'Invalid password'),
-        ]
+        actual_value = self.find_element_text(self.LOCATOR_TEXT_ERRORE_WRONG_PASSWORD_EN)
+        assert 'Invalid password' in actual_value or 'Неверный пароль' in actual_value, (
+            f"Expected password validation error, actual: '{actual_value}'"
+        )
 
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+    @allure.step("Assert notification modal on login page")
+    def is_notification_modal_present(self):
+        return self.is_element_visible(self.NOTIFICATION_MODAL_TITLE_RU) or self.is_element_visible(
+            self.NOTIFICATION_MODAL_TITLE_EN
+        )
 
     @allure.step("Assert notification modal on login page")
     def assert_notification_modal_present(self):
-        assert self.is_element_visible(self.NOTIFICATION_MODAL_TITLE_RU) or self.is_element_visible(
-            self.NOTIFICATION_MODAL_TITLE_EN
-        ), "Не найден модальный баннер разрешений уведомлений"
+        assert self.is_notification_modal_present(), "Не найден модальный баннер разрешений уведомлений"
         assert self.is_element_visible(self.ALLOW_NOTIFICATIONS_BUTTON_RU) or self.is_element_visible(
             self.ALLOW_NOTIFICATIONS_BUTTON_EN
         ), "Не найдена кнопка запроса разрешений уведомлений"

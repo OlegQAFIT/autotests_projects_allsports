@@ -4,7 +4,10 @@ from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
 from helpers.supplier_panel_data import role_has_documents
 from locators.supplier_panel.for_registration_of_visits_pade_locators import RegistrationVisitsLocators
-from helpers.add_visit import login_and_create_visit as external_login_and_create_visit
+from helpers.add_visit import (
+    create_test_visit as external_create_test_visit,
+    login_and_create_visit as external_login_and_create_visit,
+)
 
 import time
 from selenium.webdriver.support.ui import Select
@@ -40,9 +43,11 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         self.hard_click(self.RESET_BUTTON)
 
     @allure.step("Login and create visit")
-    def login_and_create_visit(self, phone_number="+375000000088", sms_code="5566",
-                               gym_token="https://holder.allsports.by/s/3b8b", attraction_id=14225):
-        external_login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+    def login_and_create_visit(self, phone_number=None, sms_code=None, gym_token=None, attraction_id=None):
+        if all(value is not None for value in [phone_number, sms_code, gym_token, attraction_id]):
+            external_login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+            return
+        external_create_test_visit()
 
     @allure.step("Login in SP V2")
     def login(self):
@@ -57,15 +62,49 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             f"Ожидался один из фрагментов: {expected_fragments}, фактически: '{actual_value}'"
         )
 
-    def _ensure_visit_card_actions_available(self):
+    def _has_visit_card_actions(self):
         has_reject = self.is_element_visible(self.DECLINE_BUTTON_LOCATOR) or self.is_element_visible(
             self.DECLINE_BUTTON_LOCATOR_EN
         )
         has_accept = self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR) or self.is_element_visible(
             self.ACCEPT_BUTTON_LOCATOR_EN
         )
-        if not (has_reject and has_accept):
-            pytest.skip("Нет доступного нового визита для проверки действий Accept/Decline.")
+        return has_reject and has_accept
+
+    def _click_new_visits_if_available(self):
+        if self.is_element_visible(self.BUTTON_NEW_VISITS_LOCATOR):
+            self.hard_click(self.BUTTON_NEW_VISITS_LOCATOR)
+            return
+        if self.is_element_visible(self.BUTTON_NEW_VISITS_LOCATOR_EN):
+            self.hard_click(self.BUTTON_NEW_VISITS_LOCATOR_EN)
+            return
+        self.driver.refresh()
+
+    def _try_create_visit_if_missing(self):
+        if not getattr(self.driver, "live_api", False):
+            pytest.skip(
+                "Нет доступного нового визита. Запустите тесты с флагом --live-api, "
+                "чтобы автотест смог создать визит через API."
+            )
+
+        self.login_and_create_visit()
+        for _ in range(5):
+            self._click_new_visits_if_available()
+            if self._has_visit_card_actions():
+                return True
+            time.sleep(1.5)
+        return self._has_visit_card_actions()
+
+    def _ensure_visit_card_actions_available(self):
+        if self._has_visit_card_actions():
+            return
+        if self._try_create_visit_if_missing():
+            return
+        raise AssertionError(
+            "Визит был создан, но карточка нового визита (Accept/Decline) не появилась в supplier panel. "
+            "Проверьте соответствие данных визита текущему аккаунту поставщика "
+            "(SUPPLIER_VISIT_GYM_TOKEN / SUPPLIER_VISIT_ATTRACTION_ID)."
+        )
 
     def _assert_new_visits_button_text(self, expected_fragments):
         locators = [self.BUTTON_NEW_VISITS_LOCATOR, self.BUTTON_NEW_VISITS_LOCATOR_EN]

@@ -1,10 +1,12 @@
 import allure
 import pytest
+import os
 from helpers import BasePage
 from helpers.authorization import LoginPageSupplierPanel
 from helpers.supplier_panel_data import role_has_documents
 from locators.supplier_panel.for_registration_of_visits_pade_locators import RegistrationVisitsLocators
 from helpers.add_visit import (
+    VisitDailyLimitReachedError,
     create_test_visit as external_create_test_visit,
     login_and_create_visit as external_login_and_create_visit,
 )
@@ -44,10 +46,19 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
 
     @allure.step("Login and create visit")
     def login_and_create_visit(self, phone_number=None, sms_code=None, gym_token=None, attraction_id=None):
-        if all(value is not None for value in [phone_number, sms_code, gym_token, attraction_id]):
-            external_login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
-            return
-        external_create_test_visit()
+        try:
+            if all(value is not None for value in [phone_number, sms_code, gym_token, attraction_id]):
+                external_login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+                return
+            external_create_test_visit()
+        except VisitDailyLimitReachedError as exc:
+            pytest.skip(f"Создание нового визита недоступно: {exc}")
+
+    @allure.step("Login with credentials")
+    def login_supplier_panel(self, role=None, login=None, password=None):
+        default_role = os.getenv("SUPPLIER_VISIT_UI_ROLE", "finance")
+        effective_role = role or default_role
+        return super().login_supplier_panel(role=effective_role, login=login, password=password)
 
     @allure.step("Login in SP V2")
     def login(self):
@@ -87,7 +98,10 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
                 "чтобы автотест смог создать визит через API."
             )
 
-        self.login_and_create_visit()
+        try:
+            self.login_and_create_visit()
+        except VisitDailyLimitReachedError as exc:
+            pytest.skip(f"Пропуск: достигнут дневной лимит создания визитов ({exc}).")
         for _ in range(5):
             self._click_new_visits_if_available()
             if self._has_visit_card_actions():

@@ -3,6 +3,7 @@ import json
 import uuid
 import base64
 import os
+import pytest
 
 JRNL_BASE_URL = "https://xn--d1aey.xn--k1aahcehedi.xn--90ais"
 LOGIN_URL = f"{JRNL_BASE_URL}/api/v1/token"
@@ -12,6 +13,10 @@ PHONE_TO_HOLDER_ID = {
     "+375330000088": 41232,
     "+375290000999": 41255,
 }
+
+
+class VisitDailyLimitReachedError(AssertionError):
+    pass
 
 
 def _to_int_or_none(value):
@@ -161,6 +166,10 @@ def _create_visit(api_token, gym_token, attraction_id):
     # На проде API иногда возвращает 403 с уже созданным визитом (status=wait, id>0).
     if response.status_code == 403 and response_status == "wait" and response_id:
         return
+    if response.status_code == 403 and response_status == "limit":
+        raise VisitDailyLimitReachedError(
+            f"Daily visit limit reached. response={response.text}"
+        )
 
     raise AssertionError(
         f"CREATE VISIT API failed. status={response.status_code}, response={response.text}"
@@ -259,6 +268,7 @@ def create_test_visit(profiles=None):
     env_profiles = _load_profiles_from_env()
     profiles = profiles or (env_profiles + DEFAULT_VISIT_PROFILES)
     errors = []
+    limit_errors = []
 
     for profile in profiles:
         try:
@@ -270,8 +280,18 @@ def create_test_visit(profiles=None):
                 holder_id=profile.get("holder_id"),
             )
             return profile
+        except VisitDailyLimitReachedError as exc:
+            limit_errors.append(f"{profile['phone_number']}: {exc}")
         except AssertionError as exc:
             errors.append(f"{profile['phone_number']}: {exc}")
+
+    if limit_errors:
+        details = "; ".join(limit_errors)
+        if errors:
+            details = f"{details}; fallback errors: {'; '.join(errors)}"
+        raise VisitDailyLimitReachedError(
+            "Не удалось создать новый визит: достигнут дневной лимит. " + details
+        )
 
     joined_errors = "; ".join(errors) if errors else "No profiles provided."
     raise AssertionError(
@@ -284,14 +304,20 @@ def create_test_visit(profiles=None):
 
 
 def test_login_and_create_visit():
-    create_test_visit()
+    try:
+        create_test_visit()
+    except VisitDailyLimitReachedError as exc:
+        pytest.skip(str(exc))
 
 def test_login_and_create_visit_without_foto():
     profile = DEFAULT_VISIT_PROFILES[1]
-    login_and_create_visit(
-        phone_number=profile["phone_number"],
-        sms_code=profile["sms_code"],
-        gym_token=profile["gym_token"],
-        attraction_id=profile["attraction_id"],
-        holder_id=profile["holder_id"],
-    )
+    try:
+        login_and_create_visit(
+            phone_number=profile["phone_number"],
+            sms_code=profile["sms_code"],
+            gym_token=profile["gym_token"],
+            attraction_id=profile["attraction_id"],
+            holder_id=profile["holder_id"],
+        )
+    except VisitDailyLimitReachedError as exc:
+        pytest.skip(str(exc))

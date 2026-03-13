@@ -1,5 +1,6 @@
 import allure
 import pytest
+import os
 
 from pages.supplier_panel.registration_visits_page import SupplierPanelRegistrationVisits
 from pages.supplier_panel.visit_history_page import SupplierPanelVisitsHistory
@@ -12,11 +13,12 @@ from pages.supplier_panel.visit_under_correction_page import SupplierPanelVisits
 @pytest.mark.pre_release
 @pytest.mark.live_api
 def test_supplier_panel_end_to_end_visit_flow(driver):
+    visit_role = os.getenv("SUPPLIER_VISIT_UI_ROLE", "finance")
     registration_page = SupplierPanelRegistrationVisits(driver)
     registration_page.open_sp()
     registration_page.login_and_create_visit()
-    registration_page.login_supplier_panel(role="reception")
-    registration_page.assert_sidebar_visibility_by_role("reception")
+    registration_page.login_supplier_panel(role=visit_role)
+    registration_page.assert_sidebar_visibility_by_role(visit_role)
 
     history_page = SupplierPanelVisitsHistory(driver)
     history_page.click_visit_history()

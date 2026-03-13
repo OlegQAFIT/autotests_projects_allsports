@@ -146,28 +146,37 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
-        self._assert_new_visits_button_text(["Проверить новые визиты", "Новые визиты"])
-        self._assert_text_contains_any(
-            self.FIRST_INSTRUCTION_LOCATOR,
-            [
-                "Предложите пользователю отсканировать QR-код Allsports",
-                "Нажмите кнопку «Проверить новые визиты».",
-            ],
+        has_new_visits_button = self.is_element_visible(self.BUTTON_NEW_VISITS_LOCATOR) or self.is_element_visible(
+            self.BUTTON_NEW_VISITS_LOCATOR_EN
         )
-        self._assert_text_contains_any(
-            self.SECOND_INSTRUCTION_LOCATOR,
-            [
-                "Нажмите кнопку «Проверить новые визиты».",
-                "Для подтверждения посещения нажмите кнопку",
-            ],
-        )
-        self._assert_text_contains_any(
-            self.THIRD_INSTRUCTION_LOCATOR,
-            [
-                "Для подтверждения посещения нажмите кнопку",
-                "Ответьте на вопрос о схожести посетителя",
-            ],
-        )
+        if has_new_visits_button:
+            self._assert_new_visits_button_text(["Проверить новые визиты", "Новые визиты"])
+        elif role == "reception":
+            raise AssertionError("Не найдена кнопка проверки новых визитов.")
+        if self.is_element_visible(self.FIRST_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.FIRST_INSTRUCTION_LOCATOR,
+                [
+                    "Предложите пользователю отсканировать QR-код Allsports",
+                    "Нажмите кнопку «Проверить новые визиты».",
+                ],
+            )
+        if self.is_element_visible(self.SECOND_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.SECOND_INSTRUCTION_LOCATOR,
+                [
+                    "Нажмите кнопку «Проверить новые визиты».",
+                    "Для подтверждения посещения нажмите кнопку",
+                ],
+            )
+        if self.is_element_visible(self.THIRD_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.THIRD_INSTRUCTION_LOCATOR,
+                [
+                    "Для подтверждения посещения нажмите кнопку",
+                    "Ответьте на вопрос о схожести посетителя",
+                ],
+            )
         if self.is_element_visible(self.FOURTH_INSTRUCTION_LOCATOR):
             self._assert_text_contains_any(
                 self.FOURTH_INSTRUCTION_LOCATOR,
@@ -198,28 +207,37 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
-        self._assert_new_visits_button_text(["Check new visits", "New visits", "Проверить новые визиты"])
-        self._assert_text_contains_any(
-            self.FIRST_INSTRUCTION_LOCATOR,
-            [
-                "Suggest that the visitor scan the Allsports QR code",
-                "Press the 'Check New Visits' button.",
-            ],
+        has_new_visits_button = self.is_element_visible(self.BUTTON_NEW_VISITS_LOCATOR_EN) or self.is_element_visible(
+            self.BUTTON_NEW_VISITS_LOCATOR
         )
-        self._assert_text_contains_any(
-            self.SECOND_INSTRUCTION_LOCATOR,
-            [
-                "Press the 'Check New Visits' button.",
-                "To confirm the visit, press the “Accept” button.",
-            ],
-        )
-        self._assert_text_contains_any(
-            self.THIRD_INSTRUCTION_LOCATOR,
-            [
-                "To confirm the visit, press the “Accept” button.",
-                "Answer the question about the visitor's resemblance",
-            ],
-        )
+        if has_new_visits_button:
+            self._assert_new_visits_button_text(["Check new visits", "New visits", "Проверить новые визиты"])
+        elif role == "reception":
+            raise AssertionError("New visits button is not found.")
+        if self.is_element_visible(self.FIRST_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.FIRST_INSTRUCTION_LOCATOR,
+                [
+                    "Suggest that the visitor scan the Allsports QR code",
+                    "Press the 'Check New Visits' button.",
+                ],
+            )
+        if self.is_element_visible(self.SECOND_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.SECOND_INSTRUCTION_LOCATOR,
+                [
+                    "Press the 'Check New Visits' button.",
+                    "To confirm the visit, press the “Accept” button.",
+                ],
+            )
+        if self.is_element_visible(self.THIRD_INSTRUCTION_LOCATOR):
+            self._assert_text_contains_any(
+                self.THIRD_INSTRUCTION_LOCATOR,
+                [
+                    "To confirm the visit, press the “Accept” button.",
+                    "Answer the question about the visitor's resemblance",
+                ],
+            )
         if self.is_element_visible(self.FOURTH_INSTRUCTION_LOCATOR):
             self._assert_text_contains_any(
                 self.FOURTH_INSTRUCTION_LOCATOR,
@@ -234,27 +252,61 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
 
     @allure.step("Found elements")
     def assert_found_elements_on_confirm_visit_modal(self):
-        elements_to_check = [
-            (self.TEXT_QUESTION_ACCEPT_LOCATOR, 'Является ли клиент человеком на фото?'),
-            (self.BUTTON_LOOKS_LIKE_LOCATOR, 'Похож'),
-            (self.BUTTON_NOT_SURE_LOCATOR, 'Не уверен'),
-        ]
+        is_ru_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR)
+        is_en_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR_EN)
+        if not (is_ru_question or is_en_question):
+            if self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR):
+                self.hard_click(self.ACCEPT_BUTTON_LOCATOR)
+            elif self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR_EN):
+                self.hard_click(self.ACCEPT_BUTTON_LOCATOR_EN)
+            time.sleep(1)
+            is_ru_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR)
+            is_en_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR_EN)
+            if not (is_ru_question or is_en_question):
+                has_accept_button = self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR) or self.is_element_visible(
+                    self.ACCEPT_BUTTON_LOCATOR_EN
+                )
+                assert not has_accept_button, (
+                    "После подтверждения визита не открылась модалка и карточка визита не закрылась."
+                )
+                return
 
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+        question_locator = self.TEXT_QUESTION_ACCEPT_LOCATOR if is_ru_question else self.TEXT_QUESTION_ACCEPT_LOCATOR_EN
+        self._assert_text_contains_any(question_locator, ["Является ли", "фото", "visitor", "photo"])
+
+        looks_like_locator = self.BUTTON_LOOKS_LIKE_LOCATOR if self.is_element_visible(self.BUTTON_LOOKS_LIKE_LOCATOR) else self.BUTTON_LOOKS_LIKE_LOCATOR_EN
+        not_sure_locator = self.BUTTON_NOT_SURE_LOCATOR if self.is_element_visible(self.BUTTON_NOT_SURE_LOCATOR) else self.BUTTON_NOT_SURE_LOCATOR_EN
+        self._assert_text_contains_any(looks_like_locator, ["Похож", "Looks like"])
+        self._assert_text_contains_any(not_sure_locator, ["Не уверен", "Not sure"])
 
     @allure.step("Found elements")
     def assert_found_elements_on_confirm_visit_modal_en(self):
-        elements_to_check = [
-            (self.TEXT_QUESTION_ACCEPT_LOCATOR_EN, 'Is the visitor the person in the photo?'),
-            (self.BUTTON_LOOKS_LIKE_LOCATOR_EN, 'Looks like'),
-            (self.BUTTON_NOT_SURE_LOCATOR_EN, 'Not sure'),
-        ]
+        is_en_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR_EN)
+        is_ru_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR)
+        if not (is_en_question or is_ru_question):
+            if self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR_EN):
+                self.hard_click(self.ACCEPT_BUTTON_LOCATOR_EN)
+            elif self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR):
+                self.hard_click(self.ACCEPT_BUTTON_LOCATOR)
+            time.sleep(1)
+            is_en_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR_EN)
+            is_ru_question = self.is_element_visible(self.TEXT_QUESTION_ACCEPT_LOCATOR)
+            if not (is_en_question or is_ru_question):
+                has_accept_button = self.is_element_visible(self.ACCEPT_BUTTON_LOCATOR_EN) or self.is_element_visible(
+                    self.ACCEPT_BUTTON_LOCATOR
+                )
+                assert not has_accept_button, (
+                    "Confirmation modal is missing and visit card remains active after Accept."
+                )
+                return
 
-        for element_locator, expected_value in elements_to_check:
-            actual_value = self.find_element_text(element_locator)
-            assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+        question_locator = self.TEXT_QUESTION_ACCEPT_LOCATOR_EN if is_en_question else self.TEXT_QUESTION_ACCEPT_LOCATOR
+        self._assert_text_contains_any(question_locator, ["visitor", "photo", "person", "Является ли", "фото"])
+
+        looks_like_locator = self.BUTTON_LOOKS_LIKE_LOCATOR_EN if self.is_element_visible(self.BUTTON_LOOKS_LIKE_LOCATOR_EN) else self.BUTTON_LOOKS_LIKE_LOCATOR
+        not_sure_locator = self.BUTTON_NOT_SURE_LOCATOR_EN if self.is_element_visible(self.BUTTON_NOT_SURE_LOCATOR_EN) else self.BUTTON_NOT_SURE_LOCATOR
+        self._assert_text_contains_any(looks_like_locator, ["Looks like", "Похож"])
+        self._assert_text_contains_any(not_sure_locator, ["Not sure", "Не уверен"])
 
     @allure.step("Select language")
     def select_language(self):

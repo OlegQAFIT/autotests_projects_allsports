@@ -81,6 +81,21 @@ def _reset_installs(holder_id, admin_token):
         )
 
 
+def _reset_visit_limit(holder_id, admin_token):
+    if not holder_id or not admin_token:
+        return
+
+    response = requests.post(
+        f"{JRNL_BASE_URL}/api/jrnl/admin/holders/{holder_id}/reset/visit",
+        headers=_journal_headers(admin_token),
+    )
+    if response.status_code not in (200, 204):
+        raise AssertionError(
+            f"RESET VISIT LIMIT failed for holder {holder_id}. "
+            f"status={response.status_code}, response={response.text}"
+        )
+
+
 def _get_sms_token_v2(holder_id, admin_token):
     if not holder_id or not admin_token:
         return None
@@ -134,38 +149,55 @@ def _mobile_login(phone_number, sms_code):
     return response, api_token
 
 
-def _create_visit(api_token, gym_token, attraction_id):
-    payload = json.dumps(
-        {
-            "token": gym_token,
-            "attraction_id": attraction_id,
-            "lat": 0,
-            "lng": 0,
+def _create_visit(api_token, gym_token, attraction_id, holder_id=None, admin_token=None):
+    def _make_request():
+        payload = json.dumps(
+            {
+                "token": gym_token,
+                "attraction_id": attraction_id,
+                "lat": 0,
+                "lng": 0,
+            }
+        )
+        headers = {
+            "Authorization": "Bearer " + api_token,
+            "Accept": "application/json",
+            "Content-Type": "application/json",
         }
-    )
-    headers = {
-        "Authorization": "Bearer " + api_token,
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-    }
+        return requests.post(CREATE_VISIT_URL, headers=headers, data=payload)
 
-    response = requests.post(CREATE_VISIT_URL, headers=headers, data=payload)
+    def _extract_status_and_id(response):
+        try:
+            response_payload = response.json()
+        except ValueError:
+            response_payload = {}
+
+        response_data = response_payload.get("data") if isinstance(response_payload, dict) else {}
+        response_status = response_data.get("status") if isinstance(response_data, dict) else None
+        response_id = response_data.get("id") if isinstance(response_data, dict) else None
+        return response_status, response_id
+
+    response = _make_request()
 
     if response.status_code == 201:
         return
 
-    try:
-        response_payload = response.json()
-    except ValueError:
-        response_payload = {}
-
-    response_data = response_payload.get("data") if isinstance(response_payload, dict) else {}
-    response_status = response_data.get("status") if isinstance(response_data, dict) else None
-    response_id = response_data.get("id") if isinstance(response_data, dict) else None
+    response_status, response_id = _extract_status_and_id(response)
 
     # На проде API иногда возвращает 403 с уже созданным визитом (status=wait, id>0).
     if response.status_code == 403 and response_status == "wait" and response_id:
         return
+
+    # На этом проекте лимит визита можно снять через admin endpoint reset/visit.
+    if response.status_code == 403 and response_status == "limit" and holder_id and admin_token:
+        _reset_visit_limit(holder_id, admin_token)
+        response = _make_request()
+        if response.status_code == 201:
+            return
+        response_status, response_id = _extract_status_and_id(response)
+        if response.status_code == 403 and response_status == "wait" and response_id:
+            return
+
     if response.status_code == 403 and response_status == "limit":
         raise VisitDailyLimitReachedError(
             f"Daily visit limit reached. response={response.text}"
@@ -241,6 +273,7 @@ def login_and_create_visit(
         fresh_sms = _get_sms_token_v2(holder_id, admin_token)
         if fresh_sms:
             current_sms_code = fresh_sms
+        _reset_visit_limit(holder_id, admin_token)
 
     response, api_token = _mobile_login(phone_number, current_sms_code)
 
@@ -261,7 +294,13 @@ def login_and_create_visit(
             f"LOGIN API failed. status={response.status_code}, response={response.text}.{admin_hint}"
         )
 
-    _create_visit(api_token, gym_token, attraction_id)
+    _create_visit(
+        api_token,
+        gym_token,
+        attraction_id,
+        holder_id=holder_id,
+        admin_token=admin_token,
+    )
 
 
 def create_test_visit(profiles=None):

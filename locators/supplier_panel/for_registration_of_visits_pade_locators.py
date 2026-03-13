@@ -78,8 +78,14 @@ class RegistrationVisitsLocators():
     ACCEPT_BUTTON_LOCATOR_EN = (
         "//button[.//*[normalize-space()='Accept']]"
     )
-    TEXT_QUESTION_ACCEPT_LOCATOR = "//div[@class='modal-header_title']/h2[text()='Является ли клиент человеком на фото?']"
-    TEXT_QUESTION_ACCEPT_LOCATOR_EN = "//div[@class='modal-header_title']/h2[text()='Is the visitor the person in the photo?']"
+    TEXT_QUESTION_ACCEPT_LOCATOR = (
+        "//div[@class='modal-header_title']/h2"
+        "[contains(normalize-space(), 'Является ли') and contains(normalize-space(), 'фото')]"
+    )
+    TEXT_QUESTION_ACCEPT_LOCATOR_EN = (
+        "//div[@class='modal-header_title']/h2"
+        "[contains(normalize-space(), 'visitor') and contains(normalize-space(), 'photo')]"
+    )
     BUTTON_LOOKS_LIKE_LOCATOR = "//div[@class='modal-controls']//button[@class='btn btn__primary btn-base modal-controls_control']/div[@class='btn-content']/div[@class='btn-content_slot' and text()='Похож']"
     BUTTON_LOOKS_LIKE_LOCATOR_EN = "//div[@class='modal-controls']//button[@class='btn btn__primary btn-base modal-controls_control']/div[@class='btn-content']/div[@class='btn-content_slot' and text()='Looks like']"
     BUTTON_NOT_SURE_LOCATOR = "//div[@class='modal-controls']//button[@class='btn btn__primary btn-outline modal-controls_control']/div[@class='btn-content']/div[@class='btn-content_slot' and text()='Не уверен']"

@@ -2,6 +2,49 @@ import requests
 import json
 import uuid
 import base64
+import os
+
+
+def _load_profiles_from_env():
+    profiles = []
+
+    def _build(prefix="SUPPLIER_VISIT"):
+        phone = os.getenv(f"{prefix}_PHONE")
+        sms_code = os.getenv(f"{prefix}_SMS_CODE")
+        gym_token = os.getenv(f"{prefix}_GYM_TOKEN")
+        attraction_id = os.getenv(f"{prefix}_ATTRACTION_ID")
+        if all([phone, sms_code, gym_token, attraction_id]):
+            return {
+                "phone_number": phone,
+                "sms_code": sms_code,
+                "gym_token": gym_token,
+                "attraction_id": int(attraction_id),
+            }
+        return None
+
+    first = _build("SUPPLIER_VISIT")
+    second = _build("SUPPLIER_VISIT_2")
+    if first:
+        profiles.append(first)
+    if second:
+        profiles.append(second)
+    return profiles
+
+
+DEFAULT_VISIT_PROFILES = [
+    {
+        "phone_number": "+375330000088",
+        "sms_code": "5566",
+        "gym_token": "https://holder.allsports.by/s/6143",
+        "attraction_id": 16835,
+    },
+    {
+        "phone_number": "+375290000999",
+        "sms_code": "1734",
+        "gym_token": "https://holder.allsports.by/s/6143",
+        "attraction_id": 16835,
+    },
+]
 
 def login_and_create_visit(phone_number, sms_code, gym_token, attraction_id):
     LOGIN_URL = "https://xn--d1aey.xn--k1aahcehedi.xn--90ais/api/v1/token"
@@ -47,18 +90,41 @@ def login_and_create_visit(phone_number, sms_code, gym_token, attraction_id):
         f"CREATE VISIT API failed. status={response.status_code}, response={response.text}"
     )
 
-def test_login_and_create_visit():
-    phone_number = "+375000000088"
-    sms_code = "5566"
-    gym_token = "https://holder.allsports.by/s/3b8b"
-    attraction_id = 14225
 
-    login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+def create_test_visit(profiles=None):
+    env_profiles = _load_profiles_from_env()
+    profiles = profiles or (env_profiles + DEFAULT_VISIT_PROFILES)
+    errors = []
+
+    for profile in profiles:
+        try:
+            login_and_create_visit(
+                phone_number=profile["phone_number"],
+                sms_code=profile["sms_code"],
+                gym_token=profile["gym_token"],
+                attraction_id=profile["attraction_id"],
+            )
+            return profile
+        except AssertionError as exc:
+            errors.append(f"{profile['phone_number']}: {exc}")
+
+    joined_errors = "; ".join(errors) if errors else "No profiles provided."
+    raise AssertionError(
+        "Не удалось создать визит ни по одному тестовому профилю. "
+        f"{joined_errors}. "
+        "Укажите актуальные данные через env: SUPPLIER_VISIT_PHONE, SUPPLIER_VISIT_SMS_CODE, "
+        "SUPPLIER_VISIT_GYM_TOKEN, SUPPLIER_VISIT_ATTRACTION_ID."
+    )
+
+
+def test_login_and_create_visit():
+    create_test_visit()
 
 def test_login_and_create_visit_without_foto():
-    phone_number = "+375290000999"
-    sms_code = "1734"
-    gym_token = "https://holder.allsports.by/s/3b8b"
-    attraction_id = 14225
-
-    login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+    profile = DEFAULT_VISIT_PROFILES[1]
+    login_and_create_visit(
+        phone_number=profile["phone_number"],
+        sms_code=profile["sms_code"],
+        gym_token=profile["gym_token"],
+        attraction_id=profile["attraction_id"],
+    )

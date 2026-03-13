@@ -10,7 +10,7 @@ def _as_bool(value: Optional[str], default: bool) -> bool:
 
 SUPPLIER_ACCOUNTS = {
     "reception": {
-        "login": os.getenv("SUPPLIER_RECEPTION_LOGIN", "test@allsports.by"),
+        "login": os.getenv("SUPPLIER_RECEPTION_LOGIN", "auttest1@gmail.com"),
         "password": os.getenv("SUPPLIER_RECEPTION_PASSWORD", "secret"),
     },
     "finance": {

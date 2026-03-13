@@ -4,6 +4,7 @@ from urllib.parse import urlparse, urlunparse
 
 import pytest
 import requests
+from dotenv import load_dotenv
 from selenium import webdriver
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
@@ -23,6 +24,8 @@ from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
 
 from helpers.base import BasePage
+
+load_dotenv()
 
 
 def pytest_addoption(parser):

@@ -86,7 +86,23 @@ def login_and_create_visit(phone_number, sms_code, gym_token, attraction_id):
 
     response = requests.post(CREATE_VISIT_URL, headers=headers, data=payload)
 
-    assert response.status_code == 201, (
+    if response.status_code == 201:
+        return
+
+    try:
+        response_payload = response.json()
+    except ValueError:
+        response_payload = {}
+
+    response_data = response_payload.get("data") if isinstance(response_payload, dict) else {}
+    response_status = response_data.get("status") if isinstance(response_data, dict) else None
+    response_id = response_data.get("id") if isinstance(response_data, dict) else None
+
+    # На проде API иногда возвращает 403 с уже созданным визитом (status=wait, id>0).
+    if response.status_code == 403 and response_status == "wait" and response_id:
+        return
+
+    raise AssertionError(
         f"CREATE VISIT API failed. status={response.status_code}, response={response.text}"
     )
 

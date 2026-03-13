@@ -46,8 +46,39 @@ def pytest_addoption(parser):
         '--live-api',
         action='store_true',
         default=False,
-        help='enable real API POST checks (disabled by default)',
+        help='enable real API POST checks',
     )
+    parser.addoption(
+        '--no-live-api',
+        action='store_true',
+        default=False,
+        help='disable real API POST checks even for suites with auto-enabled live API',
+    )
+
+
+def _should_enable_live_api_by_default(config) -> bool:
+    raw_args = tuple(getattr(config.invocation_params, "args", ()) or ())
+    if not raw_args:
+        return False
+
+    auto_live_targets = (
+        'test_supplier_panel',
+        'helpers/add_visit.py',
+    )
+
+    for arg in raw_args:
+        normalized_arg = str(arg).replace('\\', '/')
+        if any(target in normalized_arg for target in auto_live_targets):
+            return True
+    return False
+
+
+def _resolve_live_api(config) -> bool:
+    if config.getoption('--no-live-api'):
+        return False
+    if config.getoption('--live-api'):
+        return True
+    return _should_enable_live_api_by_default(config)
 
 
 def _rewrite_url(url: str, base_url: str) -> str:
@@ -160,7 +191,7 @@ def driver(request):
     browser = request.config.getoption('--b')
     headless = request.config.getoption('--headless')
     base_url = request.config.getoption('--base-url').rstrip('/')
-    live_api = request.config.getoption('--live-api')
+    live_api = _resolve_live_api(request.config)
 
     if browser == 'chrome':
         web_driver = create_chrome(headless)

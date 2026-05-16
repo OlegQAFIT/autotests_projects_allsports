@@ -63,38 +63,37 @@ class HeaderPage(BasePage):
 
     @allure.step("Проверить ссылку 'Объекты'")
     def check_link_facilities(self):
-        self.scroll_to_element(L.FACILITIES)
-        self.hard_click(L.FACILITIES)
-        self.assert_url_contains(L.URL_FACILITIES)
-        self.assert_text_on_page(L.TEXT_FACILITIES)
+        self._click_header_link_and_wait(L.FACILITIES, L.URL_FACILITIES)
+        WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, "#map, .facilities-map"))
+        )
 
     @allure.step("Проверить ссылку 'Типы подписок'")
     def check_link_levels(self):
-        self.scroll_to_element(L.LEVELS)
-        self.hard_click(L.LEVELS)
-        self.assert_url_contains(L.URL_LEVELS)
+        self._click_header_link_and_wait(L.LEVELS, L.URL_LEVELS)
         self.assert_text_on_page(L.TEXT_LEVELS)
 
     @allure.step("Проверить ссылку 'Компаниям'")
     def check_link_companies(self):
-        self.scroll_to_element(L.COMPANIES)
-        self.hard_click(L.COMPANIES)
-        self.assert_url_contains(L.URL_COMPANIES)
+        self._click_header_link_and_wait(L.COMPANIES, L.URL_COMPANIES)
         self.assert_text_on_page(L.TEXT_COMPANIES_H1)
 
     @allure.step("Проверить ссылку 'Партнерам'")
     def check_link_partners(self):
-        self.scroll_to_element(L.PARTNERS)
-        self.hard_click(L.PARTNERS)
-        self.assert_url_contains(L.URL_PARTNERS)
+        self._click_header_link_and_wait(L.PARTNERS, L.URL_PARTNERS)
         self.assert_text_on_page(L.TEXT_PARTNERS_H1)
 
     @allure.step("Проверить ссылку 'Контакты'")
     def check_link_contacts(self):
-        self.scroll_to_element(L.CONTACTS)
-        self.hard_click(L.CONTACTS)
-        self.assert_url_contains(L.URL_CONTACTS)
+        self._click_header_link_and_wait(L.CONTACTS, L.URL_CONTACTS)
         self.assert_text_on_page(L.TEXT_CONTACTS)
+
+    def _click_header_link_and_wait(self, locator, expected_url_fragment):
+        self.accept_cookie_consent()
+        self.scroll_to_element(locator)
+        self.hard_click(locator)
+        WebDriverWait(self.driver, 10).until(EC.url_contains(expected_url_fragment))
+        self.assert_url_contains(expected_url_fragment)
 
     @allure.step("Проверить наличие кнопок 'Получить предложение' и 'Задать вопрос'")
     def check_header_buttons(self):
@@ -211,7 +210,9 @@ class HeaderPage(BasePage):
     @allure.step("Проверить закрытие модалки крестиком")
     def check_offer_close(self):
         self.hard_click(L.BUTTON_CLOSE)
-        self.assert_element_not_present(L.MODAL_HEADER)
+        WebDriverWait(self.driver, 10).until(
+            EC.invisibility_of_element_located((By.CSS_SELECTOR, "div.modal"))
+        )
 
     @allure.step("Проверить наличие и корректность телефонного номера в модалке")
     def check_offer_phone(self):

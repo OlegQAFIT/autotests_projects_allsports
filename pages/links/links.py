@@ -13,7 +13,7 @@ from urllib.parse import urlparse, urlunparse
 
 class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
 
-    def __init__(self, driver, domain, domain_new=None, paths_and_redirects=None):
+    def __init__(self, driver, domain="https://www.allsports.fit/by", domain_new=None, paths_and_redirects=None):
         super().__init__(driver)
         self.driver = driver
         self.domain = domain
@@ -124,7 +124,9 @@ class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
                 expected_url = expected_url[:-1]
 
             if translated_url != expected_url:
-                print(f"\nURL {translated_url} does NOT match the expected URL {expected_url}")
+                assert translated_url == expected_url, (
+                    f"URL {translated_url} does NOT match the expected URL {expected_url}"
+                )
 
     def check_links_three(self):
         for entry in self.paths_and_redirects:
@@ -154,8 +156,9 @@ class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
     def check_redirects_to_pages(self, current_url, expected_redirect):
         translated_current_url = self.translate_url(current_url)
         translated_expected_url = self.translate_url(expected_redirect)
-        if translated_current_url != translated_expected_url:
-            print(f"\nError: URL {translated_current_url} does NOT match the expected redirect: {translated_expected_url}")
+        assert translated_current_url == translated_expected_url, (
+            f"URL {translated_current_url} does NOT match expected redirect {translated_expected_url}"
+        )
 
     def get_expected_redirect(self, entry):
         if "allsports.fit" in self.domain:
@@ -220,21 +223,21 @@ class ElementsFromLinks(BasePage, LocatorsFromPagesLinks):
         current_url = self.driver.current_url
         current_url_translated = self.translate_url(current_url, is_full_url=True)
         expected_url_translated = self.translate_url(expected_url, is_full_url=True)
-        if current_url_translated == expected_url_translated:
-            print(f"Redirection successful: {current_url_translated}")
-        else:
-            print(f"Redirection failed: {current_url_translated}. Expected: {expected_url_translated}")
+        assert current_url_translated == expected_url_translated, (
+            f"Redirection failed: {current_url_translated}. Expected: {expected_url_translated}"
+        )
 
     def check_links_for_404(self):
+        failed = []
         for link in self.links:
             try:
                 response = requests.get(link)
                 if response.status_code == 404:
-                    print(f"404 Error: {link}")
+                    failed.append(link)
                 else:
                     print(f"Accessible: {link} (Status Code: {response.status_code})")
             except requests.exceptions.RequestException as e:
-                print(f"Request failed for {link}: {e}")
-
+                failed.append(f"{link} ({e})")
+        assert not failed, f"Found unavailable links: {failed}"
 
 

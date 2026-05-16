@@ -12,7 +12,7 @@ class MainPageLocators:
     SUGGESTION_DESCRIPTION = (By.CSS_SELECTOR, ".suggestion-text .suggestion__description")
     SUGGESTION_BTN_GET_OFFER = (By.XPATH, "//div[contains(@class,'suggestion-text')]//button[contains(@class,'btn') and not(contains(@class,'btn_text'))]//span[normalize-space()='Получить предложение']")
     SUGGESTION_BTN_ASK_QUESTION = (By.XPATH, "//div[contains(@class,'suggestion-text')]//button[contains(@class,'btn_text')]//span[normalize-space()='Задать вопрос']")
-    PROMO_SECTION = (By.CSS_SELECTOR, '//*[@id="defaultView"]/main/section/div[1]')
+    PROMO_SECTION = (By.XPATH, '//*[@id="defaultView"]/main/section/div[1]')
 
     # === Блок: Изображение телефона в секции предложения ===
     SUGGESTION_IMAGE_PHONE = (By.CSS_SELECTOR, "img[src*='suggestionSection/phone.png']")
@@ -20,11 +20,11 @@ class MainPageLocators:
     # === Блок: Преимущества Allsports ===
 
     # ===================== Пользователям ============================================================
-    ADVANTAGES_TITLE = (By.CSS_SELECTOR, "section.advantages h2")
-    ADVANTAGES_TAB_USERS = (By.ID, "members")
-    ADVANTAGES_TAB_COMPANIES = (By.ID, "companies")
-    ADVANTAGES_TAB_PARTNERS = (By.ID, "partners")
-    ADVANTAGES_TAB_ACTIVE = (By.CSS_SELECTOR, ".select-tab__option_selected")
+    ADVANTAGES_TITLE = (By.CSS_SELECTOR, "#advantagesSection h2, section.advantages h2")
+    ADVANTAGES_TAB_USERS = (By.CSS_SELECTOR, "#advantagesSection #members")
+    ADVANTAGES_TAB_COMPANIES = (By.CSS_SELECTOR, "#advantagesSection #companies")
+    ADVANTAGES_TAB_PARTNERS = (By.CSS_SELECTOR, "#advantagesSection #partners")
+    ADVANTAGES_TAB_ACTIVE = (By.CSS_SELECTOR, "#advantagesSection .select-tab__option_selected")
     ADVANTAGES_SUBTITLE = (By.CSS_SELECTOR, ".advantages-tab:not(.advantages-tab_hidden) h3")
     ADVANTAGES_LIST_ITEMS = (By.CSS_SELECTOR, ".advantages-tab:not(.advantages-tab_hidden) .advantages-text ul li span")
     ADVANTAGES_BTN_LIST = (By.XPATH, "//a[.//span[contains(text(),'Список объектов') or contains(text(),'Компаниям') or contains(text(),'Партнерам')]]")
@@ -220,7 +220,7 @@ class MainPageLocators:
     FAQ_ITEMS = (By.CSS_SELECTOR, ".faq-list .expansion-item")
 
     # === Заголовки и стрелки ===
-    FAQ_QUESTION_TITLES = (By.CSS_SELECTOR, ".expansion-item-title h5.text-h5-new")
+    FAQ_QUESTION_TITLES = (By.CSS_SELECTOR, ".expansion-item-title h3, .expansion-item-title h5, .expansion-item-title .text-h5-new")
     FAQ_QUESTION_ARROWS = (By.CSS_SELECTOR, ".expansion-item__arrow")
     FAQ_QUESTION_OPEN = (By.CSS_SELECTOR, ".expansion-item__arrow .expansion-item_open")
 
@@ -231,9 +231,9 @@ class MainPageLocators:
     FAQ_ANSWER_LINKS = (By.CSS_SELECTOR, ".expansion-item-text a")
 
     # === Табы ===
-    FAQ_TAB_BAR = (By.CSS_SELECTOR, ".faq__select-tab")
-    FAQ_TAB_ITEMS = (By.CSS_SELECTOR, ".faq__select-tab li.select-tab__option")
-    FAQ_TAB_SELECTED = (By.CSS_SELECTOR, ".faq__select-tab li.select-tab__option_selected")
+    FAQ_TAB_BAR = (By.CSS_SELECTOR, "#faqSection .select-tab, #faqSection .faq__select-tab")
+    FAQ_TAB_ITEMS = (By.CSS_SELECTOR, "#faqSection .select-tab__option, #faqSection .faq__select-tab li.select-tab__option")
+    FAQ_TAB_SELECTED = (By.CSS_SELECTOR, "#faqSection .select-tab__option_selected, #faqSection .faq__select-tab li.select-tab__option_selected")
     FAQ_TAB_MEMBERS = (By.ID, "members")
     FAQ_TAB_PARTNERS = (By.ID, "partners")
     FAQ_TAB_COMPANIES = (By.ID, "companies")
@@ -246,13 +246,13 @@ class MainPageLocators:
 
     # === Блоки "Информация для ..." ===
     FAQ_INFO_BLOCK = (By.CSS_SELECTOR, ".faq-links")
-    FAQ_INFO_TITLE = (By.CSS_SELECTOR, ".faq-links span.text-h5-new")
+    FAQ_INFO_TITLE = (By.CSS_SELECTOR, "#faqSection .faq-links span, #faqSection .faq-links h3, #faqSection .faq-links h5")
     FAQ_INFO_LINK = (By.CSS_SELECTOR, ".faq-links a")
 
     # === Форма "Не нашли ответ?" ===
     FAQ_FORM = (By.CSS_SELECTOR, ".faq-form")
-    FAQ_FORM_TITLE = (By.XPATH, "//h5[normalize-space()='Не нашли ответ на вопрос?']")
-    FAQ_FORM_BTN_ASK = (By.XPATH, "//button[contains(@class,'btn_text')]//span[normalize-space()='Задать вопрос']")
+    FAQ_FORM_TITLE = (By.XPATH, "//*[@id='faqSection']//*[self::h3 or self::h4 or self::h5][contains(normalize-space(),'Не нашли ответ')]")
+    FAQ_FORM_BTN_ASK = (By.XPATH, "//*[@id='faqSection']//button[.//span[contains(normalize-space(),'Задать вопрос')]]")
 
     # === Модальное окно "Задать вопрос" ===
     MODAL_FAQ = (By.CSS_SELECTOR, ".modal")
@@ -281,25 +281,25 @@ class MainPageLocators:
     # Основной блок
     CONTACTS_SECTION = (By.CSS_SELECTOR, "#contactsSection.section-wrapper")
     CONTACTS_TITLE = (By.XPATH, "//h2[normalize-space()='Наши контакты']")
-    CONTACTS_CONTAINER = (By.CSS_SELECTOR, ".contacts-container")
-    CONTACTS_INFO = (By.CSS_SELECTOR, ".contacts-info")
+    CONTACTS_CONTAINER = (By.CSS_SELECTOR, "#contactsSection .contacts-container")
+    CONTACTS_INFO = (By.CSS_SELECTOR, "#contactsSection .contacts-info")
 
     # Блоки информации (каждый из 4: клиенты, партнёры, техподдержка, адрес)
-    CONTACTS_INFO_BLOCKS = (By.CSS_SELECTOR, ".contacts-info > div")
-    CONTACTS_INFO_TITLES = (By.CSS_SELECTOR, ".contacts-info p.text-h4")
-    CONTACTS_INFO_PARAGRAPHS = (By.CSS_SELECTOR, ".contacts-info p:not(.text-h4)")
+    CONTACTS_INFO_BLOCKS = (By.CSS_SELECTOR, "#contactsSection .contacts-info > div")
+    CONTACTS_INFO_TITLES = (By.CSS_SELECTOR, "#contactsSection .contacts-info p.text-h4")
+    CONTACTS_INFO_PARAGRAPHS = (By.CSS_SELECTOR, "#contactsSection .contacts-info p:not(.text-h4)")
 
     # Телефоны и email
-    CONTACTS_PHONES = (By.CSS_SELECTOR, ".contacts-info a[href^='tel:']")
-    CONTACTS_EMAILS = (By.CSS_SELECTOR, ".contacts-info a[href^='mailto:']")
+    CONTACTS_PHONES = (By.CSS_SELECTOR, "#contactsSection .contacts-info a[href^='tel:']")
+    CONTACTS_EMAILS = (By.CSS_SELECTOR, "#contactsSection .contacts-info a[href^='mailto:']")
 
     # Адрес
     CONTACTS_ADDRESS_TEXT = (By.XPATH, "//p[contains(text(),'г. Минск') or contains(text(),'ул. Интернациональная')]")
 
     # Карта
-    CONTACTS_MAP = (By.CSS_SELECTOR, ".contacts-map")
-    CONTACTS_MAP_CANVAS = (By.CSS_SELECTOR, ".contacts-map canvas.mapboxgl-canvas")
-    CONTACTS_MARKER = (By.CSS_SELECTOR, ".contacts-map .marker.mapboxgl-marker")
+    CONTACTS_MAP = (By.CSS_SELECTOR, "#contactsSection .contacts-map, #contactsSection .mapboxgl-map")
+    CONTACTS_MAP_CANVAS = (By.CSS_SELECTOR, "#contactsSection canvas.mapboxgl-canvas")
+    CONTACTS_MARKER = (By.CSS_SELECTOR, "#contactsSection .mapboxgl-marker")
 
     # Элементы управления картой (для отладки, если нужно)
     CONTACTS_MAP_ZOOM_IN = (By.CSS_SELECTOR, ".mapboxgl-ctrl-zoom-in")
@@ -406,20 +406,15 @@ class MainPageLocators:
     ADVP_SUBMIT = (By.XPATH, "//button[@type='submit']//span[normalize-space()='Отправить']")
 
     # === Блок "Преимущества Allsports" — вкладка "Компаниям" ===
-    ADV_TAB_COMPANIES = (By.ID, "companies")
-    ADV_COMPANY_SECTION = (By.CSS_SELECTOR, ".advantages-tab-company")
-    ADV_COMPANY_TITLE = (By.CSS_SELECTOR, ".advantages-tab-company h3")
-    ADV_COMPANY_LIST_ITEMS = (By.CSS_SELECTOR, ".advantages-tab-company ul li")
-    ADV_COMPANY_LINK = (By.CSS_SELECTOR, ".advantages-tab-company a[href*='/companies']")
+    ADV_TAB_COMPANIES = (By.CSS_SELECTOR, "#advantagesSection #companies")
+    ADV_COMPANY_SECTION = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-company")
+    ADV_COMPANY_TITLE = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-company h3")
+    ADV_COMPANY_LIST_ITEMS = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-company ul li")
+    ADV_COMPANY_LINK = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-company a[href*='/companies']")
 
-    ADV_TAB_PARTNERS = (By.CSS_SELECTOR, ".select-tab__option#partners")
-    ADV_PARTNER_SECTION = (By.CSS_SELECTOR, ".advantages-tab-partner")
-    ADV_PARTNER_TITLE = (By.CSS_SELECTOR, ".advantages-tab-partner h3")
-    ADV_PARTNER_LINK = (By.CSS_SELECTOR, ".advantages-tab-partner .advantages-links a[href*='/partners']")
-
-
-
-
-
+    ADV_TAB_PARTNERS = (By.CSS_SELECTOR, "#advantagesSection .select-tab__option#partners")
+    ADV_PARTNER_SECTION = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-partner")
+    ADV_PARTNER_TITLE = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-partner h3")
+    ADV_PARTNER_LINK = (By.CSS_SELECTOR, "#advantagesSection .advantages-tab-partner .advantages-links a[href*='/partners']")
 
 

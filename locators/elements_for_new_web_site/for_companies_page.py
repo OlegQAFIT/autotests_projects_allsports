@@ -80,18 +80,18 @@ class CompaniesLocators:
     FAQ_CONTAINER = (By.CSS_SELECTOR, ".faq-container")
     FAQ_LIST = (By.CSS_SELECTOR, ".faq-list")
     FAQ_ITEMS = (By.CSS_SELECTOR, ".faq-list .expansion-item")
-    FAQ_QUESTIONS = (By.CSS_SELECTOR, ".expansion-item-title h5")
+    FAQ_QUESTIONS = (By.CSS_SELECTOR, ".expansion-item-title h3, .expansion-item-title h5")
     FAQ_ANSWERS = (By.CSS_SELECTOR, ".expansion-item-text")
     FAQ_ARROWS = (By.CSS_SELECTOR, ".expansion-item__arrow svg")
 
     # === ССЫЛКА ДЛЯ ПАРТНЁРОВ ===
     FAQ_PARTNERS_BLOCK = (By.CSS_SELECTOR, ".faq-links")
-    FAQ_PARTNERS_LINK = (By.XPATH, "//a[contains(@href,'/partners')]")
+    FAQ_PARTNERS_LINK = (By.XPATH, "//*[@id='faqSection']//a[contains(@href,'/partners')]")
 
     # === ФОРМА "Не нашли ответ?" ===
     FAQ_FORM = (By.CSS_SELECTOR, ".faq-form")
-    FAQ_FORM_TITLE = (By.XPATH, "//h5[contains(text(),'Не нашли ответ')]")
-    FAQ_FORM_BUTTON = (By.XPATH, "//button//span[contains(text(),'Задать вопрос')]")
+    FAQ_FORM_TITLE = (By.XPATH, "//*[@id='faqSection']//*[self::h3 or self::h4 or self::h5][contains(normalize-space(),'Не нашли ответ')]")
+    FAQ_FORM_BUTTON = (By.XPATH, "//*[@id='faqSection']//button[.//span[contains(normalize-space(),'Задать вопрос')]]")
 
     # === ТЕКСТОВЫЕ ЭТАЛОНЫ ДЛЯ СРАВНЕНИЙ ===
     EXPECTED_QUESTIONS = [
@@ -216,4 +216,3 @@ class CompaniesLocators:
     # Страница "Список объектов (таблица)"
     FACILITIES_TABLE_TITLE = (By.CSS_SELECTOR, "h1.text-h3, h2.text-h3")
     FACILITIES_TABLE_ROWS = (By.CSS_SELECTOR, "table tbody tr")
-

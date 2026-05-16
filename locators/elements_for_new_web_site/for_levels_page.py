@@ -43,7 +43,11 @@ class LevelsLocators:
     JOIN_NAME_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Ваше имя']")
     JOIN_PHONE_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='phone']")
     JOIN_EMAIL_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[name='email']")
-    JOIN_COMPANY_INPUT = (By.CSS_SELECTOR, "#getDetailsSection input[placeholder='Компания']")
+    JOIN_COMPANY_INPUT = (
+        By.CSS_SELECTOR,
+        "#getDetailsSection input[placeholder='Компания'], "
+        "#getDetailsSection input[placeholder='Название компании']"
+    )
     JOIN_AGREE_LABEL = (By.CSS_SELECTOR, "#getDetailsSection label.checkbox")
     JOIN_POLICY_LINK = (By.CSS_SELECTOR, "#getDetailsSection .agreement a")
     JOIN_SUBMIT_BTN = (By.CSS_SELECTOR, "#getDetailsSection button.get-details__button")

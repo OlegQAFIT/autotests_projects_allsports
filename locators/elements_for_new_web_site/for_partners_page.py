@@ -46,9 +46,9 @@ class PartnersLocators:
     # --- FAQ ---
     FAQ_SECTION = (By.CSS_SELECTOR, "#faqSection")
     FAQ_TITLE = (By.XPATH, "//h2[normalize-space()='Часто задаваемые вопросы']")
-    FAQ_ITEMS = (By.CSS_SELECTOR, ".faq .expansion-item")
-    FAQ_QUESTIONS = (By.CSS_SELECTOR, "section.faq .expansion-item-title h5")
-    FAQ_BUTTON = (By.XPATH, "//button[.//span[text()='Задать вопрос']]")
+    FAQ_ITEMS = (By.CSS_SELECTOR, "#faqSection .expansion-item")
+    FAQ_QUESTIONS = (By.CSS_SELECTOR, "#faqSection .expansion-item-title h3, #faqSection .expansion-item-title h5, #faqSection .expansion-item-title .text-h5-new")
+    FAQ_BUTTON = (By.XPATH, "//*[@id='faqSection']//button[contains(normalize-space(.),'Задать вопрос')]")
 
     # --- CONTACTS ---
     CONTACTS_SECTION = (By.CSS_SELECTOR, "#contactsSection")
@@ -56,9 +56,9 @@ class PartnersLocators:
     CONTACTS_PHONE = (By.XPATH, "//a[starts-with(@href,'tel:')]")
     CONTACTS_EMAIL = (By.XPATH, "//a[starts-with(@href,'mailto:')]")
     CONTACTS_ADDRESS = (By.XPATH, "//p[contains(.,'Минск')]")
-    MAP_CANVAS = (By.CSS_SELECTOR, ".mapboxgl-canvas")
-    MAP_ZOOM_IN = (By.CSS_SELECTOR, ".mapboxgl-ctrl-zoom-in")
-    MAP_ZOOM_OUT = (By.CSS_SELECTOR, ".mapboxgl-ctrl-zoom-out")
+    MAP_CANVAS = (By.CSS_SELECTOR, "#contactsSection canvas.mapboxgl-canvas")
+    MAP_ZOOM_IN = (By.CSS_SELECTOR, "#contactsSection .mapboxgl-ctrl-zoom-in")
+    MAP_ZOOM_OUT = (By.CSS_SELECTOR, "#contactsSection .mapboxgl-ctrl-zoom-out")
 
     # --- VALID DATA ---
     VALID_NAME = "Олег"

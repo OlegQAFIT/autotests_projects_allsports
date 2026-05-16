@@ -34,8 +34,10 @@ class FacilitiesLocators:
 
     # === FACILITIES TABLE PAGE ===
     TABLE_URL_SUFFIX = "/facilities-table"
+    TABLE_ROOT = (By.CSS_SELECTOR, ".facilities-table")
     TABLE_SEARCH_INPUT = (By.CSS_SELECTOR, "input[placeholder='Поиск']")
     TABLE_FILTER_BUTTON = (By.CSS_SELECTOR, "button.facilities-table-filter__button")
     TABLE_FILTER_MODAL = (By.CSS_SELECTOR, ".modal-container.map-filter-modal, .modal")
+    TABLE_FILTER_MODAL_ROOT = (By.CSS_SELECTOR, ".modal-container.map-filter-modal")
     TABLE_FILTER_APPLY = (By.XPATH, "//button[contains(.,'Применить')]")
     TABLE_FILTER_RESET = (By.XPATH, "//button[contains(.,'Сбросить фильтры')]")

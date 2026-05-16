@@ -460,7 +460,7 @@ class BasePage:
     # Ожидание видимости элемента
     def wait_for_visible(self, locator, timeout=10):
         """
-        Универсальное ожидание видимости/кликабельности элемента.
+        Универсальное ожидание видимости элемента.
         Работает и с tuple-локаторами (By, value), и со строками (xpath).
         """
         try:
@@ -470,12 +470,12 @@ class BasePage:
                 by, value = By.XPATH, locator
 
             return WebDriverWait(self.driver, timeout).until(
-                EC.element_to_be_clickable((by, value))
+                EC.visibility_of_element_located((by, value))
             )
         except TimeoutException:
-            assert False, f"Элемент {locator} не найден или не кликабелен за {timeout} секунд"
+            assert False, f"Элемент {locator} не найден или не отображается за {timeout} секунд"
         except WebDriverException:
-            assert False, f"Элемент {locator} не кликабелен"
+            assert False, f"Элемент {locator} не отображается"
 
     def wait_for_visible_journal(self, locator, timeout=10):
         """
@@ -488,12 +488,12 @@ class BasePage:
                 by, value = By.XPATH, locator
 
             return WebDriverWait(self.driver, timeout).until(
-                EC.element_to_be_clickable((by, value))
+                EC.visibility_of_element_located((by, value))
             )
         except TimeoutException:
-            assert False, f"Элемент {locator} не найден или не кликабелен за {timeout} секунд"
+            assert False, f"Элемент {locator} не найден или не отображается за {timeout} секунд"
         except WebDriverException:
-            assert False, f"Элемент {locator} не кликабелен"
+            assert False, f"Элемент {locator} не отображается"
 
     def wait_for_visible_2(self, *locators):
         """

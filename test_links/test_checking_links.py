@@ -56,14 +56,14 @@ def test_check_link_four(driver, domain, domain_new):
 @allure.severity('critical')
 @allure.story('Проверка страницы, главная для перехода')
 def test_check_link_five(driver):
-    checking_links = ElementsFromLinks(driver)
+    checking_links = ElementsFromLinks(driver, domain="https://оллспортс.бел/by")
     checking_links.check_links_five()
 
 
 @allure.feature('Проверка редиректа')
 @allure.severity('critical')
-@allure.story('Проверка страницы, главная для перехода')
-def test_check_link_five(driver):
+@allure.story('Проверка отсутствия 404 по списку известных ссылок')
+def test_check_link_six_404(driver):
     domain = "https://оллспортс.бел/by"  # Укажите нужный домен, если он нужен для проверки
     checking_links = ElementsFromLinks(driver, domain)
     checking_links.check_links_for_404()

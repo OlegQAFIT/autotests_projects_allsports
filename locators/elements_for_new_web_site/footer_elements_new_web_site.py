@@ -3,11 +3,11 @@ from selenium.webdriver.common.by import By
 
 
 class FooterLocators:
-    BASE_URL = "/ru-by"
+    BASE_URL = "/"
 
     # --- Контактная информация ---
-    PHONE = (By.XPATH, "//footer//a[contains(@href, 'tel') and contains(translate(., '  ', ' '), '+375')]")
-    EMAIL = (By.XPATH, "//footer//a[contains(@href, 'mailto') and contains(., 'contact@allsports.by')]")
+    PHONE = (By.XPATH, "//footer//a[starts-with(@href,'tel:')]")
+    EMAIL = (By.XPATH, "//footer//a[starts-with(@href,'mailto:') and contains(@href,'contact@allsports.by')]")
 
     # --- Соцсети ---
     INSTAGRAM = (By.XPATH, "//footer//a[contains(@href, 'instagram.com')]")
@@ -48,12 +48,12 @@ class FooterLocators:
 
 
     # --- Документы ---
-    POLICY_PD = "/ru-by/policy/251010_processing_personal_data"
-    LICENSE_INTERMEDIARY = "/ru-by/license/241009_license"
-    USER_AGREEMENTS = "/ru-by/user-agreements"
-    INDIVIDUAL_LICENSE = "/ru-by/individual_license/241009_license"
-    RULE_ACCESS = "/ru-by/rule/250731_rule"
-    COOKIE_POLICY = "/ru-by/cookie/cookie-policy"
+    POLICY_PD = "/policy/251010_processing_personal_data"
+    LICENSE_INTERMEDIARY = "/license/241009_license"
+    USER_AGREEMENTS = "/user-agreements"
+    INDIVIDUAL_LICENSE = "/individual_license/241009_license"
+    RULE_ACCESS = "/rule/250731_rule"
+    COOKIE_POLICY = "/cookie/cookie-policy"
 
     TEXT_DOC_PD = "Политика компании в отношении обработки персональных данных"
     TEXT_DOC_INTERMEDIARY = "Договор возмездного оказания посреднических услуг"

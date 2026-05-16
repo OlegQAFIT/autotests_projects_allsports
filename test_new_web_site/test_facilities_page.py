@@ -76,3 +76,14 @@ def test_facilities_full_flow(driver):
     page.check_filters_visible()
     page.check_objects_content_loaded()
     page.check_objects_table_block()
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story('Полная проверка фильтров и поиска в таблице объектов')
+def test_facilities_table_filters_full_flow(driver):
+    page = FacilitiesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_page_opened()
+    page.check_full_table_filters_flow()

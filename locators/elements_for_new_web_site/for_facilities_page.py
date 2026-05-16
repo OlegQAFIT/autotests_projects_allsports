@@ -10,7 +10,7 @@ class FacilitiesLocators:
     # === COMMON ===
     COOKIE_ACCEPT_BTN = (By.CSS_SELECTOR, ".cookie-primary-modal__confirm")
     PAGE_ROOT = (By.CSS_SELECTOR, "section.facilities")
-    PAGE_TITLE = (By.CSS_SELECTOR, "section.facilities h1, section.facilities h2")
+    PAGE_TITLE = (By.CSS_SELECTOR, "section.facilities .facilities-header, section.facilities .facilities-filter")
 
     # === MAP ===
     MAP_BLOCK = (By.CSS_SELECTOR, "section.facilities .facilities-map, #map")
@@ -22,11 +22,20 @@ class FacilitiesLocators:
 
     # === FILTERS ===
     FILTER_BAR = (By.CSS_SELECTOR, ".facilities-filter-bar")
-    FILTER_BUTTONS = (By.CSS_SELECTOR, ".facilities-filter-buttons button")
+    FILTER_BUTTONS = (By.CSS_SELECTOR, ".facilities-filter-buttons .facilities-filter__button")
+    FILTER_SELECTS = (By.CSS_SELECTOR, ".facilities-filter-bar .select-field")
 
     # === CONTENT ===
-    FACILITIES_LIST = (By.CSS_SELECTOR, ".facilities-list")
-    FACILITIES_LIST_ITEMS = (By.CSS_SELECTOR, ".facilities-list .facilities-list-item")
-    OBJECTS_TABLE_SECTION = (By.CSS_SELECTOR, ".facilities__objects-table")
+    FACILITIES_LIST = (By.CSS_SELECTOR, ".facilities-filter-bar")
+    FACILITIES_LIST_ITEMS = (By.CSS_SELECTOR, ".facilities-filter-bar .select-field__value")
+    OBJECTS_TABLE_SECTION = (By.CSS_SELECTOR, "a.facilities__objects-table")
     FACILITIES_TABLE = (By.CSS_SELECTOR, ".facilities-table")
     FACILITIES_TABLE_ROWS = (By.CSS_SELECTOR, ".facilities-table .facilities-table__row")
+
+    # === FACILITIES TABLE PAGE ===
+    TABLE_URL_SUFFIX = "/facilities-table"
+    TABLE_SEARCH_INPUT = (By.CSS_SELECTOR, "input[placeholder='Поиск']")
+    TABLE_FILTER_BUTTON = (By.CSS_SELECTOR, "button.facilities-table-filter__button")
+    TABLE_FILTER_MODAL = (By.CSS_SELECTOR, ".modal-container.map-filter-modal, .modal")
+    TABLE_FILTER_APPLY = (By.XPATH, "//button[contains(.,'Применить')]")
+    TABLE_FILTER_RESET = (By.XPATH, "//button[contains(.,'Сбросить фильтры')]")

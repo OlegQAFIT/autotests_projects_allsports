@@ -1,5 +1,7 @@
 import logging
 import os
+import shutil
+from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
 import pytest
@@ -153,6 +155,44 @@ def _patch_base_assertions():
     BasePage.assert_element_not_present = _strict_assert_element_not_present
 
 
+def _parse_version_tuple(version: str):
+    parts = []
+    for token in version.split('.'):
+        try:
+            parts.append(int(token))
+        except ValueError:
+            parts.append(0)
+    return tuple(parts)
+
+
+def _find_cached_chromedriver() -> str | None:
+    cache_root = Path.home() / '.wdm' / 'drivers' / 'chromedriver' / 'mac64'
+    if not cache_root.exists():
+        return None
+
+    candidates: list[tuple[tuple[int, ...], str]] = []
+    for version_dir in cache_root.iterdir():
+        if not version_dir.is_dir():
+            continue
+
+        version_key = _parse_version_tuple(version_dir.name)
+        for relative in (
+            'chromedriver-mac-arm64/chromedriver',
+            'chromedriver-mac-x64/chromedriver',
+            'chromedriver/chromedriver',
+        ):
+            path = version_dir / relative
+            if path.exists() and os.access(path, os.X_OK):
+                candidates.append((version_key, str(path)))
+                break
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
 def create_chrome(headless: bool = False):
     chrome_options = ChromeOption()
     if headless:
@@ -160,9 +200,21 @@ def create_chrome(headless: bool = False):
         chrome_options.add_argument('window-size=1900x1600')
 
     chrome_options.add_argument('--disable-notifications')
+    chrome_options.add_argument('--disable-dev-shm-usage')
+    chrome_options.add_argument('--no-sandbox')
+    chrome_options.add_argument('--disable-extensions')
     chrome_options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
 
-    service = ChromeService(ChromeDriverManager().install())
+    local_driver = (
+        os.getenv('CHROMEDRIVER_PATH')
+        or shutil.which('chromedriver')
+        or _find_cached_chromedriver()
+    )
+
+    if local_driver:
+        service = ChromeService(local_driver)
+    else:
+        service = ChromeService(ChromeDriverManager().install())
     return webdriver.Chrome(service=service, options=chrome_options)
 
 

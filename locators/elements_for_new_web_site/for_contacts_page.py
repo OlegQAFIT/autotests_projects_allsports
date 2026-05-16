@@ -1,6 +1,10 @@
 class ContactsPageLocators:
+    BASE_PATH = "/contacts"
     # ==== Header ====
-    PAGE_TITLE = '//*[@id="defaultView"]/main/section[1]/h2'
+    PAGE_TITLE = (
+        "//section[contains(@class,'contacts')]//*[self::h1 or self::h2]"
+        "[contains(normalize-space(),'Наши контакты') or contains(normalize-space(),'Контакты')]"
+    )
 
     # ==== Contacts Info ====
     ADDRESS_BLOCK = (
@@ -18,15 +22,22 @@ class ContactsPageLocators:
     )
 
     # ==== Tabs ====
-    TAB_GET_OFFER = "//li[@id='get-offer' or contains(., 'Подключить компанию')]"
+    TAB_GET_OFFER = (
+        "//*[@id='get-offer' and contains(@class,'select-tab__option')]"
+        " | //*[contains(@class,'select-tab__option') and contains(normalize-space(),'Подключить компанию')]"
+    )
     TAB_BECOME_PARTNER = ("//li[@id='become-partner' or contains(., 'Стать партнером') "
                           "or contains(., 'Стать партёром')]")
 
     # ==== Feedback form (унифицировано под текущую вёрстку) ====
     INPUT_NAME = ("//label[contains(., 'Ваше имя') or contains(., 'Имя') or .//input[@type='text']]"
                   "//input[@type='text' and not(@name='email')]")
-    INPUT_PHONE = "//input[@name='phone' or (contains(@placeholder,'+375') and @type='tel')]"
-    INPUT_EMAIL = "//input[@name='email' or (contains(@placeholder,'@') and @type='text')]"
+    INPUT_PHONE = (
+        "//section[contains(@class,'get-details')]//input[@name='phone' or @type='tel']"
+    )
+    INPUT_EMAIL = (
+        "//section[contains(@class,'get-details')]//input[@name='email' or contains(@placeholder,'@')]"
+    )
 
     # На старых версиях могла быть textarea message — поддержим оба варианта.
     INPUT_MESSAGE = ("//textarea[@name='message' or contains(@placeholder, 'Сообщение') or @id='message']"
@@ -37,7 +48,10 @@ class ContactsPageLocators:
                       "or contains(@aria-label,'agree') or not(@name))]")
 
     # Кнопка отправки (три состояния)
-    BUTTON_SEND_ANY = "//form[contains(@class,'get-details__form')]//button[contains(@class,'get-details__button')]"
+    BUTTON_SEND_ANY = (
+        "//section[contains(@class,'get-details')]//form[contains(@class,'get-details__form')]"
+        "//button[contains(@class,'get-details__button')]"
+    )
     BUTTON_SEND_ENABLED = f"{BUTTON_SEND_ANY}[not(@disabled)]"
     BUTTON_SEND_DISABLED = f"{BUTTON_SEND_ANY}[@disabled]"
 

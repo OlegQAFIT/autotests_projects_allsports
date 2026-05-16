@@ -6,6 +6,9 @@ import requests
 from selenium.webdriver.common.by import By
 
 
+pytestmark = [pytest.mark.release_gate]
+
+
 PUBLIC_ENDPOINTS = [
     "https://www.allsports.fit/by/",
     "https://www.allsports.by/ru-by/",

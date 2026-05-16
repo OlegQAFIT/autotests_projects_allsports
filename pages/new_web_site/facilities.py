@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 import time
 import allure
+from selenium.common.exceptions import StaleElementReferenceException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -98,6 +100,177 @@ class FacilitiesPage(BasePage):
         href = self.driver.find_element(*L.OBJECTS_TABLE_SECTION).get_attribute("href") or ""
         assert L.TABLE_URL_SUFFIX in href, f"Ссылка на таблицу объектов некорректна: {href}"
 
+    @allure.step("Открыть страницу 'Список объектов (таблица)'")
+    def open_table_page(self):
+        base_url = getattr(self.driver, "base_url", "https://www.allsports.by/ru-by").rstrip("/")
+        self.driver.get(f"{base_url}{L.TABLE_URL_SUFFIX}")
+        WebDriverWait(self.driver, 20).until(EC.url_contains(L.TABLE_URL_SUFFIX))
+        WebDriverWait(self.driver, 25).until(
+            lambda d: len(d.find_elements(*L.FACILITIES_TABLE_ROWS)) > 0
+        )
+        return self
+
+    def _visible_table_rows_count(self, retries=6):
+        for _ in range(retries):
+            rows = self.driver.find_elements(*L.FACILITIES_TABLE_ROWS)
+            visible = 0
+            stale = False
+            for row in rows:
+                try:
+                    if row.is_displayed():
+                        visible += 1
+                except StaleElementReferenceException:
+                    stale = True
+                    break
+            if not stale:
+                return visible
+            time.sleep(0.25)
+        return 0
+
+    def _open_table_filter_modal(self):
+        filter_btn = WebDriverWait(self.driver, 15).until(
+            EC.element_to_be_clickable(L.TABLE_FILTER_BUTTON)
+        )
+        self.driver.execute_script("arguments[0].click();", filter_btn)
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.TABLE_FILTER_MODAL_ROOT)
+        )
+
+    def _close_table_filter_modal_apply(self):
+        apply_btn = WebDriverWait(self.driver, 15).until(
+            EC.element_to_be_clickable(L.TABLE_FILTER_APPLY)
+        )
+        self.driver.execute_script("arguments[0].click();", apply_btn)
+        WebDriverWait(self.driver, 15).until(
+            EC.invisibility_of_element_located(L.TABLE_FILTER_MODAL_ROOT)
+        )
+        # Даем таблице время пересчитать выдачу.
+        time.sleep(0.6)
+        WebDriverWait(self.driver, 20).until(
+            lambda d: len(d.find_elements(*L.FACILITIES_TABLE_ROWS)) > 0
+        )
+
+    def _option_xpath(self, section_title, option_text):
+        return (
+            "//div[contains(@class,'map-filter-modal')]"
+            f"//p[normalize-space()='{section_title}']/following-sibling::ul[1]"
+            f"//li[.//span[contains(normalize-space(),\"{option_text}\")]]"
+        )
+
+    def _show_all_xpath(self, section_title):
+        return (
+            "//div[contains(@class,'map-filter-modal')]"
+            f"//p[normalize-space()='{section_title}']/following-sibling::ul[1]"
+            "//li[contains(@class,'show-all')]"
+        )
+
+    def _is_option_checked(self, section_title, option_text):
+        li = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, self._option_xpath(section_title, option_text)))
+        )
+        label = li.find_element(By.CSS_SELECTOR, "label.circle-checkbox")
+        classes = (label.get_attribute("class") or "").strip()
+        return "circle-checkbox_checked" in classes
+
+    def _select_filter_option(self, section_title, option_text, show_all=False):
+        if show_all:
+            show_all_xpath = self._show_all_xpath(section_title)
+            show_all_items = self.driver.find_elements(By.XPATH, show_all_xpath)
+            if show_all_items:
+                self.driver.execute_script("arguments[0].click();", show_all_items[0])
+                time.sleep(0.2)
+
+        option = WebDriverWait(self.driver, 10).until(
+            EC.presence_of_element_located((By.XPATH, self._option_xpath(section_title, option_text)))
+        )
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", option)
+        self.driver.execute_script("arguments[0].click();", option)
+        WebDriverWait(self.driver, 8).until(
+            lambda d: self._is_option_checked(section_title, option_text)
+        )
+
+    @allure.step("Применить одиночный фильтр таблицы: {1} -> {2}")
+    def check_table_single_filter_value(self, section_title, option_text, show_all=False):
+        baseline_rows = self._visible_table_rows_count()
+        assert baseline_rows > 0, "Базовый набор таблицы пуст"
+
+        self._open_table_filter_modal()
+        self._select_filter_option(section_title, option_text, show_all=show_all)
+        self._close_table_filter_modal_apply()
+
+        filtered_rows = self._visible_table_rows_count()
+        assert filtered_rows > 0, (
+            f"После фильтра '{section_title}: {option_text}' не осталось отображаемых строк"
+        )
+        assert filtered_rows <= baseline_rows, (
+            f"Фильтр '{section_title}: {option_text}' расширил выдачу: "
+            f"до={baseline_rows}, после={filtered_rows}"
+        )
+        assert filtered_rows < baseline_rows, (
+            f"Фильтр '{section_title}: {option_text}' не сузил выдачу: "
+            f"до={baseline_rows}, после={filtered_rows}"
+        )
+
+    @allure.step("Применить комбинацию фильтров таблицы ({1})")
+    def check_table_filter_combination(self, filters):
+        baseline_rows = self._visible_table_rows_count()
+        assert baseline_rows > 0, "Базовый набор таблицы пуст"
+
+        self._open_table_filter_modal()
+        for flt in filters:
+            self._select_filter_option(
+                flt["section"],
+                flt["option"],
+                show_all=flt.get("show_all", False),
+            )
+        self._close_table_filter_modal_apply()
+
+        filtered_rows = self._visible_table_rows_count()
+        assert filtered_rows > 0, "После применения комбинации фильтров выдача пустая"
+        assert filtered_rows <= baseline_rows, (
+            f"Комбинация фильтров не должна расширять выдачу: "
+            f"до={baseline_rows}, после={filtered_rows}"
+        )
+        assert filtered_rows < baseline_rows, (
+            f"Комбинация фильтров не сузила выдачу: до={baseline_rows}, после={filtered_rows}"
+        )
+
+    @allure.step("Сбросить фильтры и вернуть baseline набор")
+    def check_table_reset_returns_baseline(self, filters, max_attempts=2):
+        baseline_rows = self._visible_table_rows_count()
+        assert baseline_rows > 0, "Базовый набор таблицы пуст"
+
+        self._open_table_filter_modal()
+        for flt in filters:
+            self._select_filter_option(
+                flt["section"],
+                flt["option"],
+                show_all=flt.get("show_all", False),
+            )
+        self._close_table_filter_modal_apply()
+
+        filtered_rows = self._visible_table_rows_count()
+        assert filtered_rows < baseline_rows, (
+            f"Комбинация перед reset не сузила выдачу: до={baseline_rows}, после={filtered_rows}"
+        )
+
+        restored_rows = filtered_rows
+        for _ in range(max_attempts):
+            self._open_table_filter_modal()
+            reset_btn = WebDriverWait(self.driver, 10).until(
+                EC.element_to_be_clickable(L.TABLE_FILTER_RESET)
+            )
+            self.driver.execute_script("arguments[0].click();", reset_btn)
+            time.sleep(0.2)
+            self._close_table_filter_modal_apply()
+            restored_rows = self._visible_table_rows_count()
+            if restored_rows == baseline_rows:
+                break
+
+        assert restored_rows == baseline_rows, (
+            f"После reset baseline не восстановлен: baseline={baseline_rows}, current={restored_rows}"
+        )
+
     @allure.step("Проверить полный сценарий фильтрации на странице 'Список объектов (таблица)'")
     def check_full_table_filters_flow(self):
         self._safe_scroll(L.OBJECTS_TABLE_SECTION)
@@ -111,7 +284,7 @@ class FacilitiesPage(BasePage):
         WebDriverWait(self.driver, 25).until(
             lambda d: len(d.find_elements(*L.FACILITIES_TABLE_ROWS)) > 0
         )
-        baseline_rows = len(self.driver.find_elements(*L.FACILITIES_TABLE_ROWS))
+        baseline_rows = self._visible_table_rows_count()
         assert baseline_rows > 0, "Таблица объектов не загружена"
 
         # Проверяем поиск
@@ -123,7 +296,7 @@ class FacilitiesPage(BasePage):
         WebDriverWait(self.driver, 15).until(
             lambda d: len(d.find_elements(*L.FACILITIES_TABLE_ROWS)) > 0
         )
-        filtered_rows = len(self.driver.find_elements(*L.FACILITIES_TABLE_ROWS))
+        filtered_rows = self._visible_table_rows_count()
         assert filtered_rows <= baseline_rows, (
             f"Поиск не сузил выборку: до={baseline_rows}, после={filtered_rows}"
         )

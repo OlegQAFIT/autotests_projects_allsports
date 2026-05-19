@@ -34,6 +34,37 @@ class BasePageSb(BasePage):
             filtered.append(entry)
         return filtered
 
+    @staticmethod
+    def strict_console_issues(raw_logs):
+        issues = []
+        for entry in raw_logs:
+            level = str(entry.get("level") or "").upper()
+            message = str(entry.get("message") or "")
+            source = str(entry.get("source") or "")
+            if level in ("SEVERE", "ERROR"):
+                issues.append(
+                    {
+                        "level": level,
+                        "source": source,
+                        "message": message,
+                    }
+                )
+                continue
+
+            # In strict mode warnings that contain explicit error/failure keywords
+            # are also treated as blockers.
+            if level in ("WARNING", "WARN"):
+                lowered = message.lower()
+                if any(token in lowered for token in ("error", "failed", "exception", "uncaught")):
+                    issues.append(
+                        {
+                            "level": level,
+                            "source": source,
+                            "message": message,
+                        }
+                    )
+        return issues
+
     def open_url(self, url: str):
         self.driver.get(url)
         self.wait_page_ready()
@@ -99,3 +130,9 @@ class BasePageSb(BasePage):
         logs = self.driver.get_log("browser")
         filtered = self.filtered_console_errors(logs)
         assert not filtered, f"Console SEVERE errors found: {filtered}"
+
+    def assert_no_console_issues_strict(self):
+        time.sleep(0.3)
+        logs = self.driver.get_log("browser")
+        issues = self.strict_console_issues(logs)
+        assert not issues, f"Console strict issues found: {issues}"

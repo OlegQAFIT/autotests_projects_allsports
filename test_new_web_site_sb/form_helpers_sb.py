@@ -69,6 +69,165 @@ SUBMIT_SPY_JS = r'''
 })();
 '''
 
+REAL_NETWORK_PROBE_JS = r'''
+(() => {
+  if (!window.__qaRealNet) window.__qaRealNet = [];
+  const push = (item) => {
+    try {
+      window.__qaRealNet.push(Object.assign({ ts: Date.now() }, item || {}));
+    } catch (e) {}
+  };
+
+  const toUrl = (input) => {
+    try {
+      if (typeof input === 'string') return input;
+      if (input && input.url) return String(input.url);
+    } catch (e) {}
+    return '';
+  };
+
+  if (!window.__qaOrigFetchReal && window.fetch) {
+    window.__qaOrigFetchReal = window.fetch.bind(window);
+    window.fetch = async function(input, init) {
+      const method = (init && init.method) ? String(init.method).toUpperCase() : 'GET';
+      const url = toUrl(input);
+      let body = '';
+      try { body = (init && init.body) ? String(init.body) : ''; } catch (e) {}
+
+      const started = Date.now();
+      try {
+        const response = await window.__qaOrigFetchReal(input, init);
+        let responseText = '';
+        try {
+          responseText = await response.clone().text();
+        } catch (e) {}
+        push({
+          transport: 'fetch',
+          method,
+          url,
+          status: Number(response.status || 0),
+          ok: !!response.ok,
+          body: body.slice(0, 1000),
+          responseText: String(responseText || '').slice(0, 1000),
+          durationMs: Date.now() - started,
+        });
+        return response;
+      } catch (error) {
+        push({
+          transport: 'fetch',
+          method,
+          url,
+          status: 0,
+          ok: false,
+          body: body.slice(0, 1000),
+          error: String(error),
+          durationMs: Date.now() - started,
+        });
+        throw error;
+      }
+    };
+  }
+
+  if (!window.__qaXhrRealPatched) {
+    window.__qaXhrRealPatched = true;
+    const origOpen = XMLHttpRequest.prototype.open;
+    const origSend = XMLHttpRequest.prototype.send;
+
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this.__qaMethod = String(method || 'GET').toUpperCase();
+      this.__qaUrl = String(url || '');
+      return origOpen.apply(this, arguments);
+    };
+
+    XMLHttpRequest.prototype.send = function(body) {
+      const xhr = this;
+      const started = Date.now();
+      xhr.addEventListener('loadend', function() {
+        let responseText = '';
+        try { responseText = String(xhr.responseText || '').slice(0, 1000); } catch (e) {}
+        push({
+          transport: 'xhr',
+          method: String(xhr.__qaMethod || 'GET').toUpperCase(),
+          url: String(xhr.__qaUrl || ''),
+          status: Number(xhr.status || 0),
+          ok: Number(xhr.status || 0) >= 200 && Number(xhr.status || 0) < 300,
+          body: body ? String(body).slice(0, 1000) : '',
+          responseText: responseText,
+          durationMs: Date.now() - started,
+        });
+      }, { once: true });
+      return origSend.apply(this, arguments);
+    };
+  }
+  return true;
+})();
+'''
+
+NETWORK_FAILURE_STUB_JS = r'''
+((statusCode) => {
+  window.__qaFailNet = [];
+  const push = (item) => {
+    try {
+      window.__qaFailNet.push(Object.assign({ ts: Date.now() }, item || {}));
+    } catch (e) {}
+  };
+
+  const normalizedStatus = Number(statusCode || 500);
+
+  if (window.fetch) {
+    window.fetch = function(input, init) {
+      const method = (init && init.method) ? String(init.method).toUpperCase() : 'GET';
+      const url = (typeof input === 'string') ? input : (input && input.url ? String(input.url) : '');
+      const body = (init && init.body) ? String(init.body) : '';
+      push({ transport: 'fetch', method, url, status: normalizedStatus, ok: false, body: body.slice(0, 1000) });
+
+      const payload = JSON.stringify({ error: 'qa simulated failure', status: normalizedStatus });
+      if (typeof Response !== 'undefined') {
+        return Promise.resolve(new Response(payload, {
+          status: normalizedStatus,
+          headers: { 'Content-Type': 'application/json' },
+        }));
+      }
+      return Promise.resolve({
+        ok: false,
+        status: normalizedStatus,
+        json: async () => ({ error: 'qa simulated failure', status: normalizedStatus }),
+        text: async () => payload,
+      });
+    };
+  }
+
+  if (!window.__qaXhrFailurePatched) {
+    window.__qaXhrFailurePatched = true;
+    XMLHttpRequest.prototype.open = function(method, url) {
+      this.__qaMethod = String(method || 'GET').toUpperCase();
+      this.__qaUrl = String(url || '');
+    };
+    XMLHttpRequest.prototype.send = function(body) {
+      const xhr = this;
+      push({
+        transport: 'xhr',
+        method: String(xhr.__qaMethod || 'GET').toUpperCase(),
+        url: String(xhr.__qaUrl || ''),
+        status: normalizedStatus,
+        ok: false,
+        body: body ? String(body).slice(0, 1000) : '',
+      });
+
+      setTimeout(() => {
+        try {
+          if (typeof xhr.onerror === 'function') xhr.onerror(new Event('error'));
+          xhr.dispatchEvent(new Event('error'));
+          xhr.dispatchEvent(new Event('loadend'));
+        } catch (e) {}
+      }, 0);
+    };
+  }
+
+  return true;
+})
+'''
+
 
 def accept_cookie_if_present(driver):
     locators = [
@@ -219,6 +378,45 @@ def submit_modal_and_collect_contact_urls(driver):
     return get_contact_post_urls(driver)
 
 
+def install_real_network_probe(driver):
+    driver.execute_script(REAL_NETWORK_PROBE_JS)
+
+
+def clear_real_network_probe(driver):
+    driver.execute_script("window.__qaRealNet = [];")
+
+
+def get_real_network_events(driver):
+    return driver.execute_script("return window.__qaRealNet || [];")
+
+
+def wait_for_contact_network_events(driver, endpoint_substring: str, timeout: float = 20.0):
+    end_at = time.time() + timeout
+    endpoint_substring = endpoint_substring or "/contact/"
+
+    while time.time() < end_at:
+        events = get_real_network_events(driver)
+        matched = []
+        for event in events:
+            method = str(event.get("method", "")).upper()
+            url = str(event.get("url", ""))
+            if method == "POST" and endpoint_substring in url:
+                matched.append(event)
+        if matched:
+            return matched
+        time.sleep(0.35)
+
+    return []
+
+
+def install_network_failure_stub(driver, status_code: int = 500):
+    driver.execute_script(NETWORK_FAILURE_STUB_JS, int(status_code))
+
+
+def get_failure_stub_events(driver):
+    return driver.execute_script("return window.__qaFailNet || [];")
+
+
 def inline_contacts_form(driver):
     return WebDriverWait(driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "form")))
 
@@ -307,3 +505,25 @@ def inline_success_state(driver):
     # Different builds show success differently. We accept either post-submit reset
     # or disabled state after send as an observable completion signal.
     return disabled_after_submit or cleared_inputs >= 2
+
+
+def wait_for_modal_submit_feedback(driver, timeout: float = 12.0):
+    end_at = time.time() + timeout
+    while time.time() < end_at:
+        send_buttons = driver.find_elements(By.XPATH, SEND_BUTTON_XPATH)
+        if not send_buttons:
+            return {"closed": True, "disabled": False, "messages": modal_validation_messages(driver)}
+
+        btn = send_buttons[0]
+        disabled = (not btn.is_enabled()) or (btn.get_attribute("disabled") is not None)
+        messages = modal_validation_messages(driver)
+        if disabled or messages:
+            return {"closed": False, "disabled": disabled, "messages": messages}
+        time.sleep(0.3)
+
+    send_buttons = driver.find_elements(By.XPATH, SEND_BUTTON_XPATH)
+    if not send_buttons:
+        return {"closed": True, "disabled": False, "messages": modal_validation_messages(driver)}
+    btn = send_buttons[0]
+    disabled = (not btn.is_enabled()) or (btn.get_attribute("disabled") is not None)
+    return {"closed": False, "disabled": disabled, "messages": modal_validation_messages(driver)}

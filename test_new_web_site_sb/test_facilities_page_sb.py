@@ -28,6 +28,26 @@ def test_facilities_map_and_controls_sb(driver):
 @allure.feature("Facilities SB")
 @allure.severity("Critical")
 @pytest.mark.release_gate
+def test_facilities_map_markers_and_popup_sb(driver):
+    page = FacilitiesPageSb(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_map_marker_popup()
+
+
+@allure.feature("Facilities SB")
+@allure.severity("Critical")
+@pytest.mark.release_gate
+def test_facilities_map_reaction_to_filters_sb(driver):
+    page = FacilitiesPageSb(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_map_reacts_to_filters(section_title="City", option_text="Limassol")
+
+
+@allure.feature("Facilities SB")
+@allure.severity("Critical")
+@pytest.mark.release_gate
 def test_facilities_table_basics_and_search_sb(driver):
     page = FacilitiesPageSb(driver)
     page.open_table_page()
@@ -39,21 +59,43 @@ def test_facilities_table_basics_and_search_sb(driver):
 @allure.feature("Facilities SB")
 @allure.severity("Critical")
 @pytest.mark.release_gate
-def test_facilities_table_single_filter_city_limassol_sb(driver):
+def test_facilities_table_filter_city_content_sb(driver):
     page = FacilitiesPageSb(driver)
     page.open_table_page()
     page.accept_cookie_consent()
-    page.check_table_single_filter_value("City", "Limassol")
+    page.check_table_filter_content_matches(
+        section_title="City",
+        option_text="Limassol",
+        content_kind="city",
+    )
 
 
 @allure.feature("Facilities SB")
 @allure.severity("Critical")
 @pytest.mark.release_gate
-def test_facilities_table_single_filter_activity_aerobics_sb(driver):
+def test_facilities_table_filter_activity_content_sb(driver):
     page = FacilitiesPageSb(driver)
     page.open_table_page()
     page.accept_cookie_consent()
-    page.check_table_single_filter_value("Activities", "Aerobics")
+    page.check_table_filter_content_matches(
+        section_title="Activities",
+        option_text="Aerobics",
+        content_kind="activity",
+    )
+
+
+@allure.feature("Facilities SB")
+@allure.severity("Critical")
+@pytest.mark.release_gate
+def test_facilities_table_filter_membership_vip_content_sb(driver):
+    page = FacilitiesPageSb(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_filter_content_matches(
+        section_title="Membership type",
+        option_text="VIP",
+        content_kind="level",
+    )
 
 
 @allure.feature("Facilities SB")
@@ -84,6 +126,21 @@ def test_facilities_table_filter_combination_three_sb(driver):
             {"section": "Activities", "option": "Aerobics", "show_all": True},
             {"section": "Activities", "option": "Aerial Yoga", "show_all": True},
         ]
+    )
+
+
+@allure.feature("Facilities SB")
+@allure.severity("Critical")
+@pytest.mark.release_gate
+def test_facilities_table_search_filters_reset_empty_state_sb(driver):
+    page = FacilitiesPageSb(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_search_filters_reset_empty_state(
+        search_query="yoga",
+        city="Limassol",
+        activity="Aerial Yoga",
+        empty_query="zzzzzzzzzz_not_found",
     )
 
 

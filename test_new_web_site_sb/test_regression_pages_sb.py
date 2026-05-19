@@ -18,3 +18,36 @@ def test_legal_pages_content_sb(driver):
 def test_mobile_viewports_key_pages_sb(driver):
     page = RegressionPagesSb(driver)
     page.check_mobile_layouts()
+
+
+@allure.feature("Regression SB UI")
+@allure.severity("Critical")
+@pytest.mark.pre_release
+def test_no_cyrillic_copywriting_and_ui_integrity_all_pages_sb(driver):
+    page = RegressionPagesSb(driver)
+    page.check_copywriting_and_ui_integrity_on_all_pages()
+
+
+@allure.feature("Regression SB UI")
+@allure.severity("Critical")
+@pytest.mark.cyrillic_gate
+def test_cyrillic_fast_gate_sb(driver):
+    page = RegressionPagesSb(driver)
+    page.check_cyrillic_fast_gate()
+
+
+@allure.feature("Regression SB UI")
+@allure.severity("Critical")
+@pytest.mark.pre_release
+def test_images_and_logo_assets_key_pages_sb(driver):
+    page = RegressionPagesSb(driver)
+    page.check_images_and_logo_assets_on_key_pages()
+
+
+@allure.feature("Regression SB UI")
+@allure.severity("Critical")
+@pytest.mark.pre_release
+@pytest.mark.cyrillic_gate
+def test_mobile_facilities_table_filter_modal_copywriting_sb(driver):
+    page = RegressionPagesSb(driver)
+    page.check_mobile_facilities_table_filter_modal_copywriting()

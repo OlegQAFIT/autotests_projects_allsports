@@ -1,0 +1,47 @@
+name: SportBenefit Browser Matrix
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 5 * * 1-5"
+
+jobs:
+  sb-release-gate:
+    name: "${{ matrix.os }} • ${{ matrix.browser }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            browser: chrome
+          - os: ubuntu-latest
+            browser: ff
+          - os: windows-latest
+            browser: edge
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pytest selenium webdriver-manager requests python-dotenv allure-pytest pytest-json-report pytest-metadata Faker
+
+      - name: Run SportBenefit release gate
+        run: >
+          pytest test_new_web_site_sb -m release_gate --headless --b ${{ matrix.browser }}
+          --base-url https://www.sportbenefit.eu
+
+      - name: Upload Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-${{ matrix.os }}-${{ matrix.browser }}
+          path: allure-results

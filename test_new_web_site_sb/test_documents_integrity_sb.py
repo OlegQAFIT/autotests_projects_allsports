@@ -97,6 +97,7 @@ def _extract_internal_legal_links(base_url: str, html: str):
 @pytest.mark.docs_integrity
 @pytest.mark.parametrize("case", DOC_CASES, ids=[c["url"].split("/en-cy/")[-1] for c in DOC_CASES])
 def test_documents_html_language_content_and_links_sb(case):
+    """Проверка legal-документов: язык, canonical, контент и внутренние ссылки."""
     response = requests.get(case["url"], timeout=25, allow_redirects=True)
     assert response.status_code == 200, f"{case['url']} returned {response.status_code}"
 

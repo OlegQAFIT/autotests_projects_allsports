@@ -8,6 +8,7 @@ from pages.new_web_site_sb.header_sb import HeaderPageSb
 @allure.feature("Header SB")
 @allure.severity("Blocker")
 def test_header_links_present_sb(driver):
+    """Проверка наличия основных ссылок в header."""
     page = HeaderPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -17,6 +18,7 @@ def test_header_links_present_sb(driver):
 @allure.feature("Header SB")
 @allure.severity("Critical")
 def test_header_navigation_sb(driver):
+    """Проверка переходов по ссылкам header."""
     page = HeaderPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -27,6 +29,7 @@ def test_header_navigation_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_header_get_offer_modal_structure_sb(driver):
+    """Проверка структуры модального окна Get an Offer из header."""
     page = HeaderPageSb(driver)
     page.open()
     page.accept_cookie_consent()

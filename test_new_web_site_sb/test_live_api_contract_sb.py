@@ -61,6 +61,7 @@ def _payload_for(endpoint_path: str):
 @allure.severity("Critical")
 @pytest.mark.parametrize("endpoint_path", CONTACT_ENDPOINTS)
 def test_contact_post_contract_live_staging_sb(request, endpoint_path):
+    """Проверка live POST-контракта контактных API на staging окружении."""
     api_base = _require_staging_host(request)
     url = f"{api_base}{endpoint_path}"
 

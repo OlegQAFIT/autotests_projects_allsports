@@ -112,6 +112,7 @@ def _collect_internal_links(driver):
 @allure.story("Crawler внутренних ссылок: HTTP + canonical + final URL")
 @allure.severity("Critical")
 def test_internal_links_crawler_http_and_canonical_sb(driver):
+    """Проверка внутренних ссылок crawler-ом: HTTP статус, final URL и canonical."""
     links = _collect_internal_links(driver)
     assert links, "Crawler did not collect any internal links"
 

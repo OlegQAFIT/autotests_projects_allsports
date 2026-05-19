@@ -72,6 +72,7 @@ def _fill_valid_modal_form(driver, kind: str, suffix: str):
 @pytest.mark.release_gate
 @pytest.mark.parametrize("case", FORM_CASES, ids=[c["id"] for c in FORM_CASES])
 def test_modal_submit_success_feedback_sb(driver, case):
+    """Проверка post-submit поведения формы при успешной отправке."""
     suffix = str(int(time.time()))
 
     driver.get(case["url"])
@@ -94,6 +95,7 @@ def test_modal_submit_success_feedback_sb(driver, case):
 @pytest.mark.parametrize("status_code", [400, 500])
 @pytest.mark.parametrize("case", FORM_CASES, ids=[c["id"] for c in FORM_CASES])
 def test_modal_submit_backend_failure_feedback_sb(driver, case, status_code):
+    """Проверка поведения формы при ответах backend 4xx/5xx."""
     suffix = f"{status_code}_{int(time.time())}"
 
     driver.get(case["url"])

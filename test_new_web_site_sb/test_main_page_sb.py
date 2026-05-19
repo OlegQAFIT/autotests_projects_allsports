@@ -20,6 +20,7 @@ from test_new_web_site_sb.form_helpers_sb import (
 @allure.feature("Main SB")
 @allure.severity("Critical")
 def test_main_page_basics_sb(driver):
+    """Проверка базовой структуры главной страницы."""
     page = MainPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -29,6 +30,7 @@ def test_main_page_basics_sb(driver):
 @allure.feature("Main SB")
 @allure.severity("Critical")
 def test_main_page_cta_buttons_sb(driver):
+    """Проверка наличия ключевых CTA-кнопок на главной странице."""
     page = MainPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -39,6 +41,7 @@ def test_main_page_cta_buttons_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_main_page_offer_modal_flow_sb(driver):
+    """Проверка полного flow модального окна Get an Offer на главной странице."""
     page = MainPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -49,6 +52,7 @@ def test_main_page_offer_modal_flow_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_main_get_offer_form_submit_endpoint_sb(driver):
+    """Проверка отправки формы Get an Offer с главной на endpoint /contact/get_offer."""
     page = MainPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -76,6 +80,7 @@ def test_main_get_offer_form_submit_endpoint_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_main_ask_question_form_submit_endpoint_sb(driver):
+    """Проверка отправки формы Ask Us a Question с главной на endpoint /contact/ask_question."""
     page = MainPageSb(driver)
     page.open()
     page.accept_cookie_consent()

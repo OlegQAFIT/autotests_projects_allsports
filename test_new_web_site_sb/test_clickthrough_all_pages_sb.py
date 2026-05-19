@@ -102,6 +102,7 @@ def _safe_close_modal(driver):
 @allure.severity("Critical")
 @pytest.mark.pre_release
 def test_internal_links_clickthrough_status_sb(driver):
+    """Проверка внутренних ссылок: корректные переходы и отсутствие 4xx/5xx статусов."""
     page = BasePageSb(driver)
     broken = []
 
@@ -130,6 +131,7 @@ def test_internal_links_clickthrough_status_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.pre_release
 def test_primary_buttons_tabs_clickthrough_sb(driver):
+    """Проверка кликабельности основных кнопок и вкладок на ключевых страницах."""
     page = BasePageSb(driver)
     issues = []
 

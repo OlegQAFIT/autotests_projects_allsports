@@ -29,6 +29,7 @@ MOBILE_VIEWPORTS = [
 @pytest.mark.pre_release
 @pytest.mark.parametrize("viewport", MOBILE_VIEWPORTS, ids=lambda v: f"{v[0]}x{v[1]}")
 def test_mobile_main_modal_flow_sb(driver, viewport):
+    """Проверка мобильного flow модальной формы на главной странице для разных viewport."""
     width, height = viewport
     driver.set_window_size(width, height)
 
@@ -57,6 +58,7 @@ def test_mobile_main_modal_flow_sb(driver, viewport):
 @pytest.mark.pre_release
 @pytest.mark.parametrize("viewport", MOBILE_VIEWPORTS, ids=lambda v: f"{v[0]}x{v[1]}")
 def test_mobile_facilities_map_filters_and_table_sb(driver, viewport):
+    """Проверка мобильной работы карты, фильтров и таблицы Facilities для разных viewport."""
     width, height = viewport
     driver.set_window_size(width, height)
 
@@ -84,6 +86,7 @@ def test_mobile_facilities_map_filters_and_table_sb(driver, viewport):
 @pytest.mark.pre_release
 @pytest.mark.parametrize("viewport", MOBILE_VIEWPORTS, ids=lambda v: f"{v[0]}x{v[1]}")
 def test_mobile_contacts_inline_form_validation_gate_sb(driver, viewport):
+    """Проверка мобильной валидации и доступности отправки inline-формы Contacts."""
     width, height = viewport
     driver.set_window_size(width, height)
 

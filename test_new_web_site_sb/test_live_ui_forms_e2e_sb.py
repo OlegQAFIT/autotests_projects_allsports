@@ -119,6 +119,7 @@ def _fill_modal_form_for_case(driver, case_kind: str, suffix: str):
 @allure.severity("Blocker")
 @pytest.mark.parametrize("case", FORM_CASES, ids=[c["id"] for c in FORM_CASES])
 def test_modal_forms_live_e2e_submit_and_response_sb(request, driver, case):
+    """Проверка live E2E отправки модальных форм и корректного ответа endpoint."""
     base = _require_staging_base(request)
     stamp = str(int(time.time()))
 
@@ -157,6 +158,7 @@ def test_modal_forms_live_e2e_submit_and_response_sb(request, driver, case):
 @allure.feature("SB Live UI E2E")
 @allure.severity("Critical")
 def test_contacts_inline_form_live_e2e_submit_and_response_sb(request, driver):
+    """Проверка live E2E отправки inline-формы Contacts и ответа endpoint."""
     base = _require_staging_base(request)
     stamp = str(int(time.time()))
 

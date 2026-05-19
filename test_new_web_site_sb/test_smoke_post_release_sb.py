@@ -11,6 +11,7 @@ from pages.new_web_site_sb.smoke_pages_sb import SmokePagesSb
 @pytest.mark.smoke
 @pytest.mark.release_gate
 def test_post_release_smoke_ui_sb(driver):
+    """Проверка post-release smoke UI по ключевым страницам."""
     page = SmokePagesSb(driver)
     page.run_post_release_smoke_ui()
 
@@ -21,5 +22,6 @@ def test_post_release_smoke_ui_sb(driver):
 @pytest.mark.smoke
 @pytest.mark.release_gate
 def test_post_release_smoke_http_sb(driver):
+    """Проверка post-release smoke HTTP статусов страниц."""
     page = SmokePagesSb(driver)
     page.run_post_release_smoke_http()

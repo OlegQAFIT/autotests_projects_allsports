@@ -50,6 +50,7 @@ UI_PAGES_FOR_CONSOLE_SB = [
 @allure.severity("Critical")
 @pytest.mark.parametrize("url", PUBLIC_ENDPOINTS_SB)
 def test_public_endpoints_status_200_sb(url):
+    """Проверка доступности публичных страниц и ресурсов по HTTP 200."""
     response = requests.get(url, timeout=25, allow_redirects=True)
     assert response.status_code == 200, f"{url} returned {response.status_code}"
 
@@ -58,6 +59,7 @@ def test_public_endpoints_status_200_sb(url):
 @allure.severity("Critical")
 @pytest.mark.parametrize("url", API_ENDPOINTS_SB)
 def test_contact_api_options_sb(url):
+    """Проверка метода OPTIONS для контактных API endpoint."""
     response = requests.options(url, timeout=20)
     assert response.status_code == 200, f"OPTIONS {url} returned {response.status_code}"
 
@@ -66,6 +68,7 @@ def test_contact_api_options_sb(url):
 @allure.severity("Normal")
 @pytest.mark.parametrize("url", API_ENDPOINTS_SB)
 def test_contact_api_get_method_guard_sb(url):
+    """Проверка защиты контактных API от метода GET (ожидается 405)."""
     response = requests.get(url, timeout=20)
     assert response.status_code == 405, f"GET {url} should return 405, got {response.status_code}"
 
@@ -74,6 +77,7 @@ def test_contact_api_get_method_guard_sb(url):
 @allure.severity("Normal")
 @pytest.mark.parametrize("url", UI_PAGES_FOR_CONSOLE_SB)
 def test_pages_have_no_severe_console_errors_sb(driver, url):
+    """Проверка отсутствия SEVERE-ошибок в консоли на ключевых страницах."""
     page = BasePageSb(driver)
     page.open_url(url)
     page.accept_cookie_consent()

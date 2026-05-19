@@ -20,6 +20,7 @@ from test_new_web_site_sb.form_helpers_sb import (
 @allure.feature("Companies SB")
 @allure.severity("Critical")
 def test_companies_offer_modal_sb(driver):
+    """Проверка открытия и структуры модального окна Get an Offer на странице Companies."""
     page = CompaniesPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -31,6 +32,7 @@ def test_companies_offer_modal_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_companies_get_offer_submit_endpoint_sb(driver):
+    """Проверка отправки формы Get an Offer на корректный endpoint /contact/get_offer."""
     page = CompaniesPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -58,6 +60,7 @@ def test_companies_get_offer_submit_endpoint_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_companies_ask_question_submit_endpoint_sb(driver):
+    """Проверка отправки формы Ask Us a Question на endpoint /contact/ask_question."""
     page = CompaniesPageSb(driver)
     page.open()
     page.accept_cookie_consent()

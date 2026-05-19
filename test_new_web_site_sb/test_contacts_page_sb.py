@@ -28,6 +28,7 @@ from test_new_web_site_sb.form_helpers_sb import (
 @allure.feature("Contacts SB")
 @allure.severity("Critical")
 def test_contacts_page_basics_sb(driver):
+    """Проверка базового открытия страницы Contacts и структуры формы."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -38,6 +39,7 @@ def test_contacts_page_basics_sb(driver):
 @allure.feature("Contacts SB")
 @allure.severity("Critical")
 def test_contacts_map_visible_sb(driver):
+    """Проверка отображения карты на странице Contacts."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -48,6 +50,7 @@ def test_contacts_map_visible_sb(driver):
 @allure.severity("Normal")
 @pytest.mark.release_gate
 def test_contacts_invalid_validation_sb(driver):
+    """Проверка валидации невалидного телефона и email на странице Contacts."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -58,6 +61,7 @@ def test_contacts_invalid_validation_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_contacts_inline_form_blocks_invalid_submit_sb(driver):
+    """Проверка, что inline-форма блокирует отправку при невалидных данных."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -89,6 +93,7 @@ def test_contacts_inline_form_blocks_invalid_submit_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_contacts_inline_form_submit_endpoint_and_success_state_sb(driver):
+    """Проверка endpoint и успешного состояния после отправки inline-формы Contacts."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -127,6 +132,7 @@ def test_contacts_inline_form_submit_endpoint_and_success_state_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_contacts_get_offer_modal_submit_endpoint_sb(driver):
+    """Проверка отправки модальной формы Get an Offer на endpoint /contact/get_offer."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()
@@ -154,6 +160,7 @@ def test_contacts_get_offer_modal_submit_endpoint_sb(driver):
 @allure.severity("Critical")
 @pytest.mark.release_gate
 def test_contacts_ask_question_modal_submit_endpoint_sb(driver):
+    """Проверка отправки модальной формы Ask Us a Question на endpoint /contact/ask_question."""
     page = ContactsPageSb(driver)
     page.open()
     page.accept_cookie_consent()

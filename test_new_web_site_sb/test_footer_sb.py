@@ -7,6 +7,7 @@ from pages.new_web_site_sb.footer_sb import FooterPageSb
 @allure.feature("Footer SB")
 @allure.severity("Critical")
 def test_footer_integrity_sb(driver):
+    """Проверка целостности футера: контакты, ссылки, legal и статусы ссылок."""
     page = FooterPageSb(driver)
     page.open()
     page.check_contacts()

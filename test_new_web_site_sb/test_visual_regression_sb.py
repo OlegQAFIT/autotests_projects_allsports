@@ -79,6 +79,7 @@ def _prepare_stable_visual_state(driver):
 @pytest.mark.pre_release
 @pytest.mark.visual_regression
 def test_visual_baseline_hashes_sb(driver):
+    """Проверка визуальной регрессии по hash-бейзлайну ключевых страниц."""
     page = BasePageSb(driver)
     baseline = _load_baseline_hashes()
     CURRENT_DIR.mkdir(parents=True, exist_ok=True)

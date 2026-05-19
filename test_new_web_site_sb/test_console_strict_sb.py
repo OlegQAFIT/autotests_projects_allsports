@@ -15,6 +15,7 @@ STRICT_CONSOLE_PAGES = sorted(set(L.KEY_PAGES + L.LEGAL_PAGES))
 @pytest.mark.console_strict
 @pytest.mark.parametrize("url", STRICT_CONSOLE_PAGES)
 def test_pages_have_no_console_issues_strict_sb(driver, url):
+    """Проверка strict-режима консоли: отсутствуют ошибки и критичные предупреждения."""
     page = BasePageSb(driver)
     page.open_url(url)
     page.accept_cookie_consent()

@@ -104,6 +104,7 @@ def _fill_modal_form(driver, form_kind: str, invalid_case: str):
 @pytest.mark.parametrize("form_case", FORM_CASES, ids=[c["form_kind"] for c in FORM_CASES])
 @pytest.mark.parametrize("invalid_case", INVALID_CASES)
 def test_modal_validation_matrix_blocks_invalid_submit_sb(driver, form_case, invalid_case):
+    """Проверка матрицы валидации: невалидные данные не должны проходить как валидные."""
     _open_target_page_and_modal(driver, form_case)
 
     _fill_modal_form(driver, form_case["form_kind"], invalid_case)

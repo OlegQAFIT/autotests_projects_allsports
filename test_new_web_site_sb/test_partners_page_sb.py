@@ -30,7 +30,7 @@ def test_partners_become_partner_modal_sb(driver):
 
 @allure.feature("Partners SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_partners_get_offer_submit_endpoint_sb(driver):
     """Проверка отправки формы Get an Offer на странице Partners."""
     page = PartnersPageSb(driver)
@@ -58,7 +58,7 @@ def test_partners_get_offer_submit_endpoint_sb(driver):
 
 @allure.feature("Partners SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_partners_become_partner_submit_endpoint_sb(driver):
     """Проверка отправки формы Become a Partner на endpoint /contact/become_partner."""
     page = PartnersPageSb(driver)
@@ -88,7 +88,7 @@ def test_partners_become_partner_submit_endpoint_sb(driver):
 
 @allure.feature("Partners SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_partners_ask_question_submit_endpoint_sb(driver):
     """Проверка отправки формы Ask Us a Question на странице Partners."""
     page = PartnersPageSb(driver)

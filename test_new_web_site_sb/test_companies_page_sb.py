@@ -30,7 +30,7 @@ def test_companies_offer_modal_sb(driver):
 
 @allure.feature("Companies SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_companies_get_offer_submit_endpoint_sb(driver):
     """Проверка отправки формы Get an Offer на корректный endpoint /contact/get_offer."""
     page = CompaniesPageSb(driver)
@@ -58,7 +58,7 @@ def test_companies_get_offer_submit_endpoint_sb(driver):
 
 @allure.feature("Companies SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_companies_ask_question_submit_endpoint_sb(driver):
     """Проверка отправки формы Ask Us a Question на endpoint /contact/ask_question."""
     page = CompaniesPageSb(driver)

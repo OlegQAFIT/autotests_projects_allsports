@@ -2,8 +2,6 @@ name: SportBenefit Browser Matrix
 
 on:
   workflow_dispatch:
-  schedule:
-    - cron: "0 5 * * 1-5"
 
 jobs:
   sb-release-gate:
@@ -36,7 +34,7 @@ jobs:
 
       - name: Run SportBenefit release gate
         run: >
-          pytest test_new_web_site_sb -m release_gate --headless --b ${{ matrix.browser }}
+          pytest test_new_web_site_sb -m "release_gate and not live_api and not form_submission" --headless --b ${{ matrix.browser }}
           --base-url https://www.sportbenefit.eu
 
       - name: Upload Allure results

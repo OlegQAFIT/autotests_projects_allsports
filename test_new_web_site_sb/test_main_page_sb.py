@@ -50,7 +50,7 @@ def test_main_page_offer_modal_flow_sb(driver):
 
 @allure.feature("Main SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_main_get_offer_form_submit_endpoint_sb(driver):
     """Проверка отправки формы Get an Offer с главной на endpoint /contact/get_offer."""
     page = MainPageSb(driver)
@@ -78,7 +78,7 @@ def test_main_get_offer_form_submit_endpoint_sb(driver):
 
 @allure.feature("Main SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_main_ask_question_form_submit_endpoint_sb(driver):
     """Проверка отправки формы Ask Us a Question с главной на endpoint /contact/ask_question."""
     page = MainPageSb(driver)

@@ -100,7 +100,7 @@ def _fill_modal_form(driver, form_kind: str, invalid_case: str):
 
 @allure.feature("SB Validation Matrix")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 @pytest.mark.parametrize("form_case", FORM_CASES, ids=[c["form_kind"] for c in FORM_CASES])
 @pytest.mark.parametrize("invalid_case", INVALID_CASES)
 def test_modal_validation_matrix_blocks_invalid_submit_sb(driver, form_case, invalid_case):

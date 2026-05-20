@@ -48,7 +48,7 @@ def test_contacts_map_visible_sb(driver):
 
 @allure.feature("Contacts SB")
 @allure.severity("Normal")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_contacts_invalid_validation_sb(driver):
     """Проверка валидации невалидного телефона и email на странице Contacts."""
     page = ContactsPageSb(driver)
@@ -59,7 +59,7 @@ def test_contacts_invalid_validation_sb(driver):
 
 @allure.feature("Contacts SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_contacts_inline_form_blocks_invalid_submit_sb(driver):
     """Проверка, что inline-форма блокирует отправку при невалидных данных."""
     page = ContactsPageSb(driver)
@@ -91,7 +91,7 @@ def test_contacts_inline_form_blocks_invalid_submit_sb(driver):
 
 @allure.feature("Contacts SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_contacts_inline_form_submit_endpoint_and_success_state_sb(driver):
     """Проверка endpoint и успешного состояния после отправки inline-формы Contacts."""
     page = ContactsPageSb(driver)
@@ -130,7 +130,7 @@ def test_contacts_inline_form_submit_endpoint_and_success_state_sb(driver):
 
 @allure.feature("Contacts SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_contacts_get_offer_modal_submit_endpoint_sb(driver):
     """Проверка отправки модальной формы Get an Offer на endpoint /contact/get_offer."""
     page = ContactsPageSb(driver)
@@ -158,7 +158,7 @@ def test_contacts_get_offer_modal_submit_endpoint_sb(driver):
 
 @allure.feature("Contacts SB Forms")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 def test_contacts_ask_question_modal_submit_endpoint_sb(driver):
     """Проверка отправки модальной формы Ask Us a Question на endpoint /contact/ask_question."""
     page = ContactsPageSb(driver)

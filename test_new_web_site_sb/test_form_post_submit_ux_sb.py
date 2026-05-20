@@ -69,7 +69,7 @@ def _fill_valid_modal_form(driver, kind: str, suffix: str):
 
 @allure.feature("SB Forms UX")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 @pytest.mark.parametrize("case", FORM_CASES, ids=[c["id"] for c in FORM_CASES])
 def test_modal_submit_success_feedback_sb(driver, case):
     """Проверка post-submit поведения формы при успешной отправке."""
@@ -91,7 +91,7 @@ def test_modal_submit_success_feedback_sb(driver, case):
 
 @allure.feature("SB Forms UX")
 @allure.severity("Critical")
-@pytest.mark.release_gate
+@pytest.mark.form_submission
 @pytest.mark.parametrize("status_code", [400, 500])
 @pytest.mark.parametrize("case", FORM_CASES, ids=[c["id"] for c in FORM_CASES])
 def test_modal_submit_backend_failure_feedback_sb(driver, case, status_code):

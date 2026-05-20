@@ -24,7 +24,7 @@ from test_new_web_site_sb.form_helpers_sb import (
 )
 
 
-pytestmark = [pytest.mark.live_api, pytest.mark.release_gate]
+pytestmark = [pytest.mark.live_api, pytest.mark.form_submission]
 
 
 FORM_CASES = [

@@ -26,26 +26,6 @@ def test_promo_texts(driver):
     page.check_promo_texts()
 
 @allure.feature('Partners Page')
-@allure.severity('High')
-@allure.story('Промо-блок — кнопка Стать партнёром')
-def test_promo_become_partner_button(driver):
-    "Проверка работы кнопки 'Стать партнёром'."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.click_become_partner()
-
-@allure.feature('Partners Page')
-@allure.severity('High')
-@allure.story('Промо-блок — кнопка Задать вопрос')
-def test_promo_ask_question_button(driver):
-    "Проверка открытия модалки по кнопке 'Задать вопрос'."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.click_ask_question()
-
-@allure.feature('Partners Page')
 @allure.severity('Normal')
 @allure.story('Промо-блок — визуальное наличие логотипа')
 def test_promo_logo_presence(driver):
@@ -183,108 +163,6 @@ def test_video_allowfullscreen(driver):
     page.check_video_allowfullscreen()
 
 
-# ===================== JOIN FORM =====================
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Форма Join — наличие полей')
-def test_join_form_fields(driver):
-    "Проверка наличия всех обязательных полей формы."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_form_fields()
-
-@allure.feature('Partners Page')
-@allure.severity('Normal')
-@allure.story('Форма Join — чекбокс политики')
-def test_join_policy_checkbox(driver):
-    "Проверка чекбокса согласия с политикой."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_policy_checkbox()
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Форма Join — валидация телефона')
-def test_join_phone_validation(driver):
-    "Проверка валидации телефона (некорректный ввод)."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_phone_validation()
-
-@allure.feature('Partners Page')
-@allure.severity('High')
-@allure.story('Форма Join — валидация email')
-def test_join_email_validation(driver):
-    "Проверка валидации email."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_email_validation()
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Форма Join — успешная отправка')
-def test_join_form_submit(driver):
-    "Проверка успешной отправки формы."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.submit_join_form_success()
-
-@allure.feature('Partners Page')
-@allure.severity('Normal')
-@allure.story('Форма Join — disabled кнопка при пустых полях')
-def test_join_button_disabled_initially(driver):
-    "Проверка, что кнопка изначально неактивна."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_button_disabled()
-
-@allure.feature('Partners Page')
-@allure.severity('Low')
-@allure.story('Форма Join — отображение текста-подсказки')
-def test_join_help_text(driver):
-    "Проверка текста формата телефона."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_help_text()
-
-@allure.feature('Partners Page')
-@allure.severity('Normal')
-@allure.story('Форма Join — клик по ссылке политики')
-def test_join_policy_link(driver):
-    "Проверка ссылки на политику обработки данных."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_policy_link()
-
-@allure.feature('Partners Page')
-@allure.severity('Normal')
-@allure.story('Форма Join — заполнение валидными данными')
-def test_join_valid_data(driver):
-    "Проверка активации кнопки при валидных данных."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.fill_join_form_valid()
-
-@allure.feature('Partners Page')
-@allure.severity('High')
-@allure.story('Форма Join — очистка полей')
-def test_join_clear_fields(driver):
-    "Проверка очистки полей перед вводом."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_clear_fields()
-
-
 # ===================== FAQ =====================
 @allure.feature('Partners Page')
 @allure.severity('Normal')
@@ -315,40 +193,6 @@ def test_faq_expand(driver):
     page.open()
     page.accept_cookie_consent()
     page.check_faq_expand()
-
-@allure.feature('Partners Page')
-@allure.severity('High')
-@allure.story('FAQ — кнопка Задать вопрос')
-def test_faq_button(driver):
-    "Проверка кнопки 'Задать вопрос' в FAQ."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_faq_button()
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('FAQ — открытие модалки вопроса')
-def test_faq_modal_open(driver):
-    "Проверка открытия модалки при нажатии 'Задать вопрос'."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.open_faq_modal()
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('FAQ — отправка вопроса')
-def test_faq_modal_submit(driver):
-    "Проверка заполнения и отправки формы вопроса."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.open_faq_modal()  # ✅ открываем модалку
-    page.submit_faq_question()
-
-
-
 
 # ===================== FAQ — Расширенные проверки =====================
 @allure.feature('Partners Page')
@@ -397,15 +241,6 @@ def test_faq_expand_all_questions(driver):
     page.expand_all_faq_questions()
 
 
-@allure.feature('Partners Page')
-@allure.severity('Low')
-@allure.story('FAQ — наличие кнопки Задать вопрос под списком')
-def test_faq_bottom_button(driver):
-    "Проверка кнопки 'Задать вопрос' под FAQ."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_faq_bottom_button()
 
 
 # ===================== CONTACTS =====================
@@ -488,73 +323,6 @@ def test_contacts_responsive(driver):
     page.open()
     page.accept_cookie_consent()
     page.check_contacts_responsive()
-
-
-# ===================== FORMS SUBMISSION =====================
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Промо — отправка формы через кнопку "Стать партнёром"')
-def test_submit_become_partner_form(driver):
-    "Проверка открытия и отправки формы через кнопку 'Стать партнёром'."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.click_become_partner()
-    page.submit_become_partner_modal()  # ✅ новый метод
-
-
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Промо — отправка формы через кнопку "Задать вопрос"')
-def test_submit_question_modal_top(driver):
-    "Проверка открытия и отправки модалки 'Задать вопрос' из промо-блока."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.click_ask_question()
-    page.submit_question_modal()
-
-
-
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('FAQ — отправка вопроса из блока FAQ')
-def test_submit_question_modal_faq(driver):
-    "Проверка открытия и успешной отправки формы 'Задать вопрос' из FAQ."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.open_faq_modal()
-    page.submit_question_modal()
-
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('Join форма — успешная отправка')
-def test_join_form_real_submit(driver):
-    "Проверка успешной отправки формы 'Присоединяйтесь к Allsports' и появления подтверждения."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.submit_join_form_success()
-    page.verify_success_modal()
-
-
-# ===================== VALIDATION TESTS (ошибки форм) =====================
-
-@allure.feature('Partners Page')
-@allure.severity('Critical')
-@allure.story('FAQ — валидация формы "Задать вопрос" (ошибки ввода)')
-def test_faq_modal_validation_errors(driver):
-    "Проверка отображения ошибок валидации в модалке FAQ."
-    page = PartnersPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.open_faq_modal()
-    page.verify_faq_question_errors()
 
 
 

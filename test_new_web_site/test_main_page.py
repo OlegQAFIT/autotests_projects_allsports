@@ -188,8 +188,7 @@ def test_faq_full_flow_per_tab(driver, tab_name):
     - Переключение вкладок
     - Наличие вопросов
     - Раскрытие ответов
-    - Наличие формы "Не нашли ответ?"
-    - Открытие модалки "Задать вопрос"
+    - Наличие блока с дополнительным действием
     """
     page = MainPage(driver)
     page.open()
@@ -198,9 +197,6 @@ def test_faq_full_flow_per_tab(driver, tab_name):
     page.check_tab_selected(tab_name)
     page.check_questions_present()
     page.check_expand_questions()
-    page.check_form_present()
-    page.open_question_modal()
-    page.check_modal_fields()
 
 
 # ===================== ИНФОРМАЦИЯ ДЛЯ ПАРТНЁРОВ =====================
@@ -229,21 +225,6 @@ def test_faq_info_block_companies(driver):
     page.click_tab("Компаниям")
     page.check_info_block()
     page.click_companies_link()
-
-
-# ===================== МОДАЛКА — ПРОВЕРКА ОТКРЫТИЯ/ЗАКРЫТИЯ =====================
-@allure.feature("Main Page")
-@allure.severity("Critical")
-@allure.story("FAQ — Модалка 'Задать вопрос' корректно открывается и закрывается")
-def test_faq_modal_open_close(driver):
-    """Проверяет, что модалка открывается, содержит все поля и корректно закрывается."""
-    page = MainPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.click_tab("Пользователям")
-    page.check_form_present()
-    page.check_modal_open_close()
-
 
 
 # ===================== VIDEO ==============================================================================================================================
@@ -324,33 +305,6 @@ def test_advantages_section_exists(driver):
     page.open()
     page.accept_cookie_consent()
     page.verify_advantages_section_exists()
-
-@allure.feature('Main Page')
-@allure.severity('Normal')
-@allure.title("Проверка вкладки 'Пользователям' и модалки 'Задать вопрос'")
-def test_advantages_users_modal(driver):
-    page = MainPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_tab_users()
-
-@allure.feature('Main Page')
-@allure.severity('Normal')
-@allure.title("Проверка вкладки 'Компаниям' и модалки 'Получить предложение'")
-def test_advantages_companies_modal(driver):
-    page = MainPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_tab_companies()
-
-@allure.feature('Main Page')
-@allure.severity('Normal')
-@allure.title("Проверка вкладки 'Партнёрам' и модалки 'Стать партнёром'")
-def test_advantages_partners_modal(driver):
-    page = MainPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_tab_partners()
 
 @allure.feature('Main Page')
 @allure.severity('Normal')

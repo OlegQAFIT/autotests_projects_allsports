@@ -94,13 +94,25 @@ def test_facilities_table_filters_full_flow(driver):
 
 @allure.feature('Facilities Page')
 @allure.severity('Critical')
+@allure.story("Таблица объектов — базовая структура и поиск")
+@pytest.mark.release_gate
+def test_facilities_table_basics_and_search(driver):
+    page = FacilitiesPage(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_basics()
+    page.check_table_search("Адреналин")
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
 @allure.story("Таблица объектов — отдельный фильтр: Город = Гомель")
 @pytest.mark.release_gate
 def test_facilities_table_single_filter_city_gomel(driver):
     page = FacilitiesPage(driver)
     page.open_table_page()
     page.accept_cookie_consent()
-    page.check_table_single_filter_value("Город", "Гомель", show_all=True)
+    page.check_table_filter_content_matches("Город", "Гомель", content_kind="city")
 
 
 @allure.feature('Facilities Page')
@@ -111,7 +123,7 @@ def test_facilities_table_single_filter_activity_aqua(driver):
     page = FacilitiesPage(driver)
     page.open_table_page()
     page.accept_cookie_consent()
-    page.check_table_single_filter_value("Активности", "Аквааэробика", show_all=True)
+    page.check_table_filter_content_matches("Активности", "Аквааэробика", content_kind="activity")
 
 
 @allure.feature('Facilities Page')
@@ -122,7 +134,7 @@ def test_facilities_table_single_filter_activity_tango(driver):
     page = FacilitiesPage(driver)
     page.open_table_page()
     page.accept_cookie_consent()
-    page.check_table_single_filter_value("Активности", "Аргентинское танго", show_all=True)
+    page.check_table_filter_content_matches("Активности", "Аргентинское танго", content_kind="activity")
 
 
 @allure.feature('Facilities Page')
@@ -172,4 +184,20 @@ def test_facilities_table_reset_returns_baseline(driver):
             {"section": "Активности", "option": "Аквааэробика", "show_all": True},
         ],
         max_attempts=2,
+    )
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story("Таблица объектов — связка search + filters + reset + empty state")
+@pytest.mark.release_gate
+def test_facilities_table_search_filters_reset_empty_state(driver):
+    page = FacilitiesPage(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_search_filters_reset_flow(
+        search_query="Адреналин",
+        city="Гомель",
+        activity="Аквааэробика",
+        empty_query="zzzzzzzzzz_not_found",
     )

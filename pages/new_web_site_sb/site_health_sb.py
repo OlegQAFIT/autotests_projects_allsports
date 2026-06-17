@@ -5,6 +5,16 @@ from pages.new_web_site_sb.base_page_sb import BasePageSb
 
 
 class SiteHealthSb(BasePageSb):
+    LEGAL_ENDPOINTS = [
+        "https://www.sportbenefit.eu/en-cy/license",
+        "https://www.sportbenefit.eu/en-cy/user-agreements",
+        "https://www.sportbenefit.eu/en-cy/policy/260407_processing_personal_data",
+        "https://www.sportbenefit.eu/en-cy/rule/250811_rule",
+        "https://www.sportbenefit.eu/en-cy/cookie/cookie-policy",
+        "https://www.sportbenefit.eu/en-cy/license/260407_license",
+        "https://www.sportbenefit.eu/en-cy/individual_license/260407_license",
+    ]
+
     PUBLIC_ENDPOINTS = [
         "https://www.sportbenefit.eu/en-cy",
         "https://www.sportbenefit.eu/en-cy/facilities",
@@ -14,13 +24,7 @@ class SiteHealthSb(BasePageSb):
         "https://www.sportbenefit.eu/en-cy/partners",
         "https://www.sportbenefit.eu/en-cy/contacts",
         "https://www.sportbenefit.eu/en-cy/app",
-        "https://www.sportbenefit.eu/en-cy/license",
-        "https://www.sportbenefit.eu/en-cy/user-agreements",
-        "https://www.sportbenefit.eu/en-cy/policy/260407_processing_personal_data",
-        "https://www.sportbenefit.eu/en-cy/rule/250811_rule",
-        "https://www.sportbenefit.eu/en-cy/cookie/cookie-policy",
-        "https://www.sportbenefit.eu/en-cy/license/260407_license",
-        "https://www.sportbenefit.eu/en-cy/individual_license/260407_license",
+        *LEGAL_ENDPOINTS,
         "https://sportbenefit.eu/media/sportbenefiteu-release.apk",
     ]
 

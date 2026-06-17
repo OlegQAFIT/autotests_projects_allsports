@@ -2,11 +2,11 @@
 import allure
 import pytest
 
-from locators.elements_for_new_web_site_sb.regression_pages_locators_sb import RegressionPagesLocatorsSb as L
 from pages.new_web_site_sb.base_page_sb import BasePageSb
+from pages.new_web_site_sb.site_health_sb import SiteHealthSb
 
 
-STRICT_CONSOLE_PAGES = sorted(set(L.KEY_PAGES + L.LEGAL_PAGES))
+STRICT_CONSOLE_PAGES = sorted(set(SiteHealthSb.UI_PAGES_FOR_CONSOLE + SiteHealthSb.LEGAL_ENDPOINTS))
 
 
 @allure.feature("SB Console Strict")

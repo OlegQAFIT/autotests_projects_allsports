@@ -8,6 +8,7 @@ from pages.new_web_site_sb.companies_sb import CompaniesPageSb
 from pages.new_web_site_sb.contact_forms_sb import ContactFormsSb
 from pages.new_web_site_sb.contacts_sb import ContactsPageSb
 from pages.new_web_site_sb.header_sb import HeaderPageSb
+from pages.new_web_site_sb.live_api_contract_sb import LiveApiContractSb
 from pages.new_web_site_sb.main_page_sb import MainPageSb
 from pages.new_web_site_sb.partners_sb import PartnersPageSb
 
@@ -683,6 +684,16 @@ def test_contacts_inline_form_live_e2e_submit_and_response_sb(request, driver):
         f"Unexpected inline response status: {status}, event={last_event}"
     )
     assert forms.inline_success_state(), "No observable inline success state after live submit"
+
+
+@allure.feature("SB Live API Contract")
+@allure.severity("Critical")
+@pytest.mark.live_api
+@pytest.mark.form_submission
+@pytest.mark.parametrize("endpoint_path", LiveApiContractSb.CONTACT_ENDPOINTS)
+def test_contact_post_contract_live_staging_sb(request, endpoint_path):
+    page = LiveApiContractSb()
+    page.check_contact_post_contract_live_staging(request, endpoint_path)
 
 
 @allure.feature("SB Mobile Regression")

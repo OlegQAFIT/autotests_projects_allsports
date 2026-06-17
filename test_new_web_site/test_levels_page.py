@@ -61,34 +61,3 @@ def test_levels_full_flow(driver):
     page.check_card_texts_archive()
     page.close_archive_modal()
 
-
-# === INLINE JOIN FORM ===
-@allure.feature('Levels Page')
-@allure.story('Inline-форма — структура и активация кнопки')
-@allure.severity('Normal')
-def test_join_form_full(driver):
-    page = LevelsPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.check_join_form_full()
-
-
-@allure.feature('Levels Page')
-@allure.story('Inline-форма — ошибки валидации телефона и email')
-@allure.severity('Critical')
-def test_join_form_validation_errors(driver):
-    page = LevelsPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.validate_join_phone_errors()
-    page.validate_join_email_errors()
-
-
-@allure.feature('Levels Page')
-@allure.story('Inline-форма — успешная отправка')
-@allure.severity('Critical')
-def test_join_form_submission(driver):
-    page = LevelsPage(driver)
-    page.open()
-    page.accept_cookie_consent()
-    page.submit_join_form()

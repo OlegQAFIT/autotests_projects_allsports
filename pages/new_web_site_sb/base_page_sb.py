@@ -73,6 +73,10 @@ class BasePageSb(BasePage):
     def wait_page_ready(self):
         WebDriverWait(self.driver, 25).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
 
+    def set_viewport(self, width: int, height: int):
+        self.driver.set_window_size(width, height)
+        return self
+
     def accept_cookie_consent(self):
         # Cookie popup can appear lazily after initial interaction on Sportbenefit.
         locators = [

@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import allure
 import pytest
-import requests
 
 from pages.new_web_site_sb.app_page_sb import AppPageSb
 
@@ -52,7 +51,7 @@ def test_app_page_console_errors_sb(driver):
 
 @allure.feature("App SB")
 @allure.severity("Critical")
-def test_app_page_http_status_sb():
+def test_app_page_http_status_sb(driver):
     """Проверка, что страница /app отвечает со статусом HTTP 200."""
-    response = requests.get("https://www.sportbenefit.eu/en-cy/app", timeout=20, allow_redirects=True)
-    assert response.status_code == 200, f"/en-cy/app returned {response.status_code}"
+    page = AppPageSb(driver)
+    page.check_http_status()

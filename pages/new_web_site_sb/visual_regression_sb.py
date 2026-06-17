@@ -1,0 +1,118 @@
+# -*- coding: utf-8 -*-
+import hashlib
+import json
+import os
+import time
+from pathlib import Path
+
+import pytest
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
+
+from pages.new_web_site_sb.base_page_sb import BasePageSb
+
+
+class VisualRegressionSb(BasePageSb):
+    REPO_ROOT = Path(__file__).resolve().parents[2]
+    BASELINE_DIR = REPO_ROOT / "test_new_web_site_sb" / "visual_baseline_sb"
+    BASELINE_HASHES_FILE = BASELINE_DIR / "hashes.json"
+    CURRENT_DIR = BASELINE_DIR / "current"
+    UPDATE_BASELINE = os.getenv("SB_VISUAL_UPDATE", "").strip() == "1"
+
+    VISUAL_CASES = [
+        {"key": "home_desktop", "url": "https://www.sportbenefit.eu/en-cy", "viewport": (1440, 900)},
+        {"key": "home_mobile", "url": "https://www.sportbenefit.eu/en-cy", "viewport": (390, 844)},
+        {"key": "facilities_table_desktop", "url": "https://www.sportbenefit.eu/en-cy/facilities-table", "viewport": (1440, 900)},
+        {"key": "companies_desktop", "url": "https://www.sportbenefit.eu/en-cy/companies", "viewport": (1440, 900)},
+        {"key": "app_desktop", "url": "https://www.sportbenefit.eu/en-cy/app", "viewport": (1440, 900)},
+    ]
+
+    def load_baseline_hashes(self):
+        if not self.BASELINE_HASHES_FILE.exists():
+            return {}
+        try:
+            return json.loads(self.BASELINE_HASHES_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            return {}
+
+    def save_baseline_hashes(self, data):
+        self.BASELINE_DIR.mkdir(parents=True, exist_ok=True)
+        self.BASELINE_HASHES_FILE.write_text(
+            json.dumps(data, ensure_ascii=False, indent=2, sort_keys=True),
+            encoding="utf-8",
+        )
+
+    @staticmethod
+    def hash_bytes(raw_bytes: bytes) -> str:
+        return hashlib.sha256(raw_bytes).hexdigest()
+
+    def prepare_stable_visual_state(self):
+        self.driver.execute_script(
+            """
+            const hideSelectors = [
+              '.cookie-primary-modal',
+              '.cookie-secondary-modal',
+              '.mapboxgl-control-container',
+              '.mapboxgl-canvas-container',
+              '.mapboxgl-canvas',
+              'video',
+              'iframe[src*="youtube"]',
+              '[class*="spinner"]',
+              '[class*="loader"]'
+            ];
+            hideSelectors.forEach((selector) => {
+              document.querySelectorAll(selector).forEach((el) => {
+                el.style.visibility = 'hidden';
+              });
+            });
+            """
+        )
+        time.sleep(0.6)
+
+    def check_visual_baseline_hashes(self):
+        baseline = self.load_baseline_hashes()
+        self.CURRENT_DIR.mkdir(parents=True, exist_ok=True)
+
+        current_hashes = {}
+        mismatches = []
+        missing = []
+
+        for case in self.VISUAL_CASES:
+            width, height = case["viewport"]
+            key = case["key"]
+            url = case["url"]
+
+            self.driver.set_window_size(width, height)
+            self.open_url(url)
+            self.accept_cookie_consent()
+            WebDriverWait(self.driver, 20).until(EC.presence_of_element_located((By.TAG_NAME, "body")))
+            self.prepare_stable_visual_state()
+
+            image = self.driver.get_screenshot_as_png()
+            current_hash = self.hash_bytes(image)
+            current_hashes[key] = current_hash
+            (self.CURRENT_DIR / f"{key}.png").write_bytes(image)
+
+            if self.UPDATE_BASELINE:
+                continue
+
+            expected_hash = baseline.get(key)
+            if not expected_hash:
+                missing.append(key)
+                continue
+            if current_hash != expected_hash:
+                mismatches.append(
+                    f"{key}: expected={expected_hash[:16]}..., actual={current_hash[:16]}..., "
+                    f"url={url}, viewport={width}x{height}"
+                )
+
+        if self.UPDATE_BASELINE:
+            self.save_baseline_hashes(current_hashes)
+            pytest.skip("Visual baseline hashes updated via SB_VISUAL_UPDATE=1")
+
+        assert not missing, (
+            "Visual baseline keys are missing. Run with SB_VISUAL_UPDATE=1 to record baseline. Missing keys: "
+            + ", ".join(missing)
+        )
+        assert not mismatches, "Visual regression hash mismatches found:\n" + "\n".join(mismatches)

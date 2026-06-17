@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import requests
+
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -55,3 +57,7 @@ class AppPageSb(BasePageSb):
 
     def check_no_severe_console_errors(self):
         self.assert_no_severe_console_errors()
+
+    def check_http_status(self):
+        response = requests.get("https://www.sportbenefit.eu/en-cy/app", timeout=20, allow_redirects=True)
+        assert response.status_code == 200, f"/en-cy/app returned {response.status_code}"

@@ -3,6 +3,7 @@ import time
 from urllib.parse import urlparse, urlunparse
 
 import allure
+import requests
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -105,3 +106,8 @@ class AppPage(BasePage):
         logs = self.driver.get_log("browser")
         filtered = self._filtered_console_errors(logs)
         assert not filtered, f"SEVERE ошибки в консоли /app: {filtered}"
+
+    @allure.step("Проверить HTTP статус страницы App")
+    def check_http_status_200(self, timeout=20):
+        response = requests.get(L.BASE_URL, timeout=timeout, allow_redirects=True)
+        assert response.status_code == 200, f"{L.BASE_URL} returned {response.status_code}"

@@ -88,6 +88,19 @@ class MainPage(BasePage):
             self._check_subscription_cards(in_archive=True)
             self.close_archive_modal()
 
+    @allure.step("Проверить обычные карточки подписок")
+    def check_regular_subscription_cards(self):
+        self._check_subscription_cards(in_archive=False)
+
+    @allure.step("Проверить архивные карточки подписок")
+    def check_archive_subscription_cards(self):
+        if not self.open_archive_modal():
+            return
+        try:
+            self._check_subscription_cards(in_archive=True)
+        finally:
+            self.close_archive_modal()
+
     def _check_subscription_cards(self, in_archive=False):
         """Проверка всех карточек (название, тексты, ссылки)."""
         driver = self.driver

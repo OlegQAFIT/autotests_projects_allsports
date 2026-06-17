@@ -544,13 +544,8 @@ def test_subscription_cards_texts_and_links(driver):
     page.open()
     page.accept_cookie_consent()
 
-    # Проверяем обычные карточки
-    page._check_subscription_cards(in_archive=False)
-
-    # Проверяем архивные карточки
-    page.open_archive_modal()
-    page._check_subscription_cards(in_archive=True)
-    page.close_archive_modal()
+    page.check_regular_subscription_cards()
+    page.check_archive_subscription_cards()
 
 
 @allure.feature("Companies Page")
@@ -564,7 +559,7 @@ def test_subscription_links_regular_cards(driver):
     page = CompaniesPage(driver)
     page.open()
     page.accept_cookie_consent()
-    page._check_subscription_cards(in_archive=False)
+    page.check_regular_subscription_cards()
 
 
 @allure.feature("Companies Page")
@@ -579,14 +574,7 @@ def test_subscription_links_archive_cards(driver):
     page.open()
     page.accept_cookie_consent()
 
-    # Открываем модалку архивных подписок
-    page.open_archive_modal()
-
-    # Проверяем переходы по ссылкам
-    page._check_subscription_cards(in_archive=True)
-
-    # Закрываем модалку
-    page.close_archive_modal()
+    page.check_archive_subscription_cards()
 
 
 @allure.feature("Companies Page")
@@ -617,13 +605,8 @@ def test_subscription_facilities_tables_load(driver):
     page.open()
     page.accept_cookie_consent()
 
-    # Проверяем таблицы обычных карточек
-    page._check_subscription_cards(in_archive=False)
-
-    # Проверяем таблицы архивных карточек
-    page.open_archive_modal()
-    page._check_subscription_cards(in_archive=True)
-    page.close_archive_modal()
+    page.check_regular_subscription_cards()
+    page.check_archive_subscription_cards()
 
 
 @allure.feature("Companies Page")
@@ -639,10 +622,5 @@ def test_subscription_card_texts_valid(driver):
     page.open()
     page.accept_cookie_consent()
 
-    # Проверяем тексты карточек обычных подписок
-    page._check_subscription_cards(in_archive=False)
-
-    # Проверяем тексты карточек архивных подписок
-    page.open_archive_modal()
-    page._check_subscription_cards(in_archive=True)
-    page.close_archive_modal()
+    page.check_regular_subscription_cards()
+    page.check_archive_subscription_cards()

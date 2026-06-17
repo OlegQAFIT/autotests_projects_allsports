@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 import allure
 import pytest
-import requests
 
 from pages.new_web_site.app_page import AppPage
 
@@ -54,5 +53,5 @@ def test_app_page_console_errors(driver):
 @allure.severity("Critical")
 @allure.story("Проверка HTTP статуса страницы /app")
 def test_app_page_http_status_200():
-    response = requests.get("https://www.allsports.by/ru-by/app", timeout=20, allow_redirects=True)
-    assert response.status_code == 200, f"/ru-by/app returned {response.status_code}"
+    page = AppPage(None)
+    page.check_http_status_200()

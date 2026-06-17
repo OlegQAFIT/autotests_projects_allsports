@@ -29,8 +29,10 @@ REPORT_ZIP="allure_report_${NOW}.zip"
 TEST_EXIT=0
 set +e
 "$PYTEST" \
-    test_new_web_site/test_regression_pages.py \
-    -m schedule \
+    test_new_web_site/test_smoke_post_release.py \
+    -m "smoke and release_gate" \
+    --json-report \
+    --json-report-file=pytest-report.json \
     --alluredir=allure-results \
     > "$LOG_FILE" 2>&1
 TEST_EXIT=$?
@@ -42,10 +44,39 @@ if [ -x "$ALLURE" ]; then
     "$ZIP" -r "$REPORT_ZIP" allure-report >/dev/null || true
 fi
 
-# ===== ПОДСЧЁТ ПРОВЕРОК ИЗ ЛОГА =====
-TOTAL=$(grep -Eo 'CHECKS_TOTAL=[0-9]+' "$LOG_FILE" | tail -1 | cut -d'=' -f2 || true)
-PASSED=$(grep -Eo 'CHECKS_PASSED=[0-9]+' "$LOG_FILE" | tail -1 | cut -d'=' -f2 || true)
-FAILED=$(grep -Eo 'CHECKS_FAILED=[0-9]+' "$LOG_FILE" | tail -1 | cut -d'=' -f2 || true)
+# ===== ПОДСЧЁТ РЕЗУЛЬТАТОВ ИЗ JSON-ОТЧЁТА =====
+TOTAL=0
+PASSED=0
+FAILED=0
+
+if [ -f "pytest-report.json" ]; then
+    TOTAL=$("$VENV_PATH/bin/python" - <<'PY'
+import json
+from pathlib import Path
+
+data = json.loads(Path("pytest-report.json").read_text(encoding="utf-8"))
+print((data.get("summary") or {}).get("total", 0))
+PY
+)
+    PASSED=$("$VENV_PATH/bin/python" - <<'PY'
+import json
+from pathlib import Path
+
+data = json.loads(Path("pytest-report.json").read_text(encoding="utf-8"))
+print((data.get("summary") or {}).get("passed", 0))
+PY
+)
+    FAILED=$("$VENV_PATH/bin/python" - <<'PY'
+import json
+from pathlib import Path
+
+data = json.loads(Path("pytest-report.json").read_text(encoding="utf-8"))
+summary = data.get("summary") or {}
+failed = sum(summary.get(key, 0) for key in ("failed", "error"))
+print(failed)
+PY
+)
+fi
 
 TOTAL=${TOTAL:-0}
 PASSED=${PASSED:-0}
@@ -61,7 +92,32 @@ SUMMARY="🏁 *Результаты тестов (${NOW})*
 📊 Всего проверок: $TOTAL"
 
 if [ "$FAILED" -gt 0 ]; then
-    FAILED_DETAILS=$(awk 'found{print} /^FAILED_ITEMS:/{found=1}' "$LOG_FILE" | tail -40)
+    FAILED_DETAILS=$("$VENV_PATH/bin/python" - <<'PY'
+import json
+from pathlib import Path
+
+report = Path("pytest-report.json")
+if not report.exists():
+    print("pytest-report.json not found")
+    raise SystemExit(0)
+
+data = json.loads(report.read_text(encoding="utf-8"))
+tests = data.get("tests") or []
+failed = []
+for test in tests:
+    outcome = test.get("outcome")
+    if outcome not in {"failed", "error"}:
+        continue
+    nodeid = test.get("nodeid", "<unknown>")
+    message = ""
+    call = test.get("call") or {}
+    crash = call.get("crash") or {}
+    message = crash.get("message") or ""
+    failed.append(f"{nodeid}\n{message}".strip())
+
+print("\n\n".join(failed[:20]))
+PY
+)
     SUMMARY="$SUMMARY\n\n*📌 Упавшие проверки:*\n\`\`\`$FAILED_DETAILS\`\`\`"
 fi
 

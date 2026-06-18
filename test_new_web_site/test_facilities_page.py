@@ -55,6 +55,48 @@ def test_facilities_objects_content_loaded(driver):
 
 
 @allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story('Поиск на карте открывает список поставщиков')
+def test_facilities_search_list_modal(driver):
+    page = FacilitiesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_search_list_modal()
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story('Из списка поставщиков открывается карточка объекта')
+def test_facilities_search_item_opens_provider_card(driver):
+    page = FacilitiesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_search_item_opens_provider_modal()
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story('Выбор города на карте меняет выдачу и положение карты')
+@pytest.mark.release_gate
+def test_facilities_map_city_filter_reacts(driver):
+    page = FacilitiesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_map_city_filter_reacts("Гомель")
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story('После выбора города часть активностей становится недоступной')
+@pytest.mark.release_gate
+def test_facilities_map_city_disables_some_activities(driver):
+    page = FacilitiesPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_map_city_disables_some_activities("Гомель")
+
+
+@allure.feature('Facilities Page')
 @allure.severity('Normal')
 @allure.story('Проверка блока таблицы объектов')
 def test_facilities_objects_table_block(driver):
@@ -139,6 +181,21 @@ def test_facilities_table_single_filter_activity_tango(driver):
 
 @allure.feature('Facilities Page')
 @allure.severity('Critical')
+@allure.story("Таблица объектов — отдельный фильтр: Дополнительно = Объекты с Plus услугами")
+@pytest.mark.release_gate
+def test_facilities_table_single_filter_additional_plus_services(driver):
+    page = FacilitiesPage(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_filter_content_matches(
+        "Дополнительно",
+        "Объекты с Plus услугами",
+        content_kind="tag",
+    )
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
 @allure.story("Таблица объектов — комбинация 2 фильтров (Город + Активность)")
 @pytest.mark.release_gate
 def test_facilities_table_filters_combination_two(driver):
@@ -201,3 +258,14 @@ def test_facilities_table_search_filters_reset_empty_state(driver):
         activity="Аквааэробика",
         empty_query="zzzzzzzzzz_not_found",
     )
+
+
+@allure.feature('Facilities Page')
+@allure.severity('Critical')
+@allure.story("Таблица объектов — строка поставщика открывает карточку с активностями")
+@pytest.mark.release_gate
+def test_facilities_table_row_opens_provider_modal(driver):
+    page = FacilitiesPage(driver)
+    page.open_table_page()
+    page.accept_cookie_consent()
+    page.check_table_row_opens_provider_modal()

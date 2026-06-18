@@ -156,6 +156,75 @@ class FacilitiesPage(BasePage):
             EC.visibility_of_element_located(L.TABLE_FILTER_MODAL_ROOT)
         )
 
+    def _open_main_filter_modal(self):
+        filter_btn = WebDriverWait(self.driver, 15).until(
+            EC.element_to_be_clickable(L.FILTER_BUTTON)
+        )
+        self.driver.execute_script("arguments[0].click();", filter_btn)
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.FILTER_MODAL_ROOT)
+        )
+
+    def _close_main_filter_modal_apply(self):
+        apply_btn = WebDriverWait(self.driver, 15).until(
+            EC.presence_of_element_located(L.FILTER_APPLY)
+        )
+        self.driver.execute_script("arguments[0].click();", apply_btn)
+        WebDriverWait(self.driver, 15).until(
+            EC.invisibility_of_element_located(L.FILTER_MODAL_ROOT)
+        )
+        time.sleep(0.9)
+
+    def _reset_main_filters_in_modal(self):
+        reset_btn = WebDriverWait(self.driver, 12).until(
+            EC.presence_of_element_located(L.FILTER_RESET)
+        )
+        self.driver.execute_script("arguments[0].click();", reset_btn)
+        time.sleep(0.25)
+
+    def _open_search_list_modal(self):
+        button = WebDriverWait(self.driver, 15).until(
+            EC.element_to_be_clickable(L.SEARCH_BUTTON)
+        )
+        self.driver.execute_script("arguments[0].click();", button)
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.SEARCH_LIST_MODAL)
+        )
+        WebDriverWait(self.driver, 20).until(
+            lambda d: len(d.find_elements(*L.FACILITY_LIST_ITEMS)) > 0
+            or len(d.find_elements(*L.FACILITY_LIST_EMPTY)) > 0
+        )
+
+    def _close_search_list_modal(self):
+        close_buttons = self.driver.find_elements(*L.SEARCH_LIST_CLOSE)
+        if close_buttons:
+            try:
+                self.driver.execute_script("arguments[0].click();", close_buttons[0])
+                WebDriverWait(self.driver, 10).until(
+                    EC.invisibility_of_element_located(L.SEARCH_LIST_MODAL)
+                )
+                return
+            except Exception:
+                pass
+
+        search_buttons = self.driver.find_elements(*L.SEARCH_BUTTON)
+        if search_buttons:
+            self.driver.execute_script("arguments[0].click();", search_buttons[0])
+            WebDriverWait(self.driver, 10).until(
+                EC.invisibility_of_element_located(L.SEARCH_LIST_MODAL)
+            )
+
+    def _search_list_items_count(self):
+        return len(self.driver.find_elements(*L.FACILITY_LIST_ITEMS))
+
+    def _close_facility_object_modal(self):
+        close_buttons = self.driver.find_elements(*L.FACILITY_OBJECT_MODAL_CLOSE)
+        assert close_buttons, "Не найдена кнопка закрытия карточки поставщика"
+        self.driver.execute_script("arguments[0].click();", close_buttons[0])
+        WebDriverWait(self.driver, 12).until(
+            EC.invisibility_of_element_located(L.FACILITY_OBJECT_MODAL)
+        )
+
     def _close_table_filter_modal_apply(self):
         apply_btn = WebDriverWait(self.driver, 15).until(
             EC.presence_of_element_located(L.TABLE_FILTER_APPLY)
@@ -290,6 +359,77 @@ class FacilitiesPage(BasePage):
             """
         )
 
+    def get_map_filter_state(self):
+        return self.driver.execute_script(
+            """
+            const state = window.__NUXT__?.pinia?.mapFilter;
+            if (!state) return null;
+
+            const toText = (value) => {
+              if (value == null) return '';
+              if (typeof value === 'string') return value;
+              if (typeof value === 'number' || typeof value === 'boolean') return String(value);
+              if (typeof value === 'object') {
+                if (typeof value.value === 'string') return value.value;
+                if (typeof value.id === 'string') return value.id;
+                if (typeof value.name === 'string') return value.name;
+              }
+              return '';
+            };
+
+            const toTextList = (items) => Array.isArray(items)
+              ? items.map(toText).filter(Boolean)
+              : [];
+
+            const bounds = state.bounds && typeof state.bounds === 'object'
+              ? {
+                  south: Number(state.bounds._sw?.lat ?? state.bounds.south ?? 0),
+                  west: Number(state.bounds._sw?.lng ?? state.bounds.west ?? 0),
+                  north: Number(state.bounds._ne?.lat ?? state.bounds.north ?? 0),
+                  east: Number(state.bounds._ne?.lng ?? state.bounds.east ?? 0),
+                }
+              : null;
+
+            return {
+              city: toText(state.city),
+              activities: toTextList(state.activities),
+              tags: toTextList(state.tags),
+              search: toText(state.search),
+              searchActivities: toText(state.searchActivities),
+              selectedLevel: toText(state.selectedLevel),
+              bounds: bounds,
+            };
+            """
+        )
+
+    def _get_modal_option_states(self, section_title):
+        script = """
+            const sectionTitle = arguments[0];
+            const modal = document.querySelector('.modal-container.map-filter-modal');
+            if (!modal) return [];
+
+            const section = Array.from(modal.querySelectorAll('p')).find(
+              (node) => node.textContent.trim() === sectionTitle
+            );
+            if (!section) return [];
+
+            const list = section.nextElementSibling;
+            if (!list) return [];
+
+            return Array.from(list.querySelectorAll('li')).map((item) => {
+              const label = item.querySelector('span');
+              const checkbox = item.querySelector('label.circle-checkbox');
+              const classes = item.className || '';
+              return {
+                text: (label?.textContent || item.textContent || '').trim(),
+                unavailable: classes.includes('unavailable'),
+                showAll: classes.includes('show-all'),
+                checked: (checkbox?.className || '').includes('circle-checkbox_checked'),
+              };
+            });
+        """
+        return self.driver.execute_script(script, section_title) or []
+
     def _assert_table_rows_are_from_state(self, state):
         row_names = self._table_row_names()
         assert row_names, "Названия отображаемых строк таблицы пусты"
@@ -383,6 +523,45 @@ class FacilitiesPage(BasePage):
                 f"{item.get('name')} -> {item.get('levels')}"
             )
 
+    def _assert_tag_content_matches(self, state, expected_tag, baseline_state=None):
+        self._assert_selected_contains_expected(state["selectedTags"], expected_tag, "дополнительно")
+        expected_aliases = self._aliases_for_value(expected_tag)
+        assert state["objectsCount"] > 0, "После фильтра 'Дополнительно' не осталось объектов"
+
+        matched_objects = 0
+        for item in state["objects"]:
+            merged = {
+                self._normalize_key(value)
+                for value in (item.get("tags", []) + item.get("services", []))
+                if value
+            }
+            if any(
+                any(alias == value or alias in value or value in alias for alias in expected_aliases)
+                for value in merged
+            ):
+                matched_objects += 1
+
+        if matched_objects > 0:
+            return
+
+        # Для части опций "Дополнительно" сайт не отдает в state явный признак,
+        # по которому можно верифицировать каждый объект по полям tags/services.
+        if baseline_state:
+            baseline_names = {
+                self._normalize_text(item.get("name"))
+                for item in baseline_state["objects"]
+                if item.get("name")
+            }
+            filtered_names = {
+                self._normalize_text(item.get("name"))
+                for item in state["objects"]
+                if item.get("name")
+            }
+            assert filtered_names, "После фильтра 'Дополнительно' нет имен объектов для проверки"
+            assert filtered_names != baseline_names, (
+                f"Фильтр '{expected_tag}' выбран, но состав объектов не изменился"
+            )
+
     @allure.step("Проверить открытие страницы Объекты")
     def check_page_opened(self):
         WebDriverWait(self.driver, 15).until(EC.visibility_of_element_located(L.PAGE_ROOT))
@@ -439,6 +618,96 @@ class FacilitiesPage(BasePage):
         href = link.get_attribute("href") or ""
         assert L.TABLE_URL_SUFFIX in href, f"Ссылка на таблицу объектов некорректна: {href}"
 
+    @allure.step("Проверить, что поиск на карте открывает список поставщиков")
+    def check_search_list_modal(self):
+        self._safe_scroll(L.MAP_BLOCK)
+        self._open_search_list_modal()
+        items_count = self._search_list_items_count()
+        empty_state = self.driver.find_elements(*L.FACILITY_LIST_EMPTY)
+        assert items_count > 0 or empty_state, "Поиск не открыл ни список поставщиков, ни empty state"
+        self._close_search_list_modal()
+
+    @allure.step("Проверить, что из списка поставщиков открывается карточка объекта")
+    def check_search_item_opens_provider_modal(self):
+        self._safe_scroll(L.MAP_BLOCK)
+        self._open_search_list_modal()
+        items = WebDriverWait(self.driver, 15).until(
+            lambda d: d.find_elements(*L.FACILITY_LIST_ITEMS)
+        )
+        self.driver.execute_script("arguments[0].click();", items[0])
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.FACILITY_OBJECT_MODAL)
+        )
+        title = WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.FACILITY_OBJECT_MODAL_TITLE)
+        )
+        modal_items = self.driver.find_elements(*L.FACILITY_OBJECT_MODAL_LIST_ITEMS)
+        assert (title.text or "").strip(), "Карточка поставщика открылась без заголовка"
+        assert modal_items, "В карточке поставщика не найден список активностей/услуг"
+        self._close_facility_object_modal()
+
+    @allure.step("Проверить, что фильтр по городу на карте меняет результаты и положение карты")
+    def check_map_city_filter_reacts(self, city="Гомель"):
+        self._safe_scroll(L.MAP_BLOCK)
+        baseline_state = self.get_map_filter_state()
+        assert baseline_state, "mapFilter state недоступен до фильтрации"
+
+        self._open_search_list_modal()
+        baseline_count = self._search_list_items_count()
+        self._close_search_list_modal()
+        assert baseline_count > 0, "Базовый список поставщиков пуст"
+
+        self._open_main_filter_modal()
+        self._select_filter_option("Город", city, show_all=True)
+        self._close_main_filter_modal_apply()
+
+        filtered_state = self.get_map_filter_state()
+        assert filtered_state, "mapFilter state недоступен после выбора города"
+        self._assert_selected_contains_expected([filtered_state["city"]], city, "город карты")
+
+        self._open_search_list_modal()
+        filtered_count = self._search_list_items_count()
+        self._close_search_list_modal()
+        assert 0 < filtered_count <= baseline_count, (
+            f"Фильтр по городу на карте дал некорректный набор: "
+            f"baseline={baseline_count}, filtered={filtered_count}"
+        )
+
+        baseline_bounds = baseline_state.get("bounds") or {}
+        filtered_bounds = filtered_state.get("bounds") or {}
+        bounds_changed = baseline_bounds != filtered_bounds
+        count_changed = filtered_count != baseline_count
+        assert bounds_changed or count_changed, (
+            "После выбора города не изменились ни границы карты, ни число поставщиков"
+        )
+
+    @allure.step("Проверить, что при выборе города часть активностей становится недоступной")
+    def check_map_city_disables_some_activities(self, city="Гомель"):
+        self._safe_scroll(L.MAP_BLOCK)
+        self._open_main_filter_modal()
+        before_options = self._get_modal_option_states("Активности")
+        before_unavailable = {
+            self._normalize_text(item["text"])
+            for item in before_options
+            if item.get("text") and item.get("unavailable") and not item.get("showAll")
+        }
+        self._select_filter_option("Город", city, show_all=True)
+        time.sleep(0.8)
+        after_options = self._get_modal_option_states("Активности")
+        after_unavailable = {
+            self._normalize_text(item["text"])
+            for item in after_options
+            if item.get("text") and item.get("unavailable") and not item.get("showAll")
+        }
+        self._close_main_filter_modal_apply()
+
+        assert after_unavailable, (
+            f"После выбора города '{city}' не появилось ни одной недоступной активности"
+        )
+        assert after_unavailable != before_unavailable or len(after_unavailable) > len(before_unavailable), (
+            "Набор недоступных активностей не изменился после смены города"
+        )
+
     @allure.step("Проверить базовую структуру таблицы объектов")
     def check_table_basics(self):
         self.wait_table_loaded()
@@ -491,10 +760,30 @@ class FacilitiesPage(BasePage):
             self._assert_city_content_matches(filtered_state, option_text)
         elif content_kind == "activity":
             self._assert_activity_content_matches(filtered_state, option_text)
+        elif content_kind == "tag":
+            self._assert_tag_content_matches(filtered_state, option_text, baseline_state=baseline_state)
         elif content_kind == "level":
             self._assert_level_content_matches(filtered_state, option_text)
         else:
             raise AssertionError(f"Неподдерживаемый тип проверки контента: {content_kind}")
+
+    @allure.step("Проверить, что строка таблицы открывает карточку поставщика")
+    def check_table_row_opens_provider_modal(self):
+        self.wait_table_loaded()
+        buttons = WebDriverWait(self.driver, 15).until(
+            lambda d: d.find_elements(*L.FACILITIES_TABLE_OBJECT_BUTTON)
+        )
+        self.driver.execute_script("arguments[0].click();", buttons[0])
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.FACILITY_OBJECT_MODAL)
+        )
+        title = WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located(L.FACILITY_OBJECT_MODAL_TITLE)
+        )
+        modal_items = self.driver.find_elements(*L.FACILITY_OBJECT_MODAL_LIST_ITEMS)
+        assert (title.text or "").strip(), "Карточка объекта из таблицы открылась без заголовка"
+        assert modal_items, "В карточке объекта из таблицы нет активностей/услуг"
+        self._close_facility_object_modal()
 
     @allure.step("Проверить комбинацию фильтров таблицы ({1})")
     def check_table_filter_combination(self, filters):

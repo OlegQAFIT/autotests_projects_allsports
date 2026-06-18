@@ -32,16 +32,37 @@ class FacilitiesLocators:
         By.XPATH,
         "//button[contains(.,'Фильтр') or .//span[contains(.,'Фильтр')]]",
     )
+    FILTER_MODAL_ROOT = (By.CSS_SELECTOR, ".modal-container.map-filter-modal")
+    FILTER_APPLY = (
+        By.XPATH,
+        "//div[contains(@class,'map-filter-modal')]//button[.//span[normalize-space()='Применить'] or normalize-space()='Применить']",
+    )
+    FILTER_RESET = (
+        By.XPATH,
+        "//div[contains(@class,'map-filter-modal')]//button[.//span[normalize-space()='Сбросить фильтры'] or normalize-space()='Сбросить фильтры']",
+    )
 
     # === CONTENT ===
     FACILITIES_LIST = (By.CSS_SELECTOR, ".facilities-filter-bar")
     FACILITIES_LIST_ITEMS = (By.CSS_SELECTOR, ".facilities-filter-bar .select-field__value")
+    SEARCH_LIST_MODAL = (By.CSS_SELECTOR, ".facility-object-list-modal")
+    SEARCH_LIST_CLOSE = (By.CSS_SELECTOR, ".facility-object-list-modal__close")
+    FACILITY_LIST_ITEMS = (By.CSS_SELECTOR, ".facility-list-item")
+    FACILITY_LIST_EMPTY = (By.CSS_SELECTOR, ".facilities-list_empty")
+    FACILITY_OBJECT_MODAL = (By.CSS_SELECTOR, ".modal-container.facility-object-modal, .facility-object-modal")
+    FACILITY_OBJECT_MODAL_TITLE = (By.CSS_SELECTOR, ".facility-object-modal__title")
+    FACILITY_OBJECT_MODAL_CLOSE = (By.CSS_SELECTOR, ".facility-object-modal__close")
+    FACILITY_OBJECT_MODAL_LIST_ITEMS = (By.CSS_SELECTOR, ".facility-object-modal__list-item")
     OBJECTS_TABLE_SECTION = (
         By.CSS_SELECTOR,
         "a.facilities__objects-table, a[href*='/facilities-table']",
     )
     FACILITIES_TABLE = (By.CSS_SELECTOR, ".facilities-table")
     FACILITIES_TABLE_ROWS = (By.CSS_SELECTOR, ".facilities-table .facilities-table__row")
+    FACILITIES_TABLE_OBJECT_BUTTON = (
+        By.CSS_SELECTOR,
+        ".facilities-table .facilities-table__object-button",
+    )
     FACILITIES_TABLE_ROW_NAME = (
         By.CSS_SELECTOR,
         ".facilities-table .facilities-table__row .facilities-table__text-icon p",
@@ -53,7 +74,6 @@ class FacilitiesLocators:
     TABLE_ROOT = (By.CSS_SELECTOR, ".facilities-table")
     TABLE_SEARCH_INPUT = (By.CSS_SELECTOR, "input[placeholder='Поиск']")
     TABLE_FILTER_BUTTON = (By.CSS_SELECTOR, "button.facilities-table-filter__button")
-    TABLE_FILTER_MODAL = (By.CSS_SELECTOR, ".modal-container.map-filter-modal, .modal")
     TABLE_FILTER_MODAL_ROOT = (By.CSS_SELECTOR, ".modal-container.map-filter-modal")
     TABLE_FILTER_APPLY = (
         By.XPATH,

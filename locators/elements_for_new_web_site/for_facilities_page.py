@@ -24,6 +24,7 @@ class FacilitiesLocators:
     FILTER_BAR = (By.CSS_SELECTOR, ".facilities-filter-bar")
     FILTER_BUTTONS = (By.CSS_SELECTOR, ".facilities-filter-buttons .facilities-filter__button")
     FILTER_SELECTS = (By.CSS_SELECTOR, ".facilities-filter-bar .select-field")
+    MAIN_SEARCH_INPUT = (By.CSS_SELECTOR, ".facilities-filter-bar input.text-body")
     SEARCH_BUTTON = (
         By.XPATH,
         "//button[contains(.,'Поиск') or .//span[contains(.,'Поиск')]]",
@@ -74,6 +75,7 @@ class FacilitiesLocators:
     TABLE_ROOT = (By.CSS_SELECTOR, ".facilities-table")
     TABLE_SEARCH_INPUT = (By.CSS_SELECTOR, "input[placeholder='Поиск']")
     TABLE_FILTER_BUTTON = (By.CSS_SELECTOR, "button.facilities-table-filter__button")
+    TABLE_FILTER_SELECTS = (By.CSS_SELECTOR, ".facilities-table-section .select-field")
     TABLE_FILTER_MODAL_ROOT = (By.CSS_SELECTOR, ".modal-container.map-filter-modal")
     TABLE_FILTER_APPLY = (
         By.XPATH,

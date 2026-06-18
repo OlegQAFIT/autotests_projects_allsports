@@ -113,6 +113,15 @@ class FacilitiesPage(BasePage):
             or len(d.find_elements(*L.FACILITIES_TABLE_NO_RESULT)) > 0
         )
 
+    def _is_any_displayed(self, locator):
+        for element in self.driver.find_elements(*locator):
+            try:
+                if element.is_displayed():
+                    return True
+            except StaleElementReferenceException:
+                continue
+        return False
+
     def _visible_table_rows_count(self, retries=6):
         for _ in range(retries):
             rows = self.driver.find_elements(*L.FACILITIES_TABLE_ROWS)
@@ -148,19 +157,19 @@ class FacilitiesPage(BasePage):
         return []
 
     def _open_table_filter_modal(self):
-        filter_btn = WebDriverWait(self.driver, 15).until(
-            EC.element_to_be_clickable(L.TABLE_FILTER_BUTTON)
-        )
-        self.driver.execute_script("arguments[0].click();", filter_btn)
+        buttons = self.driver.find_elements(*L.TABLE_FILTER_BUTTON)
+        if not buttons:
+            return
+        self.driver.execute_script("arguments[0].click();", buttons[0])
         WebDriverWait(self.driver, 15).until(
             EC.visibility_of_element_located(L.TABLE_FILTER_MODAL_ROOT)
         )
 
     def _open_main_filter_modal(self):
-        filter_btn = WebDriverWait(self.driver, 15).until(
-            EC.element_to_be_clickable(L.FILTER_BUTTON)
-        )
-        self.driver.execute_script("arguments[0].click();", filter_btn)
+        buttons = self.driver.find_elements(*L.FILTER_BUTTON)
+        if not buttons:
+            return
+        self.driver.execute_script("arguments[0].click();", buttons[0])
         WebDriverWait(self.driver, 15).until(
             EC.visibility_of_element_located(L.FILTER_MODAL_ROOT)
         )
@@ -183,19 +192,65 @@ class FacilitiesPage(BasePage):
         time.sleep(0.25)
 
     def _open_search_list_modal(self):
-        button = WebDriverWait(self.driver, 15).until(
-            EC.element_to_be_clickable(L.SEARCH_BUTTON)
-        )
-        self.driver.execute_script("arguments[0].click();", button)
-        WebDriverWait(self.driver, 15).until(
-            EC.visibility_of_element_located(L.SEARCH_LIST_MODAL)
-        )
-        WebDriverWait(self.driver, 20).until(
-            lambda d: len(d.find_elements(*L.FACILITY_LIST_ITEMS)) > 0
-            or len(d.find_elements(*L.FACILITY_LIST_EMPTY)) > 0
-        )
+        buttons = self.driver.find_elements(*L.SEARCH_BUTTON)
+        if buttons:
+            self.driver.execute_script("arguments[0].click();", buttons[0])
+            try:
+                WebDriverWait(self.driver, 10).until(
+                    lambda d: len(d.find_elements(*L.SEARCH_LIST_MODAL)) > 0
+                    or len(d.find_elements(*L.FACILITY_LIST_ITEMS)) > 0
+                    or len(d.find_elements(*L.FACILITY_LIST_EMPTY)) > 0
+                )
+                return
+            except TimeoutException:
+                pass
+
+        if not buttons or not self.driver.find_elements(*L.SEARCH_LIST_MODAL):
+            search_input = WebDriverWait(self.driver, 15).until(
+                EC.visibility_of_element_located(L.MAIN_SEARCH_INPUT)
+            )
+            query = "Фитнес"
+            self.driver.execute_script(
+                """
+                const input = arguments[0];
+                const value = arguments[1];
+                input.focus();
+                const setter = Object.getOwnPropertyDescriptor(
+                  window.HTMLInputElement.prototype,
+                  'value'
+                ).set;
+                setter.call(input, value);
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new KeyboardEvent('keyup', { bubbles: true, key: 't' }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                """,
+                search_input,
+                query,
+            )
+            time.sleep(0.8)
+            WebDriverWait(self.driver, 20).until(
+                lambda d: len(d.find_elements(*L.SEARCH_LIST_MODAL)) > 0
+                or len(d.find_elements(*L.FACILITY_LIST_ITEMS)) > 0
+                or len(d.find_elements(*L.FACILITY_LIST_EMPTY)) > 0
+            )
 
     def _close_search_list_modal(self):
+        if not self._is_any_displayed(L.SEARCH_BUTTON):
+            search_inputs = self.driver.find_elements(*L.MAIN_SEARCH_INPUT)
+            if search_inputs:
+                self.driver.execute_script(
+                    """
+                    const input = arguments[0];
+                    input.value = '';
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                    input.dispatchEvent(new Event('change', { bubbles: true }));
+                    input.blur();
+                    """,
+                    search_inputs[0],
+                )
+                time.sleep(0.6)
+            return
+
         close_buttons = self.driver.find_elements(*L.SEARCH_LIST_CLOSE)
         if close_buttons:
             try:
@@ -224,6 +279,51 @@ class FacilitiesPage(BasePage):
         WebDriverWait(self.driver, 12).until(
             EC.invisibility_of_element_located(L.FACILITY_OBJECT_MODAL)
         )
+
+    def _desktop_select_option(self, section_kind, option_text):
+        indices = {
+            "city": 1,
+            "activity": 2,
+            "tag": 3,
+        }
+        select_index = indices[section_kind]
+        script = """
+            const selectIndex = arguments[0];
+            const optionText = arguments[1];
+            const root = document;
+            const normalize = (value) => (value || '').replace(/\\s+/g, ' ').trim();
+            const isVisible = (el) => !!(el && (el.offsetWidth || el.offsetHeight || el.getClientRects().length));
+
+            const visibleSelects = Array.from(
+              root.querySelectorAll('.facilities-table-section .select')
+            ).filter(isVisible);
+            const selectRoot = visibleSelects[selectIndex];
+            if (!selectRoot) return false;
+
+            selectRoot.click();
+            const options = Array.from(selectRoot.querySelectorAll('li, span, div')).filter((el) => {
+              if (!isVisible(el)) return false;
+              return normalize(el.textContent) === optionText;
+            });
+            const option = options[0];
+            if (!option) return false;
+            option.click();
+            document.body.click();
+            return true;
+        """
+        success = self.driver.execute_script(script, select_index, option_text)
+        assert success, f"Не удалось выбрать '{option_text}' в desktop-контроле '{section_kind}'"
+        time.sleep(0.8)
+        self.wait_table_settled()
+
+    def _desktop_reset_filters(self):
+        for section_kind in ("city", "activity", "tag"):
+            reset_target = "Вся Беларусь" if section_kind == "city" else "Сбросить все"
+            try:
+                self._desktop_select_option(section_kind, reset_target)
+            except AssertionError:
+                if section_kind == "city":
+                    raise
 
     def _close_table_filter_modal_apply(self):
         apply_btn = WebDriverWait(self.driver, 15).until(
@@ -713,7 +813,9 @@ class FacilitiesPage(BasePage):
         self.wait_table_loaded()
         assert self._visible_table_rows_count() > 0, "Таблица объектов пустая"
         WebDriverWait(self.driver, 15).until(EC.visibility_of_element_located(L.TABLE_SEARCH_INPUT))
-        WebDriverWait(self.driver, 15).until(EC.visibility_of_element_located(L.TABLE_FILTER_BUTTON))
+        assert self._is_any_displayed(L.TABLE_FILTER_BUTTON) or len(self.driver.find_elements(*L.TABLE_FILTER_SELECTS)) >= 3, (
+            "Не найдены элементы фильтрации таблицы"
+        )
 
     @allure.step("Проверить поиск в таблице объектов: {1}")
     def check_table_search(self, query="Адреналин"):
@@ -744,9 +846,13 @@ class FacilitiesPage(BasePage):
         baseline_count = baseline_state["objectsCount"]
         assert baseline_count > 0, "Базовый набор таблицы пуст"
 
-        self._open_table_filter_modal()
-        self._select_filter_option(section_title, option_text, show_all=True)
-        self._close_table_filter_modal_apply()
+        if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+            self._open_table_filter_modal()
+            self._select_filter_option(section_title, option_text, show_all=True)
+            self._close_table_filter_modal_apply()
+        else:
+            desktop_kind = {"Город": "city", "Активности": "activity", "Дополнительно": "tag"}[section_title]
+            self._desktop_select_option(desktop_kind, option_text)
 
         filtered_state = self.get_table_filter_state()
         assert filtered_state, "tableFilter state недоступен после фильтрации"
@@ -793,14 +899,19 @@ class FacilitiesPage(BasePage):
         baseline_count = baseline_state["objectsCount"]
         assert baseline_count > 0, "Базовый набор таблицы пуст"
 
-        self._open_table_filter_modal()
-        for flt in filters:
-            self._select_filter_option(
-                flt["section"],
-                flt["option"],
-                show_all=flt.get("show_all", False),
-            )
-        self._close_table_filter_modal_apply()
+        if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+            self._open_table_filter_modal()
+            for flt in filters:
+                self._select_filter_option(
+                    flt["section"],
+                    flt["option"],
+                    show_all=flt.get("show_all", False),
+                )
+            self._close_table_filter_modal_apply()
+        else:
+            kind_map = {"Город": "city", "Активности": "activity", "Дополнительно": "tag"}
+            for flt in filters:
+                self._desktop_select_option(kind_map[flt["section"]], flt["option"])
 
         filtered_state = self.get_table_filter_state()
         assert filtered_state, "tableFilter state недоступен после комбинации фильтров"
@@ -818,14 +929,19 @@ class FacilitiesPage(BasePage):
         baseline_count = baseline_state["objectsCount"]
         assert baseline_count > 0, "Базовый набор таблицы пуст"
 
-        self._open_table_filter_modal()
-        for flt in filters:
-            self._select_filter_option(
-                flt["section"],
-                flt["option"],
-                show_all=flt.get("show_all", False),
-            )
-        self._close_table_filter_modal_apply()
+        if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+            self._open_table_filter_modal()
+            for flt in filters:
+                self._select_filter_option(
+                    flt["section"],
+                    flt["option"],
+                    show_all=flt.get("show_all", False),
+                )
+            self._close_table_filter_modal_apply()
+        else:
+            kind_map = {"Город": "city", "Активности": "activity", "Дополнительно": "tag"}
+            for flt in filters:
+                self._desktop_select_option(kind_map[flt["section"]], flt["option"])
 
         filtered_state = self.get_table_filter_state()
         assert filtered_state, "tableFilter state недоступен после фильтрации"
@@ -836,9 +952,12 @@ class FacilitiesPage(BasePage):
 
         restored_state = filtered_state
         for _ in range(max_attempts):
-            self._open_table_filter_modal()
-            self._reset_filters_in_modal()
-            self._close_table_filter_modal_apply()
+            if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+                self._open_table_filter_modal()
+                self._reset_filters_in_modal()
+                self._close_table_filter_modal_apply()
+            else:
+                self._desktop_reset_filters()
             restored_state = self.get_table_filter_state()
             assert restored_state, "tableFilter state недоступен после reset"
 
@@ -879,10 +998,14 @@ class FacilitiesPage(BasePage):
             "Поиск дал пустой или расширенный набор результатов"
         )
 
-        self._open_table_filter_modal()
-        self._select_filter_option("Город", city, show_all=True)
-        self._select_filter_option("Активности", activity, show_all=True)
-        self._close_table_filter_modal_apply()
+        if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+            self._open_table_filter_modal()
+            self._select_filter_option("Город", city, show_all=True)
+            self._select_filter_option("Активности", activity, show_all=True)
+            self._close_table_filter_modal_apply()
+        else:
+            self._desktop_select_option("city", city)
+            self._desktop_select_option("activity", activity)
 
         combined_state = self.get_table_filter_state()
         assert combined_state, "tableFilter state недоступен после связки search+filters"
@@ -901,9 +1024,12 @@ class FacilitiesPage(BasePage):
 
         reset_state = None
         for _ in range(3):
-            self._open_table_filter_modal()
-            self._reset_filters_in_modal()
-            self._close_table_filter_modal_apply()
+            if self.driver.find_elements(*L.TABLE_FILTER_BUTTON):
+                self._open_table_filter_modal()
+                self._reset_filters_in_modal()
+                self._close_table_filter_modal_apply()
+            else:
+                self._desktop_reset_filters()
             self._set_table_search("")
             reset_state = self.get_table_filter_state()
             assert reset_state, "tableFilter state недоступен после reset"

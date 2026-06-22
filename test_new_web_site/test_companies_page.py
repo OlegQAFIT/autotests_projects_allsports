@@ -323,9 +323,9 @@ def test_contacts_section_present(driver):
 
 @allure.feature('Companies Page')
 @allure.severity('High')
-@allure.story('Контакты — корректность данных')
+@allure.story('Контакты — точное совпадение всех данных блока')
 def test_contacts_data(driver):
-    "Проверка корректности номеров телефонов, email и расписаний."
+    "Проверка полного текста блока контактов: телефоны, email, время работы и адрес."
     page = CompaniesPage(driver)
     page.open()
     page.accept_cookie_consent()

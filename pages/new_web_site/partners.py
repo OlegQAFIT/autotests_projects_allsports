@@ -387,6 +387,36 @@ class PartnersPage(BasePage):
         self._safe_scroll((By.CSS_SELECTOR, "#contactsSection"))
         self.assert_element_present(L.CONTACTS_ADDRESS)
 
+    @allure.step("Проверить точное совпадение текста блока 'Наши контакты'")
+    def check_contacts_text_exact(self):
+        self._safe_scroll((By.CSS_SELECTOR, "#contactsSection"))
+        root = self.driver.find_element(*L.CONTACTS_SECTION)
+        actual_text = re.sub(r"\s+", " ", root.text.replace("\xa0", " ")).strip()
+
+        expected_fragments = [
+            "Наши контакты",
+            "Отдел по работе с клиентами",
+            "+375 44 771 09 47",
+            "sales@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Отдел по работе с партнёрами",
+            "+375 44 525 38 92",
+            "suppliers@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Техническая поддержка",
+            "+375 44 770 94 26",
+            "support@allsports.by",
+            "(пн-пт: 9:00-21:00, сб-вс: 9:00-19:00)",
+            "Адрес:",
+            "220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21",
+        ]
+
+        for fragment in expected_fragments:
+            assert fragment in actual_text, (
+                f"В блоке 'Наши контакты' не найден ожидаемый текст: {fragment}\n"
+                f"Фактический текст блока: {actual_text}"
+            )
+
     @allure.step("Проверить наличие карты на странице")
     def check_contacts_map(self):
         self._safe_scroll((By.CSS_SELECTOR, "#contactsSection"))

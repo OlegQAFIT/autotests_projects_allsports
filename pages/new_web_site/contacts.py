@@ -87,28 +87,36 @@ class ContactsPage(BasePage, ContactsPageLocators):
     @allure.step("Проверить, что контактные данные совпадают с ожидаемыми")
     def check_contacts_text_exact(self):
         """
-        Проверяет, что телефоны, e-mail и адрес на странице совпадают с эталонными.
-        Использует явное сравнение текста, как на макете.
+        Проверяет, что весь текст блока контактов совпадает с эталонными данными,
+        включая телефоны, e-mail, время работы и адрес.
         """
+        self._safe_scroll(self.ADDRESS_BLOCK)
+        root = self.driver.find_element(By.XPATH, self.ADDRESS_BLOCK)
+        actual_text = re.sub(r"\s+", " ", root.text.replace("\xa0", " ")).strip()
 
-        # --- Эталонные данные (из твоего скриншота) ---
-        expected_contacts = {
-            "clients_phone": "+375 44 771 09 47",
-            "clients_email": "sales@allsports.by",
-            "partners_phone": "+375 44 525 38 92",
-            "partners_email": "suppliers@allsports.by",
-            "support_phone": "+375 44 770 94 26",
-            "support_email": "support@allsports.by",
-            "address": "220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21",
-        }
+        expected_fragments = [
+            "Наши контакты",
+            "Отдел по работе с клиентами",
+            "+375 44 771 09 47",
+            "sales@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Отдел по работе с партнёрами",
+            "+375 44 525 38 92",
+            "suppliers@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Техническая поддержка",
+            "+375 44 770 94 26",
+            "support@allsports.by",
+            "(пн-пт: 9:00-21:00, сб-вс: 9:00-19:00)",
+            "Адрес:",
+            "220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21",
+        ]
 
-        # --- Проверка телефонов ---
-        page_source = self.driver.page_source
-
-        for key, value in expected_contacts.items():
-            assert value in page_source, f"❌ Текст '{value}' не найден на странице (ключ: {key})"
-
-        print("✅ Все контактные данные успешно найдены на странице.")
+        for fragment in expected_fragments:
+            assert fragment in actual_text, (
+                f"❌ В блоке контактов не найден ожидаемый текст: {fragment}\n"
+                f"Фактический текст блока: {actual_text}"
+            )
 
 
     # ==== Вспомогательные заполнители ====

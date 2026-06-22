@@ -285,6 +285,16 @@ def test_contacts_address(driver):
     page.check_contacts_address()
 
 @allure.feature('Partners Page')
+@allure.severity('High')
+@allure.story('Контакты — точное совпадение всех данных блока')
+def test_contacts_text_exact(driver):
+    "Проверка полного текста блока контактов: телефоны, email, время работы и адрес."
+    page = PartnersPage(driver)
+    page.open()
+    page.accept_cookie_consent()
+    page.check_contacts_text_exact()
+
+@allure.feature('Partners Page')
 @allure.severity('Normal')
 @allure.story('Контакты — карта')
 def test_contacts_map(driver):
@@ -323,7 +333,6 @@ def test_contacts_responsive(driver):
     page.open()
     page.accept_cookie_consent()
     page.check_contacts_responsive()
-
 
 
 

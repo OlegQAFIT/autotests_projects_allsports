@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import re
 import time
 import allure
 from selenium.webdriver.common.by import By
@@ -881,14 +882,34 @@ class CompaniesPage(BasePage):
 
     @allure.step("Проверить корректность контактных данных")
     def check_contacts_data(self):
-        """Проверяет наличие ключевых контактных данных в блоке."""
+        """Проверяет точное совпадение текста в блоке 'Наши контакты'."""
         self._safe_scroll(L.CONTACTS_SECTION)
         root = self.driver.find_element(*L.CONTACTS_SECTION)
-        phones = root.find_elements(By.CSS_SELECTOR, "a[href^='tel:']")
-        emails = root.find_elements(By.CSS_SELECTOR, "a[href^='mailto:']")
-        assert len(phones) >= 2, f"Недостаточно телефонных ссылок в контактах: {len(phones)}"
-        assert len(emails) >= 2, f"Недостаточно email-ссылок в контактах: {len(emails)}"
-        assert "минск" in root.text.lower(), "В блоке контактов не найден адрес (Минск)"
+        actual_text = re.sub(r"\s+", " ", root.text.replace("\xa0", " ")).strip()
+
+        expected_fragments = [
+            "Наши контакты",
+            "Отдел по работе с клиентами",
+            "+375 44 771 09 47",
+            "sales@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Отдел по работе с партнёрами",
+            "+375 44 525 38 92",
+            "suppliers@allsports.by",
+            "(пн-пт: 09:00-18:00, сб-вс: выходной)",
+            "Техническая поддержка",
+            "+375 44 770 94 26",
+            "support@allsports.by",
+            "(пн-пт: 9:00-21:00, сб-вс: 9:00-19:00)",
+            "Адрес:",
+            "220030 г. Минск, ул. Интернациональная, 36-2, офисы 2-20, 1-21",
+        ]
+
+        for fragment in expected_fragments:
+            assert fragment in actual_text, (
+                f"В блоке 'Наши контакты' не найден ожидаемый текст: {fragment}\n"
+                f"Фактический текст блока: {actual_text}"
+            )
 
     @allure.step("Проверить, что карта отображается и не сломана")
     def check_contacts_map(self):
@@ -1292,6 +1313,4 @@ class CompaniesPage(BasePage):
             EC.invisibility_of_element_located(L.SUBSCRIPTIONS_ARCHIVE_MODAL)
         )
         time.sleep(0.6)
-
-
 

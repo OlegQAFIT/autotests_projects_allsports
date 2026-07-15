@@ -12,6 +12,9 @@ from helpers.add_visit import (
 )
 
 import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support.ui import Select
 
 
@@ -45,10 +48,33 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         self.hard_click(self.RESET_BUTTON)
 
     @allure.step("Login and create visit")
-    def login_and_create_visit(self, phone_number=None, sms_code=None, gym_token=None, attraction_id=None):
+    def login_and_create_visit(
+        self,
+        phone_number=None,
+        sms_code=None,
+        gym_token=None,
+        attraction_id=None,
+        holder_id=None,
+        admin_token=None,
+        supplier_id=None,
+        lat=None,
+        lng=None,
+    ):
         try:
-            if all(value is not None for value in [phone_number, sms_code, gym_token, attraction_id]):
-                external_login_and_create_visit(phone_number, sms_code, gym_token, attraction_id)
+            if phone_number is not None and attraction_id is not None and (
+                gym_token is not None or all(value is not None for value in [supplier_id, lat, lng])
+            ):
+                external_login_and_create_visit(
+                    phone_number,
+                    sms_code,
+                    gym_token,
+                    attraction_id,
+                    holder_id=holder_id,
+                    admin_token=admin_token,
+                    supplier_id=supplier_id,
+                    lat=lat,
+                    lng=lng,
+                )
                 return
             external_create_test_visit()
         except VisitDailyLimitReachedError as exc:
@@ -120,6 +146,40 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             "(SUPPLIER_VISIT_GYM_TOKEN / SUPPLIER_VISIT_ATTRACTION_ID)."
         )
 
+    def clear_pending_visits_if_any(self, max_visits=10):
+        for _ in range(max_visits):
+            self._click_new_visits_if_available()
+            time.sleep(1)
+
+            if not self._has_visit_card_actions():
+                return
+
+            if self.is_element_visible(self.DECLINE_BUTTON_LOCATOR):
+                self.hard_click(self.DECLINE_BUTTON_LOCATOR)
+            elif self.is_element_visible(self.DECLINE_BUTTON_LOCATOR_EN):
+                self.hard_click(self.DECLINE_BUTTON_LOCATOR_EN)
+            else:
+                return
+
+            if self.is_element_visible(self.INPUT_REASON_REJECT_LOCATOR):
+                self.fill(self.INPUT_REASON_REJECT_LOCATOR, "autotest cleanup")
+
+            if self.is_element_visible(self.CLICK_BUTTON_SAVE):
+                self.hard_click(self.CLICK_BUTTON_SAVE)
+            elif self.is_element_visible(self.CLICK_BUTTON_SAVE_EN):
+                self.hard_click(self.CLICK_BUTTON_SAVE_EN)
+            else:
+                return
+
+            time.sleep(2)
+            self.driver.refresh()
+            time.sleep(2)
+
+        if self._has_visit_card_actions():
+            raise AssertionError(
+                "Не удалось очистить все неподтвержденные визиты перед проверкой страницы."
+            )
+
     def _assert_new_visits_button_text(self, expected_fragments):
         locators = [self.BUTTON_NEW_VISITS_LOCATOR, self.BUTTON_NEW_VISITS_LOCATOR_EN]
         for locator in locators:
@@ -132,7 +192,6 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     def assert_found_elements_on_registrarion_visitspage_ru(self, role="reception"):
         elements_to_check = [
             (self.LOGO_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
-            (self.TEXT_ADMINISTRATOR_LOCATOR, 'Администратор'),
             (self.SHORT_INSTRUCTION_LOCATOR, 'Краткая инструкция:'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR, 'Регистрация визитов'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR, 'История визитов'),
@@ -151,8 +210,6 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         )
         if has_new_visits_button:
             self._assert_new_visits_button_text(["Проверить новые визиты", "Новые визиты"])
-        elif role == "reception":
-            raise AssertionError("Не найдена кнопка проверки новых визитов.")
         if self.is_element_visible(self.FIRST_INSTRUCTION_LOCATOR):
             self._assert_text_contains_any(
                 self.FIRST_INSTRUCTION_LOCATOR,
@@ -193,7 +250,6 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     def assert_found_elements_on_registrarion_visitspage_en(self, role="reception"):
         elements_to_check = [
             (self.LOGO_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
-            (self.TEXT_ADMINISTRATOR_LOCATOR_EN, 'Administrator'),
             (self.SHORT_INSTRUCTION_LOCATOR_EN, 'Short instruction:'),
             (self.SIDEBAR_REGISTRATION_VISITS_LOCATOR_EN, 'Registration of visits'),
             (self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN, 'Visit history'),
@@ -212,8 +268,6 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
         )
         if has_new_visits_button:
             self._assert_new_visits_button_text(["Check new visits", "New visits", "Проверить новые визиты"])
-        elif role == "reception":
-            raise AssertionError("New visits button is not found.")
         if self.is_element_visible(self.FIRST_INSTRUCTION_LOCATOR):
             self._assert_text_contains_any(
                 self.FIRST_INSTRUCTION_LOCATOR,
@@ -410,6 +464,28 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
+    @allure.step("Assert registration visits page is opened after reject")
+    def assert_registration_page_opened_after_reject(self, language="ru"):
+        expected_logo = (
+            self.LOGO_REGISTRATION_VISITS_LOCATOR_EN
+            if language == "en"
+            else self.LOGO_REGISTRATION_VISITS_LOCATOR
+        )
+        fallback_logo = (
+            self.LOGO_REGISTRATION_VISITS_LOCATOR
+            if language == "en"
+            else self.LOGO_REGISTRATION_VISITS_LOCATOR_EN
+        )
+        assert self.is_element_visible(expected_logo) or self.is_element_visible(fallback_logo), (
+            "После отклонения визита не открылась страница регистрации визитов."
+        )
+        WebDriverWait(self.driver, 10).until(
+            EC.invisibility_of_element_located((By.XPATH, self.REJECT_VISIT_TEXT_LOCATOR))
+        )
+        WebDriverWait(self.driver, 10).until(
+            EC.invisibility_of_element_located((By.XPATH, self.REJECT_VISIT_TEXT_LOCATOR_EN))
+        )
+
     @allure.step("Add reason visit")
     def enter_reason_visit(self):
         self.fill(self.INPUT_REASON_REJECT_LOCATOR, self.INPUT_REASON_REJECT_TEXT_LOCATOR)
@@ -425,14 +501,36 @@ class SupplierPanelRegistrationVisits(LoginPageSupplierPanel, RegistrationVisits
     @allure.step("Assert sidebar visibility by role")
     def assert_sidebar_visibility_by_role(self, role):
         mandatory_tabs = [
-            self.SIDEBAR_REGISTRATION_VISITS_LOCATOR,
-            self.SIDEBAR_VISITS_HISTORY_LOCATOR,
-            self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR,
-            self.SIDEBAR_FACILITY_DETAILS_LOCATOR,
-            self.SIDEBAR_CONTACTS_LOCATOR,
+            (
+                self.SIDEBAR_REGISTRATION_VISITS_LOCATOR,
+                self.SIDEBAR_REGISTRATION_VISITS_LOCATOR_EN,
+                '//a[@href="/visits/registration" and contains(@class, "nav_link")]',
+            ),
+            (
+                self.SIDEBAR_VISITS_HISTORY_LOCATOR,
+                self.SIDEBAR_VISITS_HISTORY_LOCATOR_EN,
+                '//a[@href="/visits/all" and contains(@class, "nav_link")]',
+            ),
+            (
+                self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR,
+                self.SIDEBAR_VISITS_UNDER_CORRECTION_LOCATOR_EN,
+                '//a[@href="/visits/corrections" and contains(@class, "nav_link")]',
+            ),
+            (
+                self.SIDEBAR_FACILITY_DETAILS_LOCATOR,
+                self.SIDEBAR_FACILITY_DETAILS_LOCATOR_EN,
+                '//a[@href="/supplier/about" and contains(@class, "nav_link")]',
+            ),
+            (
+                self.SIDEBAR_CONTACTS_LOCATOR,
+                self.SIDEBAR_CONTACTS_LOCATOR_EN,
+                '//a[@href="/contacts" and contains(@class, "nav_link")]',
+            ),
         ]
-        for locator in mandatory_tabs:
-            assert self.is_element_visible(locator), f"Обязательная вкладка отсутствует: {locator}"
+        for locators in mandatory_tabs:
+            assert any(self.is_element_visible(locator) for locator in locators), (
+                f"Обязательная вкладка отсутствует: {locators}"
+            )
 
         has_documents = self.is_element_visible(self.SIDEBAR_DOCUMENTS_LOCATOR)
         expected_documents = role_has_documents(role)

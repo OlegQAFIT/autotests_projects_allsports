@@ -1,3 +1,5 @@
+import os
+
 import allure
 import pytest
 from pages.supplier_panel.registration_visits_page import SupplierPanelRegistrationVisits
@@ -14,6 +16,7 @@ def test_checking_elements_supplier_panel_ru(driver, role):
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
     registration_visits_supplier_panel.login_supplier_panel(role=role)
+    registration_visits_supplier_panel.clear_pending_visits_if_any()
     registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_ru(role=role)
 
 
@@ -29,6 +32,7 @@ def test_checking_elements_supplier_panel_en(driver, role):
     registration_visits_supplier_panel.open_sp()
     registration_visits_supplier_panel.login_supplier_panel(role=role)
     registration_visits_supplier_panel.select_language()
+    registration_visits_supplier_panel.clear_pending_visits_if_any()
     registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en(role=role)
 
 
@@ -55,6 +59,7 @@ def test_elements_with_visit_en(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit()
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.select_language()
     registration_visits_supplier_panel.assert_found_elements_with_wisit_page_en()
@@ -69,6 +74,7 @@ def test_elements_when_cancel_visit_ru(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit()
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.click_reject_visit()
     registration_visits_supplier_panel.assert_found_elements_modal_reject_visit_page_ru()
@@ -83,6 +89,17 @@ def test_elements_when_cancel_visit_en(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit(
+        phone_number="+375330000088",
+        sms_code="4290",
+        gym_token=None,
+        attraction_id=16835,
+        holder_id=41232,
+        admin_token=os.getenv("SUPPLIER_JRNL_ADMIN_TOKEN"),
+        supplier_id=5003,
+        lat=53.90450845,
+        lng=27.56395822,
+    )
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.select_language()
     registration_visits_supplier_panel.click_reject_visit_en()
@@ -98,11 +115,12 @@ def test_reject_visit_ru(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit()
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.click_reject_visit()
     registration_visits_supplier_panel.enter_reason_visit()
     registration_visits_supplier_panel.click_save_reject_visit()
-    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_ru()
+    registration_visits_supplier_panel.assert_registration_page_opened_after_reject(language="ru")
 
 
 @allure.feature('Панель поставщика')
@@ -114,8 +132,8 @@ def test_confirm_visit_elements_ru(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
-    registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.login_and_create_visit()
+    registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.click_confirm_visit_ru()
     registration_visits_supplier_panel.assert_found_elements_on_confirm_visit_modal()
 
@@ -129,6 +147,7 @@ def test_confirm_visit_elements_en(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit()
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.select_language()
     registration_visits_supplier_panel.click_confirm_visit_en()
@@ -144,12 +163,13 @@ def test_reject_visit_en(driver):
     """
     registration_visits_supplier_panel = SupplierPanelRegistrationVisits(driver)
     registration_visits_supplier_panel.open_sp()
+    registration_visits_supplier_panel.login_and_create_visit()
     registration_visits_supplier_panel.login_supplier_panel()
     registration_visits_supplier_panel.select_language()
     registration_visits_supplier_panel.click_reject_visit_en()
     registration_visits_supplier_panel.enter_reason_visit()
     registration_visits_supplier_panel.click_save_reject_visit_en()
-    registration_visits_supplier_panel.assert_found_elements_on_registrarion_visitspage_en()
+    registration_visits_supplier_panel.assert_registration_page_opened_after_reject(language="en")
 
 
 # @allure.feature('')

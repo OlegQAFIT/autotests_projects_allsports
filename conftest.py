@@ -1,6 +1,8 @@
 import logging
 import os
+import re
 import shutil
+import subprocess
 from pathlib import Path
 from urllib.parse import urlparse, urlunparse
 
@@ -8,7 +10,7 @@ import pytest
 import requests
 from dotenv import load_dotenv
 from selenium import webdriver
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import SessionNotCreatedException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options as ChromeOption
 from selenium.webdriver.chrome.service import Service as ChromeService
@@ -28,6 +30,7 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from helpers.base import BasePage
 
 load_dotenv()
+load_dotenv(Path.home() / ".allsports_test_env")
 
 
 def pytest_addoption(parser):
@@ -69,6 +72,8 @@ def _should_enable_live_api_by_default(config) -> bool:
     auto_live_targets = (
         'test_supplier_panel',
         'helpers/add_visit.py',
+        'test_journal_main_flow/test_create_visit_holder_api.py',
+        'test_journal_main_flow/test_create_visit.py',
     )
 
     for arg in raw_args:
@@ -193,6 +198,80 @@ def _find_cached_chromedriver() -> str | None:
     return candidates[0][1]
 
 
+def _find_chrome_binary() -> str | None:
+    candidates = (
+        os.getenv('CHROME_BINARY'),
+        '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+        '/Applications/Chromium.app/Contents/MacOS/Chromium',
+    )
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return candidate
+    return None
+
+
+def _extract_major_version(version: str | None) -> int | None:
+    if not version:
+        return None
+    match = re.search(r'(\d+)', version)
+    if not match:
+        return None
+    return int(match.group(1))
+
+
+def _get_chrome_browser_major_version(binary_path: str | None) -> int | None:
+    if not binary_path:
+        return None
+    try:
+        output = subprocess.check_output([binary_path, '--version'], text=True).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return _extract_major_version(output)
+
+
+def _get_chromedriver_major_version(driver_path: str | None) -> int | None:
+    if not driver_path:
+        return None
+    try:
+        output = subprocess.check_output([driver_path, '--version'], text=True).strip()
+    except (OSError, subprocess.SubprocessError):
+        return None
+    return _extract_major_version(output)
+
+
+def _find_matching_cached_chromedriver(browser_major: int | None) -> str | None:
+    if browser_major is None:
+        return _find_cached_chromedriver()
+
+    cache_root = Path.home() / '.wdm' / 'drivers' / 'chromedriver' / 'mac64'
+    if not cache_root.exists():
+        return None
+
+    candidates: list[tuple[tuple[int, ...], str]] = []
+    for version_dir in cache_root.iterdir():
+        if not version_dir.is_dir():
+            continue
+        if _extract_major_version(version_dir.name) != browser_major:
+            continue
+
+        version_key = _parse_version_tuple(version_dir.name)
+        for relative in (
+            'chromedriver-mac-arm64/chromedriver',
+            'chromedriver-mac-x64/chromedriver',
+            'chromedriver/chromedriver',
+        ):
+            path = version_dir / relative
+            if path.exists() and os.access(path, os.X_OK):
+                candidates.append((version_key, str(path)))
+                break
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
 def create_chrome(headless: bool = False):
     chrome_options = ChromeOption()
     if headless:
@@ -204,18 +283,35 @@ def create_chrome(headless: bool = False):
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-extensions')
     chrome_options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+    chrome_binary = _find_chrome_binary()
+    if chrome_binary:
+        chrome_options.binary_location = chrome_binary
+
+    browser_major = _get_chrome_browser_major_version(chrome_binary)
 
     local_driver = (
         os.getenv('CHROMEDRIVER_PATH')
         or shutil.which('chromedriver')
-        or _find_cached_chromedriver()
+        or _find_matching_cached_chromedriver(browser_major)
     )
 
+    if local_driver and browser_major:
+        driver_major = _get_chromedriver_major_version(local_driver)
+        if driver_major != browser_major:
+            local_driver = None
+
     if local_driver:
-        service = ChromeService(local_driver)
-    else:
+        try:
+            service = ChromeService(local_driver)
+            return webdriver.Chrome(service=service, options=chrome_options)
+        except SessionNotCreatedException:
+            pass
+
+    try:
+        return webdriver.Chrome(options=chrome_options)
+    except Exception:
         service = ChromeService(ChromeDriverManager().install())
-    return webdriver.Chrome(service=service, options=chrome_options)
+        return webdriver.Chrome(service=service, options=chrome_options)
 
 
 def create_firefox(headless: bool = False):

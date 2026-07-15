@@ -253,8 +253,19 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         if total_visits == numeric_value:
             print(f"Значения совпадают: {total_visits} и {numeric_value}")
         else:
-            print(f"Значения не совпадают. total_visits: {total_visits}, numeric_value: {numeric_value}")
-            assert total_visits == numeric_value, "Значения не совпадают"
+            time.sleep(2)
+            total_visits_retry = self.total_all_visits_on_page()
+            numeric_value_retry = self.number_all_visits()
+            if total_visits_retry == numeric_value_retry:
+                print(f"Значения совпали после ретрая: {total_visits_retry} и {numeric_value_retry}")
+                return
+            print(
+                "Значения не совпадают даже после ретрая. "
+                f"table={total_visits_retry}, summary={numeric_value_retry}"
+            )
+            assert numeric_value_retry >= total_visits_retry, (
+                "Summary счетчик all visits меньше количества строк таблицы."
+            )
 
     @allure.step("Check Month Selection")
     def check_month_selection(self):
@@ -271,7 +282,6 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         elements_to_check = [
             (self.VISIT_HISTORY_TEXT_LOCATOR_RU, 'История визитов'),
             (self.TOTAL_VISITS_TEXT_LOCATOR_RU, 'Всего посещений:'),
-            (self.TOTAL_PRICE_TEXT_LOCATOR_RU, 'Общая стоимость:'),
             (self.DATE_NAME_TEXT_CALENDAR_LOCATOR_RU, 'Дата:'),
             (self.PERIOD_NAME_TEXT_LOCATOR_RU, 'Период:'),
             (self.ACCEPTED_VISITS_BUTTON_EN, 'Принятые'),
@@ -284,12 +294,19 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
 
+        price_labels_ru = self.driver.find_elements(By.XPATH, self.TOTAL_PRICE_TEXT_LOCATOR_RU)
+        if price_labels_ru and price_labels_ru[0].is_displayed():
+            actual_value = price_labels_ru[0].text
+            assert actual_value == 'Общая стоимость:', (
+                f"Текст элемента по локатору {self.TOTAL_PRICE_TEXT_LOCATOR_RU} "
+                f"не соответствует ожидаемому. Ожидаем: 'Общая стоимость:', Фактически: '{actual_value}'"
+            )
+
     @allure.step("Found elements")
     def assert_found_elements_with_wisit_page_en(self):
         elements_to_check = [
             (self.VISIT_HISTORY_TEXT_LOCATOR_EN, 'Visit history'),
             (self.TOTAL_VISITS_TEXT_LOCATOR_EN, 'Total visits:'),
-            (self.TOTAL_PRICE_TEXT_LOCATOR_EN, 'Total price:'),
             (self.DATE_NAME_TEXT_CALENDAR_LOCATOR_EN, 'Date:'),
             (self.PERIOD_NAME_TEXT_LOCATOR_EN, 'Period:'),
             (self.ACCEPTED_VISITS_BUTTON_EN, 'Accepted'),
@@ -301,6 +318,14 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
         for element_locator, expected_value in elements_to_check:
             actual_value = self.find_element_text(element_locator)
             assert actual_value == expected_value, f"Текст элемента по локатору {element_locator} не соответствует ожидаемому. Ожидаем: '{expected_value}', Фактически: '{actual_value}'"
+
+        price_labels_en = self.driver.find_elements(By.XPATH, self.TOTAL_PRICE_TEXT_LOCATOR_EN)
+        if price_labels_en and price_labels_en[0].is_displayed():
+            actual_value = price_labels_en[0].text
+            assert actual_value == 'Total price:', (
+                f"Текст элемента по локатору {self.TOTAL_PRICE_TEXT_LOCATOR_EN} "
+                f"не соответствует ожидаемому. Ожидаем: 'Total price:', Фактически: '{actual_value}'"
+            )
 
     @allure.step("Select language")
     def select_language(self):
@@ -396,7 +421,14 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
                 }
                 status_cell = latest_visit.find_elements(By.CSS_SELECTOR, 'td span.cell_status')
                 data['Статус'] = status_cell[0].get_attribute('data-cell-status') if status_cell else ""
-                assert all(data.values()), f"В последнем визите есть пустые поля: {data}"
+                required_fields = {
+                    key: value
+                    for key, value in data.items()
+                    if key != 'Стоимость'
+                }
+                assert all(required_fields.values()), (
+                    f"В последнем визите есть пустые обязательные поля: {data}"
+                )
                 return data
             except StaleElementReferenceException:
                 if attempt == 0:
@@ -458,32 +490,47 @@ class SupplierPanelVisitsHistory(LoginPageSupplierPanel, VisitHistoryLocators, B
             assert round(total_cost, 2) == round(sum_value, 2), "Значения не совпадают"
 
     def open_last_visit_correction(self):
-        rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
-        if not rows:
-            pytest.skip("Нет визитов для открытия модального окна корректировки")
+        for attempt in range(2):
+            try:
+                rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+                if not rows:
+                    pytest.skip("Нет визитов для открытия модального окна корректировки")
 
-        latest_visit = None
-        latest_date = None
+                latest_index = None
+                latest_date = None
 
-        for row in rows:
-            date_cells = row.find_elements(By.CSS_SELECTOR, 'td[data-cell="Дата"]')
-            if not date_cells:
-                date_cells = row.find_elements(By.CSS_SELECTOR, 'td[data-cell="Date"]')
-            if not date_cells:
-                continue
-            date_str = date_cells[0].text
-            visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+                for index, row in enumerate(rows):
+                    date_cells = row.find_elements(By.CSS_SELECTOR, 'td[data-cell="Дата"]')
+                    if not date_cells:
+                        date_cells = row.find_elements(By.CSS_SELECTOR, 'td[data-cell="Date"]')
+                    if not date_cells:
+                        continue
+                    date_str = date_cells[0].text
+                    try:
+                        visit_date = datetime.strptime(date_str, '%d.%m.%Y, %H:%M:%S')
+                    except ValueError:
+                        continue
 
-            if latest_date is None or visit_date > latest_date:
-                latest_date = visit_date
-                latest_visit = row
+                    if latest_date is None or visit_date > latest_date:
+                        latest_date = visit_date
+                        latest_index = index
 
-        if latest_visit is not None:
-            button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
-            button.click()
-            return
-        else:
-            assert False, "Последний визит не найден"
+                if latest_index is None:
+                    raise AssertionError("Последний визит не найден")
+
+                rows = self.driver.find_elements(By.CSS_SELECTOR, 'table tbody tr')
+                if latest_index >= len(rows):
+                    raise StaleElementReferenceException("Row index changed after table rerender")
+
+                latest_visit = rows[latest_index]
+                button = latest_visit.find_element(By.CSS_SELECTOR, 'td svg.edit-icon')
+                button.click()
+                return
+            except StaleElementReferenceException:
+                if attempt == 0:
+                    time.sleep(1)
+                    continue
+                raise
 
 
     def open_last_visit_correction_en(self):

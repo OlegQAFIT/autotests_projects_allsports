@@ -1,15 +1,19 @@
-import string
+import os
 import random
+import string
+import time
 
 import allure
 from faker import Faker
 from selenium.common import NoSuchElementException
-from selenium.webdriver.common.by import By
+from selenium.common.exceptions import ElementNotInteractableException, InvalidElementStateException
 from helpers import BasePage
 from helpers.authorization import LoginPage
 from locators.journal.for_company_page_locators import CompanyPageLocators
-from selenium.webdriver.support.ui import Select
-import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.support import expected_conditions as EC
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 
 class Company(LoginPage, CompanyPageLocators, BasePage):
@@ -28,6 +32,10 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     @allure.step("Open Journal")
     def open_jn(self):
         self.driver.get('https://xn--d1aey.xn--k1aahcehedi.xn--90ais/login')
+
+    @allure.step("Open add company page")
+    def open_add_company_page(self):
+        self.driver.get('https://xn--d1aey.xn--k1aahcehedi.xn--90ais/companies/add')
 
     @allure.step("Open SP")
     def open_sp(self):
@@ -56,6 +64,18 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
     @allure.step("Click Create Company tab")
     def click_create_company_tab(self):
         self.hard_click(self.CREATE_COMPANY)
+
+    @allure.step("Login for main company flow")
+    def login_for_main_company_flow(self):
+        login = os.getenv("JOURNAL_COMPANY_LOGIN", "oleg.fit@gmail.com")
+        password = os.getenv("JOURNAL_COMPANY_PASSWORD", "9efbee942864")
+        self.fill(self.LOGIN_FIELD, login)
+        self.fill(self.PASSWORD_FIELD, password)
+        self.hard_click(self.SIGNIN_BUTTON)
+        WebDriverWait(self.driver, 15).until(lambda driver: "/login" not in driver.current_url)
+        WebDriverWait(self.driver, 15).until(
+            EC.visibility_of_element_located((By.XPATH, self.FOOTER_COMPANY))
+        )
 
     @allure.step("Drop City selection")
     def drop_city_selection(self):
@@ -113,6 +133,202 @@ class Company(LoginPage, CompanyPageLocators, BasePage):
         self.fill(CompanyPageLocators.LEGAL_NAME_INPUT, self.company_input_value)
         self.fill(CompanyPageLocators.LEGAL_ADDRESS_INPUT, self.LEGAL_ADDRESS_TEXT)
         self.fill(CompanyPageLocators.CONTACT_PHONE_INPUT, self.CONTACT_PHONE_TEXT)
+
+    def _select_root_by_label(self, label_text):
+        return f"//span[normalize-space()='{label_text}']/ancestor::p/parent::*[contains(@class,'select')]"
+
+    def _select_body_by_label(self, label_text):
+        return f"{self._select_root_by_label(label_text)}//div[contains(@class,'select_body')]"
+
+    def _select_option_by_label(self, label_text, option_text):
+        return (
+            f"{self._select_root_by_label(label_text)}"
+            f"//div[contains(@class,'select_option')]/span[normalize-space()='{option_text}']"
+        )
+
+    def _input_by_label(self, label_text):
+        return f"//p[contains(normalize-space(.), '{label_text}')]/ancestor::label//input"
+
+    def _click_and_type(self, locator, text):
+        element = self.wait_for_visible(locator)
+        self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+        try:
+            element.click()
+        except Exception:
+            self.driver.execute_script("arguments[0].click();", element)
+
+        try:
+            element.clear()
+        except Exception:
+            pass
+
+        try:
+            element.send_keys(Keys.COMMAND, "a")
+            element.send_keys(Keys.BACKSPACE)
+            element.send_keys(text)
+        except ElementNotInteractableException:
+            self.driver.execute_script(
+                """
+                const input = arguments[0];
+                const value = arguments[1];
+                input.value = '';
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.value = value;
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                """,
+                element,
+                text,
+            )
+
+    @allure.step("Select '{option_text}' in '{label_text}' dropdown")
+    def select_dropdown_value_by_label(self, label_text, option_text):
+        dropdown = self.wait_for_visible(self._select_body_by_label(label_text))
+        dropdown.click()
+        option = WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, self._select_option_by_label(label_text, option_text)))
+        )
+        option.click()
+
+    @allure.step("Set timezone '{timezone}'")
+    def set_timezone_for_main_flow(self, timezone):
+        timezone_input = "//input[contains(@class,'search-input_input') and @placeholder='Type to search...']"
+        timezone_option = f"//li/a[normalize-space()='{timezone}']"
+        self._click_and_type(timezone_input, timezone)
+        option = WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, timezone_option))
+        )
+        option.click()
+
+    @allure.step("Fill main flow required fields")
+    def fill_main_flow_required_fields(self, company_name, vat_number, legal_address):
+        self.created_company_name = company_name
+        self.company_input_value = company_name
+
+        self._click_and_type(self._input_by_label("Company Name:"), company_name)
+        self.select_dropdown_value_by_label("Manager:", "Oleg")
+        self._click_and_type(self._input_by_label("VAT NUMBER:"), vat_number)
+        legal_name_locator = self._input_by_label("Legal Name:")
+        WebDriverWait(self.driver, 10).until(
+            EC.element_to_be_clickable((By.XPATH, legal_name_locator))
+        )
+        try:
+            self._click_and_type(legal_name_locator, company_name)
+        except (ElementNotInteractableException, InvalidElementStateException):
+            pass
+        self._click_and_type(self._input_by_label("Legal Address:"), legal_address)
+        self._click_and_type(self._input_by_label("Contact Phone:"), self.CONTACT_PHONE_TEXT)
+
+    @allure.step("Fill compensation amount '{amount}'")
+    def fill_compensation_amount_for_main_flow(self, amount):
+        self._click_and_type(self._input_by_label("Compensation amount (VAT included):"), amount)
+
+    @allure.step("Clear compensation amount")
+    def clear_compensation_amount_for_main_flow(self):
+        locator = self._input_by_label("Compensation amount (VAT included):")
+        element = self.wait_for_visible(locator)
+
+        for _ in range(3):
+            self.driver.execute_script("arguments[0].scrollIntoView({block: 'center'});", element)
+            try:
+                element.click()
+            except Exception:
+                self.driver.execute_script("arguments[0].click();", element)
+
+            try:
+                element.clear()
+            except Exception:
+                pass
+
+            try:
+                element.send_keys(Keys.COMMAND, "a")
+                element.send_keys(Keys.BACKSPACE)
+                element.send_keys(Keys.DELETE)
+            except Exception:
+                pass
+
+            self.driver.execute_script(
+                """
+                const input = arguments[0];
+                const setter = Object.getOwnPropertyDescriptor(
+                    window.HTMLInputElement.prototype,
+                    'value'
+                ).set;
+                setter.call(input, '');
+                input.dispatchEvent(new Event('input', { bubbles: true }));
+                input.dispatchEvent(new Event('change', { bubbles: true }));
+                input.dispatchEvent(new Event('blur', { bubbles: true }));
+                """,
+                element,
+            )
+
+            try:
+                WebDriverWait(self.driver, 2).until(
+                    lambda driver: element.get_attribute("value") == ""
+                )
+                return
+            except Exception:
+                time.sleep(0.5)
+
+        raise AssertionError(
+            "Поле 'Compensation amount (VAT included)' не удалось очистить, значение осталось: "
+            f"{element.get_attribute('value')}"
+        )
+
+    @allure.step("Create company for main flow")
+    def create_company_for_main_flow(
+        self,
+        company_suffix,
+        registration_type="STANDARD",
+        compensation_type=None,
+        fill_compensation_amount=True,
+    ):
+        random_token = self.faker.bothify(text="??##??##").upper()
+        company_name = f"AT Main Flow {random_token} {company_suffix}"
+        vat_number = "".join(random.choices(string.digits, k=9))
+        legal_address = self.faker.address().replace("\n", ", ")
+
+        self.select_dropdown_value_by_label("Location:", "Minsk")
+        self.select_dropdown_value_by_label("Locale:", "ru")
+        self.set_timezone_for_main_flow("Europe/Minsk")
+        self.select_dropdown_value_by_label("Sell Strategy:", "ООО” ОЛЛСПОРТС“ ПЕРЕХОД")
+
+        if registration_type == "REGISTRATION_FORM":
+            self.select_dropdown_value_by_label("Registration type:", "REGISTRATION_FORM")
+            self.select_dropdown_value_by_label("Default subscription:", "region")
+            if compensation_type:
+                self.select_dropdown_value_by_label("Compensation type:", compensation_type)
+                if fill_compensation_amount and compensation_type in {"X_AMOUNT", "X_AMOUNT_WITH_EXTENSION"}:
+                    self.fill_compensation_amount_for_main_flow("25")
+                elif not fill_compensation_amount and compensation_type in {"X_AMOUNT", "X_AMOUNT_WITH_EXTENSION"}:
+                    self.clear_compensation_amount_for_main_flow()
+
+        self.fill_main_flow_required_fields(company_name, vat_number, legal_address)
+        self.click_save_company()
+
+    @allure.step("Assert company saved in main flow")
+    def assert_company_saved_in_main_flow(self):
+        try:
+            WebDriverWait(self.driver, 10).until(lambda driver: "/companies/add" not in driver.current_url)
+        except Exception as error:
+            debug_values = {
+                "company_name": self.find_element(self._input_by_label("Company Name:")).get_attribute("value"),
+                "vat_number": self.find_element(self._input_by_label("VAT NUMBER:")).get_attribute("value"),
+                "legal_name": self.find_element(self._input_by_label("Legal Name:")).get_attribute("value"),
+                "legal_address": self.find_element(self._input_by_label("Legal Address:")).get_attribute("value"),
+                "contact_phone": self.find_element(self._input_by_label("Contact Phone:")).get_attribute("value"),
+            }
+            save_button = self.find_element("//button[contains(., 'Save and continue')]")
+            raise AssertionError(
+                f"Компания не сохранилась. URL: {self.driver.current_url}; "
+                f"save_disabled={save_button.get_attribute('disabled')}; "
+                f"values={debug_values}"
+            ) from error
+        company_name_input = self.wait_for_visible(self._input_by_label("Company Name:"))
+        saved_value = company_name_input.get_attribute("value")
+        assert saved_value == self.company_input_value, (
+            f"Название компании не сохранилось. Ожидалось '{self.company_input_value}', фактически '{saved_value}'"
+        )
 
     @allure.step("Fill fields with max company name")
     def fill_fields_name_company(self):

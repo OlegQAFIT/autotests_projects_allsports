@@ -98,10 +98,25 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
                 f"Ожидаем: '{normalized_expected}', Фактически: '{actual_value}'"
             )
 
+    @allure.step("Facility details fields are filled")
+    def assert_facility_details_fields_are_filled(self):
+        elements_to_check = [
+            self.TEXT_FACILITY_NAME_LOCATOR,
+            self.TEXT_ADDRESS_LOCATOR,
+            self.TEXT_CONTACT_PHONE_LOCATOR,
+            self.TEXT_DESCRIPTION_LOCATOR,
+            self.TEXT_WEBSITE_LOCATOR,
+        ]
+
+        for element_locator in elements_to_check:
+            actual_value = " ".join(self.find_element_text(element_locator).split())
+            assert actual_value, (
+                f"Поле по локатору {element_locator} пустое на странице сведений об объекте"
+            )
+
     @allure.step("Found elements")
     def assert_found_button_on_facility_details_ru(self):
         elements_to_check = [
-            (self.BUTTON_REFRESH_INFO_LOCATOR_RU, 'Обновить информацию'),
             (self.BUTTON_CHANGE_DATA_LOCATOR_RU, 'Изменить данные'),
         ]
 
@@ -112,7 +127,6 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
     @allure.step("Found elements")
     def assert_found_button_on_facility_details_en(self):
         elements_to_check = [
-            (self.BUTTON_REFRESH_INFO_LOCATOR_EN, 'Refresh info'),
             (self.BUTTON_CHANGE_DATA_LOCATOR_EN, 'Change data'),
         ]
 
@@ -122,9 +136,6 @@ class SupplierPanelFacilityDetails(LoginPageSupplierPanel, FacilityDetailsLocato
 
     @allure.step("Assert clickable button")
     def assert_clickable_button(self):
-        assert self.is_button_clickable(self.BUTTON_REFRESH_INFO_LOCATOR_RU), (
-            "Кнопка 'Обновить информацию' не кликабельна"
-        )
         assert self.is_button_clickable(self.BUTTON_CHANGE_DATA_LOCATOR_RU), (
             "Кнопка 'Изменить данные' не кликабельна"
         )

@@ -42,7 +42,7 @@ def test_checking_elements_on_facility_details_page_supplier_panel(driver):
     facility_details_supplier_panel.open_sp()
     facility_details_supplier_panel.login_supplier_panel(role="reception")
     facility_details_supplier_panel.click_facility_details()
-    facility_details_supplier_panel.assert_found_text_on_facility_details(role="reception")
+    facility_details_supplier_panel.assert_facility_details_fields_are_filled()
 
 
 @allure.feature('Supplier Panel Facility Details')

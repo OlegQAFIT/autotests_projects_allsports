@@ -4,6 +4,13 @@ import uuid
 import base64
 import os
 import pytest
+from pathlib import Path
+
+from dotenv import load_dotenv
+
+load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
+load_dotenv(Path.home() / ".allsports_test_env")
 
 JRNL_BASE_URL = "https://xn--d1aey.xn--k1aahcehedi.xn--90ais"
 LOGIN_URL = f"{JRNL_BASE_URL}/api/v1/token"
@@ -316,7 +323,10 @@ def _request_sms_v2(phone_number, instance_id, csrf_token):
         )
 
 
-def _confirm_sms_v2(phone_number, sms_code, instance_id, csrf_token):
+def _confirm_sms_v2(phone_number, sms_code, instance_id, csrf_token=None):
+    if csrf_token is None:
+        csrf_token = _get_mobile_v2_csrf_token(instance_id)
+
     response = requests.post(
         MOBILE_V2_CONFIRM_SMS_URL,
         headers={
@@ -642,16 +652,6 @@ def _deduplicate_profiles(profiles):
 
 DEFAULT_VISIT_PROFILES = [
     {
-        "phone_number": "+375440000105",
-        "sms_code": None,
-        "gym_token": None,
-        "attraction_id": 16835,
-        "holder_id": None,
-        "supplier_id": 5003,
-        "lat": 53.90450845,
-        "lng": 27.56395822,
-    },
-    {
         "phone_number": "375440000100",
         "sms_code": None,
         "gym_token": None,
@@ -719,7 +719,6 @@ def login_and_create_visit(
         if holder_id is None and working_admin_token:
             holder_id = _find_holder_id_by_phone(phone_number, working_admin_token)
         instance_id = str(uuid.uuid4())
-        csrf_token = _get_mobile_v2_csrf_token(instance_id)
         effective_sms_code = sms_code
 
         if working_admin_token:
@@ -731,8 +730,12 @@ def login_and_create_visit(
             )
             if holder_id:
                 _reset_installs(holder_id, working_admin_token)
-            _request_sms_v2(phone_number, instance_id, csrf_token)
-            fresh_sms_code = _get_sms_token_v2(holder_id, working_admin_token) if holder_id else sms_code
+
+        request_csrf_token = _get_mobile_v2_csrf_token(instance_id)
+        _request_sms_v2(phone_number, instance_id, request_csrf_token)
+
+        if working_admin_token and holder_id:
+            fresh_sms_code = _get_sms_token_v2(holder_id, working_admin_token)
             if fresh_sms_code:
                 effective_sms_code = fresh_sms_code
 
@@ -745,14 +748,22 @@ def login_and_create_visit(
             )
 
         try:
-            oauth_token = _confirm_sms_v2(phone_number, effective_sms_code, instance_id, csrf_token)
+            confirm_csrf_token = _get_mobile_v2_csrf_token(instance_id)
+            oauth_token = _confirm_sms_v2(phone_number, effective_sms_code, instance_id, confirm_csrf_token)
         except VisitNoInstallsError:
             if not (working_admin_token and holder_id):
                 raise
             _reset_installs(holder_id, working_admin_token)
-            _request_sms_v2(phone_number, instance_id, csrf_token)
+            retry_request_csrf_token = _get_mobile_v2_csrf_token(instance_id)
+            _request_sms_v2(phone_number, instance_id, retry_request_csrf_token)
             refreshed_sms_code = _get_sms_token_v2(holder_id, working_admin_token)
-            oauth_token = _confirm_sms_v2(phone_number, refreshed_sms_code, instance_id, csrf_token)
+            retry_confirm_csrf_token = _get_mobile_v2_csrf_token(instance_id)
+            oauth_token = _confirm_sms_v2(
+                phone_number,
+                refreshed_sms_code,
+                instance_id,
+                retry_confirm_csrf_token,
+            )
         _create_visit_v2(
             oauth_token,
             supplier_id,

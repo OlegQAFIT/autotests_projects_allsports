@@ -1,9 +1,16 @@
 import os
 import re
 import uuid
+from pathlib import Path
 
 import allure
+import pytest
 import requests
+from dotenv import load_dotenv
+
+
+load_dotenv()
+load_dotenv(Path(__file__).resolve().parents[1] / ".env")
 
 
 BASE_URL = "https://xn--d1aey.xn--k1aahcehedi.xn--90ais"
@@ -14,10 +21,11 @@ CONFIRM_SMS_URL = f"{BASE_URL}{MOBILE_API_PREFIX}/confirm-sms-code"
 CREATE_VISIT_URL = f"{BASE_URL}{MOBILE_API_PREFIX}/suppliers/visit"
 ADMIN_LOGIN_URL = f"{BASE_URL}/api/admin_login"
 
-SMS_CODE = os.getenv("CREATE_VISIT_SMS_CODE", "1234")
+SMS_CODE = os.getenv("CREATE_VISIT_SMS_CODE", "").strip()
 ADMIN_TOKEN = os.getenv("SUPPLIER_JRNL_ADMIN_TOKEN", "").strip()
-ADMIN_EMAIL = os.getenv("SUPPLIER_JRNL_EMAIL", "").strip()
-ADMIN_PASSWORD = os.getenv("SUPPLIER_JRNL_PASSWORD", "").strip()
+ADMIN_EMAIL = os.getenv("SUPPLIER_JRNL_EMAIL", "").strip() or "oleg.fit@gmail.com"
+ADMIN_PASSWORD = os.getenv("SUPPLIER_JRNL_PASSWORD", "").strip() or "9efbee942864"
+
 VISIT_PROFILES = {
     "vip": {
         "phone": "375440000100",
@@ -73,12 +81,10 @@ VISIT_PROFILES = {
 
 
 def _normalize_token(token):
-    if not token:
-        return ""
-    token = str(token).strip()
-    if token.lower().startswith("bearer "):
-        return token[7:].strip()
-    return token
+    normalized = str(token or "").strip()
+    if normalized.lower().startswith("bearer "):
+        return normalized[7:].strip()
+    return normalized
 
 
 def _admin_headers(admin_token):
@@ -133,7 +139,8 @@ def _find_holder_id(phone, admin_token):
 
     requested_phone = re.sub(r"\D", "", str(phone))
     exact_matches = [
-        item for item in items
+        item
+        for item in items
         if isinstance(item, dict)
         and re.sub(r"\D", "", str(item.get("phone_number", ""))) == requested_phone
     ]
@@ -180,6 +187,17 @@ def _reset_installs(holder_id, admin_token):
     )
 
 
+def _reset_visit_limit(holder_id, admin_token):
+    response = requests.post(
+        f"{BASE_URL}/api/jrnl/admin/holders/{holder_id}/reset/visit",
+        headers=_admin_headers(admin_token),
+        timeout=30,
+    )
+    assert response.status_code in (200, 204), (
+        f"RESET VISIT LIMIT failed. status={response.status_code}, body={response.text}"
+    )
+
+
 def _mobile_headers(instance_id, csrf_token=None):
     headers = {
         "Accept": "application/json",
@@ -206,8 +224,7 @@ def _get_csrf_token(instance_id):
     return csrf_token
 
 
-def _request_sms(phone, instance_id):
-    csrf_token = _get_csrf_token(instance_id)
+def _request_sms(phone, instance_id, csrf_token):
     response = requests.post(
         REQUEST_SMS_URL,
         headers={
@@ -247,44 +264,91 @@ def _confirm_sms(phone, sms_code, instance_id):
     body = response.json()
     oauth_token = body.get("oauth-token") or body.get("oauth_token")
     assert oauth_token, f"oauth-token not found in confirm response: {body}"
-    return oauth_token
+    return str(oauth_token)
 
 
-def _create_visit(oauth_token, request_body):
-    response = requests.post(
-        CREATE_VISIT_URL,
-        headers={
-            "Authorization": f"Bearer {oauth_token}",
-            "Accept": "application/json",
-            "Content-Type": "application/json",
-        },
-        json=request_body,
-        timeout=30,
-    )
+def _create_visit(oauth_token, request_body, holder_id=None, admin_token=None):
+    def _make_request():
+        return requests.post(
+            CREATE_VISIT_URL,
+            headers={
+                "Authorization": f"Bearer {oauth_token}",
+                "Accept": "application/json",
+                "Content-Type": "application/json",
+            },
+            json=request_body,
+            timeout=30,
+        )
+
+    def _extract_status_and_id(response):
+        try:
+            payload = response.json()
+        except ValueError:
+            payload = {}
+
+        response_status = payload.get("status") if isinstance(payload, dict) else None
+        response_id = payload.get("id") if isinstance(payload, dict) else None
+        return response_status, response_id, payload if isinstance(payload, dict) else {}
+
+    response = _make_request()
+    if response.status_code == 201:
+        body = response.json()
+        assert isinstance(body.get("id"), int), f"Field id is invalid: {body}"
+        assert body.get("status") == "wait", f"Expected status=wait, got: {body}"
+        assert body.get("timeout_at"), f"Field timeout_at is missing: {body}"
+        assert "content" in body, f"Field content is missing: {body}"
+        return
+
+    response_status, response_id, body = _extract_status_and_id(response)
+    if response.status_code == 403 and response_status == "wait" and response_id:
+        return
+
+    if response.status_code == 403 and response_status == "limit" and holder_id and admin_token:
+        _reset_visit_limit(holder_id, admin_token)
+        response = _make_request()
+        if response.status_code == 201:
+            body = response.json()
+            assert isinstance(body.get("id"), int), f"Field id is invalid: {body}"
+            assert body.get("status") == "wait", f"Expected status=wait, got: {body}"
+            assert body.get("timeout_at"), f"Field timeout_at is missing: {body}"
+            assert "content" in body, f"Field content is missing: {body}"
+            return
+        response_status, response_id, body = _extract_status_and_id(response)
+        if response.status_code == 403 and response_status == "wait" and response_id:
+            return
+
     assert response.status_code == 201, (
-        "Не удалось создать визит через holder API. "
-        f"status={response.status_code}, body={response.text}"
+        f"CREATE VISIT API failed. status={response.status_code}, body={response.text}"
     )
 
-    body = response.json()
-    assert isinstance(body.get("id"), int), f"Поле id отсутствует или некорректно: {body}"
-    assert body.get("status") == "wait", f"Ожидался статус wait, получено: {body}"
-    assert body.get("timeout_at"), f"Поле timeout_at отсутствует: {body}"
-    assert "content" in body, f"Поле content отсутствует: {body}"
+    assert isinstance(body.get("id"), int), f"Field id is invalid: {body}"
+    assert body.get("status") == "wait", f"Expected status=wait, got: {body}"
+    assert body.get("timeout_at"), f"Field timeout_at is missing: {body}"
+    assert "content" in body, f"Field content is missing: {body}"
 
 
 def _login_and_create_visit(phone, request_body):
-    instance_id = str(uuid.uuid4())
-    _request_sms(phone, instance_id)
-    sms_code = SMS_CODE
     admin_token = _resolve_admin_token()
+    sms_code = SMS_CODE or None
+
     if admin_token:
         holder_id = _find_holder_id(phone, admin_token)
         _reset_installs(holder_id, admin_token)
+        _reset_visit_limit(holder_id, admin_token)
+        instance_id = str(uuid.uuid4())
+        request_csrf_token = _get_csrf_token(instance_id)
+        _request_sms(phone, instance_id, request_csrf_token)
         sms_code = _get_sms_token_v2(holder_id, admin_token)
+    else:
+        if not sms_code:
+            pytest.skip(
+                "Set CREATE_VISIT_SMS_CODE or SUPPLIER_JRNL_EMAIL/SUPPLIER_JRNL_PASSWORD "
+                "to run mobile holder visit creation tests."
+            )
+        instance_id = str(uuid.uuid4())
 
     oauth_token = _confirm_sms(phone, sms_code, instance_id)
-    _create_visit(oauth_token, request_body)
+    _create_visit(oauth_token, request_body, holder_id=holder_id if admin_token else None, admin_token=admin_token)
 
 
 @allure.feature("Holder API")

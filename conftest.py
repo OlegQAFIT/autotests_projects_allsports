@@ -74,6 +74,7 @@ def _should_enable_live_api_by_default(config) -> bool:
         'helpers/add_visit.py',
         'test_journal_main_flow/test_create_visit_holder_api.py',
         'test_journal_main_flow/test_create_visit.py',
+        'test_journal_main_flow/test_create_visit_cy.py',
     )
 
     for arg in raw_args:

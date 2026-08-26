@@ -2,6 +2,7 @@ import os
 import re
 import time
 import uuid
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -501,23 +502,176 @@ def _login_and_create_visit(phone, request_body):
     _create_visit(oauth_token, request_body, holder_id=holder_id if admin_token else None, admin_token=admin_token)
 
 
-def _get_supplier_visits():
-    bearer_token = _normalize_bearer_token(CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN)
-    if not bearer_token:
-        pytest.skip(
-            "Укажите CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN в Environment variables "
-            "для проверки визитов в supplier panel."
-        )
+def _collect_browser_tokens(value, key_hint=""):
+    """Собирает возможные access-токены из localStorage/sessionStorage."""
+    tokens = []
+    if isinstance(value, dict):
+        for key, nested_value in value.items():
+            tokens.extend(_collect_browser_tokens(nested_value, str(key).lower()))
+    elif isinstance(value, list):
+        for nested_value in value:
+            tokens.extend(_collect_browser_tokens(nested_value, key_hint))
+    elif isinstance(value, str):
+        candidate = value.strip()
+        if candidate.startswith("{") or candidate.startswith("["):
+            try:
+                tokens.extend(_collect_browser_tokens(json.loads(candidate), key_hint))
+            except json.JSONDecodeError:
+                pass
+        elif "token" in key_hint or (
+            candidate.count(".") == 2 and all(candidate.split("."))
+        ):
+            tokens.append(_normalize_token(candidate))
 
-    response = requests.get(
+    # access_token должен проверяться раньше refresh_token; окончательный выбор
+    # всё равно подтверждается реальным read-only запросом ниже.
+    unique_tokens = []
+    for token in sorted(
+        set(tokens), key=lambda item: ("refresh" in str(item).lower(), len(item))
+    ):
+        if token:
+            unique_tokens.append(token)
+    return unique_tokens
+
+
+def _get_supplier_api_headers_from_browser(driver):
+    """Возвращает заголовки фактического API-запроса, сделанного фронтендом панели."""
+    try:
+        entries = driver.get_log("performance")
+    except Exception:
+        return {}
+
+    api_prefix = f"{SUPPLIER_PANEL_BASE_URL}/api/supplier/1.0.0/"
+    request_ids = set()
+    headers_by_request = {}
+    for entry in entries:
+        try:
+            message = json.loads(entry["message"])["message"]
+            params = message.get("params", {})
+            method = message.get("method")
+        except (KeyError, TypeError, json.JSONDecodeError):
+            continue
+
+        if method == "Network.requestWillBeSent":
+            request = params.get("request", {})
+            if str(request.get("url", "")).startswith(api_prefix):
+                request_id = params.get("requestId")
+                if request_id:
+                    request_ids.add(request_id)
+                    headers_by_request[request_id] = request.get("headers", {})
+        elif method == "Network.requestWillBeSentExtraInfo":
+            request_id = params.get("requestId")
+            if request_id in request_ids:
+                headers_by_request.setdefault(request_id, {}).update(
+                    params.get("headers", {})
+                )
+
+    for headers in reversed(list(headers_by_request.values())):
+        if any(str(key).lower() == "authorization" for key in headers):
+            return {
+                str(key): str(value)
+                for key, value in headers.items()
+                if str(key).lower()
+                not in {"cookie", "content-length", "host", "connection"}
+            }
+    return {}
+
+
+def _get_supplier_panel_api_response(driver, url, params=None):
+    """Получает ответ Supplier Panel с актуальной авторизацией из UI-сессии."""
+    configured_authorization = _normalize_bearer_token(
+        CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN
+    )
+    status_codes = []
+    if configured_authorization:
+        response = requests.get(
+            url,
+            headers={
+                "Accept": "application/json, text/plain, */*",
+                "Authorization": configured_authorization,
+                "X-Country": CY_JOURNAL_COUNTRY,
+                "X-Localization": "ru",
+            },
+            params=params,
+            timeout=30,
+        )
+        if response.status_code == 200:
+            return response
+        status_codes.append(response.status_code)
+
+    _reset_supplier_panel_session(driver)
+    account = next(_iter_supplier_panel_accounts())
+    page = SupplierPanelRegistrationVisits(driver)
+    page.open_sp()
+    page.login_supplier_panel(login=account["login"], password=account["password"])
+    time.sleep(0.5)
+
+    browser_headers = _get_supplier_api_headers_from_browser(driver)
+
+    # Панель хранит токен в browser storage; его нельзя заменять вручную
+    # статическим значением из Environment variables.
+    storage_script = """
+        const dump = (store) => Object.fromEntries(
+            Array.from({length: store.length}, (_, i) => {
+                const key = store.key(i);
+                return [key, store.getItem(key)];
+            })
+        );
+        return {local: dump(window.localStorage), session: dump(window.sessionStorage)};
+    """
+    deadline = time.monotonic() + 10
+    token_candidates = []
+    while time.monotonic() < deadline:
+        token_candidates = _collect_browser_tokens(driver.execute_script(storage_script))
+        if token_candidates:
+            break
+        time.sleep(0.25)
+    authorization_values = [
+        *[
+            value
+            for key, value in browser_headers.items()
+            if key.lower() == "authorization"
+        ],
+    ]
+    assert token_candidates or authorization_values, (
+        "После входа в Supplier Panel не найдена авторизация для API. "
+        "Проверьте успешность логина и формат хранения сессии в панели."
+    )
+    authorization_values.extend(f"Bearer {token}" for token in token_candidates)
+
+    for authorization in dict.fromkeys(authorization_values):
+        session = requests.Session()
+        for cookie in driver.get_cookies():
+            session.cookies.set(
+                cookie["name"],
+                cookie["value"],
+                domain=cookie.get("domain"),
+                path=cookie.get("path", "/"),
+            )
+        session.headers.update(browser_headers)
+        session.headers.update(
+            {
+                "Accept": "application/json, text/plain, */*",
+                "Authorization": authorization,
+                "X-Country": CY_JOURNAL_COUNTRY,
+                "X-Localization": "ru",
+            }
+        )
+        response = session.get(url, params=params, timeout=30)
+        status_codes.append(response.status_code)
+        if response.status_code == 200:
+            return response
+
+    raise AssertionError(
+        "Не удалось подобрать действующий access token Supplier Panel после UI-логина. "
+        f"Статусы запроса: {status_codes}"
+    )
+
+
+def _get_supplier_visits(driver):
+    response = _get_supplier_panel_api_response(
+        driver,
         SUPPLIER_VISITS_CHECK_URL,
-        headers={
-            "Accept": "application/json, text/plain, */*",
-            "Authorization": bearer_token,
-            "X-Country": CY_JOURNAL_COUNTRY,
-            "X-Localization": "ru",
-        },
-        timeout=30,
     )
     assert response.status_code == 200, (
         f"SUPPLIER VISITS CHECK API failed. status={response.status_code}, body={response.text}"
@@ -529,24 +683,11 @@ def _get_supplier_visits():
     return visits
 
 
-def _get_supplier_accepted_visits_for_month(month_value):
-    bearer_token = _normalize_bearer_token(CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN)
-    if not bearer_token:
-        pytest.skip(
-            "Укажите CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN в Environment variables "
-            "для проверки accepted-визитов в supplier panel."
-        )
-
-    response = requests.get(
+def _get_supplier_accepted_visits_for_month(month_value, driver):
+    response = _get_supplier_panel_api_response(
+        driver,
         SUPPLIER_ACCEPTED_VISITS_URL,
-        headers={
-            "Accept": "application/json, text/plain, */*",
-            "Authorization": bearer_token,
-            "X-Country": CY_JOURNAL_COUNTRY,
-            "X-Localization": "ru",
-        },
         params={"month": month_value, "status": "accepted"},
-        timeout=30,
     )
     assert response.status_code == 200, (
         f"SUPPLIER ACCEPTED VISITS API failed. status={response.status_code}, body={response.text}"
@@ -846,8 +987,8 @@ def test_create_visit_vip_no_limit():
 @allure.feature("Holder API")
 @allure.severity("critical")
 @allure.story("Check created visits arrived in supplier panel")
-def test_check_created_visits_arrived_in_supplier_panel():
-    visits = _get_supplier_visits()
+def test_check_created_visits_arrived_in_supplier_panel(driver):
+    visits = _get_supplier_visits(driver)
 
     actual_entries = {
         (
@@ -938,14 +1079,14 @@ def test_confirm_target_visits_and_check_limit_counters_cy(driver):
 @allure.feature("Holder API")
 @allure.severity("critical")
 @allure.story("Check accepted visits in supplier panel and journal")
-def test_check_accepted_visits_in_supplier_panel_and_journal_cy():
+def test_check_accepted_visits_in_supplier_panel_and_journal_cy(driver):
     today = datetime.now().date()
     today_iso = today.isoformat()
     month_value = today.strftime("%Y-%m")
     admin_token = _resolve_admin_token()
     assert admin_token, "Не удалось получить admin token для проверки journal."
 
-    supplier_visits = _get_supplier_accepted_visits_for_month(month_value)
+    supplier_visits = _get_supplier_accepted_visits_for_month(month_value, driver)
     journal_rows = _get_journal_rows_for_period(
         date_from=today.replace(day=1).isoformat(),
         date_finish=today_iso,
@@ -1045,14 +1186,14 @@ def test_check_accepted_visits_in_supplier_panel_and_journal_cy():
 @allure.feature("Holder API")
 @allure.severity("critical")
 @allure.story("Reject accepted visits and verify journal status")
-def test_reject_accepted_visits_and_check_journal_status_cy():
+def test_reject_accepted_visits_and_check_journal_status_cy(driver):
     today = datetime.now().date()
     today_iso = today.isoformat()
     month_value = today.strftime("%Y-%m")
     admin_token = _resolve_admin_token()
     assert admin_token, "Не удалось получить admin token для реджекта визитов."
 
-    supplier_visits = _get_supplier_accepted_visits_for_month(month_value)
+    supplier_visits = _get_supplier_accepted_visits_for_month(month_value, driver)
     expected_today_visits = {
         "Test AVT visit VIP CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
         "Test AVT visit PLATINUM CY": {"attraction_id": 16985, "attraction_name": "Swimm"},

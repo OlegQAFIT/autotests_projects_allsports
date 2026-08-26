@@ -283,7 +283,9 @@ def create_chrome(headless: bool = False):
     chrome_options.add_argument('--disable-dev-shm-usage')
     chrome_options.add_argument('--no-sandbox')
     chrome_options.add_argument('--disable-extensions')
-    chrome_options.set_capability('goog:loggingPrefs', {'browser': 'ALL'})
+    chrome_options.set_capability(
+        'goog:loggingPrefs', {'browser': 'ALL', 'performance': 'ALL'}
+    )
     chrome_binary = _find_chrome_binary()
     if chrome_binary:
         chrome_options.binary_location = chrome_binary

@@ -39,6 +39,8 @@ CY_JOURNAL_COUNTRY = os.getenv("CY_JOURNAL_COUNTRY", "cy").strip() or "cy"
 CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN = os.getenv(
     "CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN", ""
 ).strip()
+CY_SUPPLIER_AUTH_ATTEMPTS = 3
+CY_SUPPLIER_AUTH_RETRY_INTERVAL_SECONDS = 2
 
 VISIT_PROFILES = {
     "vip": {
@@ -167,7 +169,7 @@ def _normalize_holder_name(name):
     normalized = str(name or "").strip()
     if "[!!!" in normalized:
         normalized = normalized.split("[!!!", 1)[0].strip()
-    return normalized
+    return normalized.casefold()
 
 
 def _format_confirm_phone(phone):
@@ -571,7 +573,8 @@ def _get_supplier_api_headers_from_browser(driver):
             return {
                 str(key): str(value)
                 for key, value in headers.items()
-                if str(key).lower()
+                if not str(key).startswith(":")
+                and str(key).lower()
                 not in {"cookie", "content-length", "host", "connection"}
             }
     return {}
@@ -599,17 +602,9 @@ def _get_supplier_panel_api_response(driver, url, params=None):
             return response
         status_codes.append(response.status_code)
 
-    _reset_supplier_panel_session(driver)
-    account = next(_iter_supplier_panel_accounts())
-    page = SupplierPanelRegistrationVisits(driver)
-    page.open_sp()
-    page.login_supplier_panel(login=account["login"], password=account["password"])
-    time.sleep(0.5)
-
-    browser_headers = _get_supplier_api_headers_from_browser(driver)
-
-    # Панель хранит токен в browser storage; его нельзя заменять вручную
-    # статическим значением из Environment variables.
+    # Supplier Panel can briefly issue a token that the API has not yet accepted.
+    # Start a fresh browser session before every retry so a stale token or cookie
+    # from a previous attempt cannot make the scheduled run flaky.
     storage_script = """
         const dump = (store) => Object.fromEntries(
             Array.from({length: store.length}, (_, i) => {
@@ -619,52 +614,61 @@ def _get_supplier_panel_api_response(driver, url, params=None):
         );
         return {local: dump(window.localStorage), session: dump(window.sessionStorage)};
     """
-    deadline = time.monotonic() + 10
-    token_candidates = []
-    while time.monotonic() < deadline:
-        token_candidates = _collect_browser_tokens(driver.execute_script(storage_script))
-        if token_candidates:
-            break
-        time.sleep(0.25)
-    authorization_values = [
-        *[
+    account = next(_iter_supplier_panel_accounts())
+    for login_attempt in range(1, CY_SUPPLIER_AUTH_ATTEMPTS + 1):
+        _reset_supplier_panel_session(driver)
+        page = SupplierPanelRegistrationVisits(driver)
+        page.open_sp()
+        page.login_supplier_panel(login=account["login"], password=account["password"])
+        time.sleep(0.5)
+
+        browser_headers = _get_supplier_api_headers_from_browser(driver)
+        deadline = time.monotonic() + 10
+        token_candidates = []
+        while time.monotonic() < deadline:
+            token_candidates = _collect_browser_tokens(driver.execute_script(storage_script))
+            if token_candidates:
+                break
+            time.sleep(0.25)
+
+        authorization_values = [
             value
             for key, value in browser_headers.items()
             if key.lower() == "authorization"
-        ],
-    ]
-    assert token_candidates or authorization_values, (
-        "После входа в Supplier Panel не найдена авторизация для API. "
-        "Проверьте успешность логина и формат хранения сессии в панели."
-    )
-    authorization_values.extend(f"Bearer {token}" for token in token_candidates)
+        ]
+        authorization_values.extend(f"Bearer {token}" for token in token_candidates)
+        if not authorization_values:
+            status_codes.append(f"attempt {login_attempt}: no authorization found")
+        else:
+            for authorization in dict.fromkeys(authorization_values):
+                session = requests.Session()
+                for cookie in driver.get_cookies():
+                    session.cookies.set(
+                        cookie["name"],
+                        cookie["value"],
+                        domain=cookie.get("domain"),
+                        path=cookie.get("path", "/"),
+                    )
+                session.headers.update(browser_headers)
+                session.headers.update(
+                    {
+                        "Accept": "application/json, text/plain, */*",
+                        "Authorization": authorization,
+                        "X-Country": CY_JOURNAL_COUNTRY,
+                        "X-Localization": "ru",
+                    }
+                )
+                response = session.get(url, params=params, timeout=30)
+                status_codes.append(response.status_code)
+                if response.status_code == 200:
+                    return response
 
-    for authorization in dict.fromkeys(authorization_values):
-        session = requests.Session()
-        for cookie in driver.get_cookies():
-            session.cookies.set(
-                cookie["name"],
-                cookie["value"],
-                domain=cookie.get("domain"),
-                path=cookie.get("path", "/"),
-            )
-        session.headers.update(browser_headers)
-        session.headers.update(
-            {
-                "Accept": "application/json, text/plain, */*",
-                "Authorization": authorization,
-                "X-Country": CY_JOURNAL_COUNTRY,
-                "X-Localization": "ru",
-            }
-        )
-        response = session.get(url, params=params, timeout=30)
-        status_codes.append(response.status_code)
-        if response.status_code == 200:
-            return response
+        if login_attempt < CY_SUPPLIER_AUTH_ATTEMPTS:
+            time.sleep(CY_SUPPLIER_AUTH_RETRY_INTERVAL_SECONDS)
 
     raise AssertionError(
-        "Не удалось подобрать действующий access token Supplier Panel после UI-логина. "
-        f"Статусы запроса: {status_codes}"
+        "Не удалось подобрать действующий access token Supplier Panel после "
+        f"{CY_SUPPLIER_AUTH_ATTEMPTS} UI-логинов. Статусы запроса: {status_codes}"
     )
 
 
@@ -893,13 +897,17 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
 
             card_info = _current_visit_card(page)
             user_name = card_info["user_name"]
-            expected_action = expected_actions.get(user_name)
+            user_name_key = _normalize_holder_name(user_name)
+            expected_action = expected_actions.get(user_name_key)
 
             if expected_action is None:
                 stop_reason = f"encountered non-test visit: {user_name}"
                 break
 
-            if user_name in processed_names_total or user_name in processed_names_account:
+            if (
+                user_name_key in processed_names_total
+                or user_name_key in processed_names_account
+            ):
                 duplicate_streak += 1
                 time.sleep(1)
                 _open_pending_visits_if_present(page)
@@ -917,8 +925,8 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
                 processed.append(_confirm_visit_card(page, card_info))
             else:
                 processed.append(_reject_visit_card(page, card_info))
-            processed_names_account.add(user_name)
-            processed_names_total.add(user_name)
+            processed_names_account.add(user_name_key)
+            processed_names_total.add(user_name_key)
 
             if processed_names_total == set(expected_actions):
                 stop_reason = "all expected visits processed"
@@ -1004,7 +1012,7 @@ def test_check_created_visits_arrived_in_supplier_panel(driver):
     missing_visits = []
     for expected in EXPECTED_VISITS_IN_SUPPLIER_PANEL:
         expected_entry = (
-            expected["user_name"],
+            _normalize_holder_name(expected["user_name"]),
             expected["attraction_id"],
             expected["attraction_name"],
             expected["status"],
@@ -1034,7 +1042,7 @@ def test_confirm_target_visits_and_check_limit_counters_cy(driver):
     )
 
     expected_actions = {
-        profile["user_name"]: "confirm"
+        _normalize_holder_name(profile["user_name"]): "confirm"
         for profile in VISIT_PROFILES.values()
     }
 
@@ -1042,7 +1050,7 @@ def test_confirm_target_visits_and_check_limit_counters_cy(driver):
     print(f"supplier panel processing results: {results}")
 
     processed_names = {
-        item["user_name"]
+        _normalize_holder_name(item["user_name"])
         for account_result in results
         for item in account_result["processed"]
     }
@@ -1094,11 +1102,13 @@ def test_check_accepted_visits_in_supplier_panel_and_journal_cy(driver):
     )
 
     expected_today_visits = {
-        "Test AVT visit VIP CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit PLATINUM CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit GOLD CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit SILVER CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit VIP CY(no limit)": {"attraction_id": 16984, "attraction_name": "Gym"},
+        _normalize_holder_name(profile["user_name"]): {
+            "attraction_id": profile["request_body"]["attraction_id"],
+            "attraction_name": "Gym"
+            if profile["request_body"]["attraction_id"] == 16984
+            else "Swimm",
+        }
+        for profile in VISIT_PROFILES.values()
     }
 
     supplier_today_rows = []
@@ -1195,11 +1205,13 @@ def test_reject_accepted_visits_and_check_journal_status_cy(driver):
 
     supplier_visits = _get_supplier_accepted_visits_for_month(month_value, driver)
     expected_today_visits = {
-        "Test AVT visit VIP CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit PLATINUM CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit GOLD CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit SILVER CY": {"attraction_id": 16985, "attraction_name": "Swimm"},
-        "Test AVT visit VIP CY(no limit)": {"attraction_id": 16984, "attraction_name": "Gym"},
+        _normalize_holder_name(profile["user_name"]): {
+            "attraction_id": profile["request_body"]["attraction_id"],
+            "attraction_name": "Gym"
+            if profile["request_body"]["attraction_id"] == 16984
+            else "Swimm",
+        }
+        for profile in VISIT_PROFILES.values()
     }
 
     supplier_today_rows = []

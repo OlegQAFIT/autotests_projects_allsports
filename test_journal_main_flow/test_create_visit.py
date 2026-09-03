@@ -160,6 +160,8 @@ EXPECTED_JOURNAL_COMPANY = "!!!НЕ ТРОГАТЬ!!! AT Main Flow ZP26PW07 Comp
 EXPECTED_JOURNAL_SUPPLIER = "Gym НЕ УДАЛЯТЬ НЕ ИЗМЕНЯТЬ НИЧЕГО, НЕ ШУТКА"
 VISIT_REJECT_REASON = "manually_rejected_broken_scan"
 VISIT_REJECT_STATUS = "supplier_reject_wrong_id"
+SUPPLIER_VISITS_SYNC_TIMEOUT = 90
+SUPPLIER_VISITS_SYNC_POLL_INTERVAL = 5
 
 
 def _normalize_token(token):
@@ -523,6 +525,72 @@ def _get_supplier_accepted_visits_for_month(month_value):
     return body
 
 
+def _wait_for_expected_waiting_visits(expected_visits):
+    """Wait until all newly created visits are visible in the supplier queue."""
+    expected_entries = {
+        (
+            visit["user_name"],
+            visit["level"],
+            visit["attraction_id"],
+            visit["attraction_name"],
+            visit["status"],
+        )
+        for visit in expected_visits
+    }
+    deadline = time.monotonic() + SUPPLIER_VISITS_SYNC_TIMEOUT
+
+    while True:
+        actual_entries = {
+            (
+                visit.get("user", {}).get("name"),
+                visit.get("user", {}).get("level"),
+                visit.get("attraction", {}).get("id"),
+                visit.get("attraction", {}).get("name"),
+                visit.get("status"),
+            )
+            for visit in _get_supplier_visits()
+            if isinstance(visit, dict)
+        }
+        missing_entries = expected_entries - actual_entries
+        if not missing_entries:
+            return
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                "Не дождались появления waiting-визитов в supplier panel за "
+                f"{SUPPLIER_VISITS_SYNC_TIMEOUT} сек.: {sorted(missing_entries)}"
+            )
+        time.sleep(SUPPLIER_VISITS_SYNC_POLL_INTERVAL)
+
+
+def _wait_for_today_accepted_visits(month_value, today_iso, expected_visits):
+    """Wait until supplier panel API reflects visits confirmed through the UI."""
+    deadline = time.monotonic() + SUPPLIER_VISITS_SYNC_TIMEOUT
+    supplier_by_name = {}
+
+    while True:
+        supplier_by_name = {}
+        for visit in _get_supplier_accepted_visits_for_month(month_value):
+            if not isinstance(visit, dict):
+                continue
+            if not str(visit.get("created_at", "")).startswith(today_iso):
+                continue
+
+            user = visit.get("user", {})
+            user_name = user.get("name") if isinstance(user, dict) else None
+            if user_name in expected_visits:
+                supplier_by_name[user_name] = visit
+
+        missing_names = sorted(set(expected_visits) - set(supplier_by_name))
+        if not missing_names:
+            return supplier_by_name
+        if time.monotonic() >= deadline:
+            raise AssertionError(
+                "Не дождались accepted-визитов в supplier panel за "
+                f"{SUPPLIER_VISITS_SYNC_TIMEOUT} сек.: {missing_names}"
+            )
+        time.sleep(SUPPLIER_VISITS_SYNC_POLL_INTERVAL)
+
+
 def _get_journal_rows_for_period(date_from, date_finish, admin_token):
     response = requests.get(
         JOURNAL_VISITS_URL,
@@ -705,6 +773,7 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
         processed_names_account = set()
         stop_reason = None
         duplicate_streak = 0
+        foreign_card_streak = 0
 
         for _ in range(max_iterations):
             has_actions = page.is_element_visible(page.ACCEPT_BUTTON_LOCATOR) or page.is_element_visible(
@@ -724,9 +793,21 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
             expected_action = expected_actions.get(user_name)
 
             if expected_action is None:
-                stop_reason = f"encountered non-test visit: {user_name}"
-                break
+                # Do not accept or reject somebody else's visit. Refreshing and opening
+                # the queue again allows the supplier panel to return another card.
+                foreign_card_streak += 1
+                page.driver.refresh()
+                time.sleep(2)
+                _open_pending_visits_if_present(page)
+                if foreign_card_streak >= 5:
+                    stop_reason = (
+                        "foreign visit blocks the queue repeatedly: "
+                        f"{user_name}"
+                    )
+                    break
+                continue
 
+            foreign_card_streak = 0
             if user_name in processed_names_total or user_name in processed_names_account:
                 duplicate_streak += 1
                 time.sleep(1)
@@ -824,38 +905,7 @@ def test_create_visit_vip_no_limit():
 @allure.severity("critical")
 @allure.story("Check created visits arrived in supplier panel")
 def test_check_created_visits_arrived_in_supplier_panel():
-    visits = _get_supplier_visits()
-
-    actual_entries = {
-        (
-            visit.get("user", {}).get("name"),
-            visit.get("user", {}).get("level"),
-            visit.get("attraction", {}).get("id"),
-            visit.get("attraction", {}).get("name"),
-            visit.get("status"),
-        )
-        for visit in visits
-        if isinstance(visit, dict)
-    }
-
-    missing_visits = []
-    for expected in EXPECTED_VISITS_IN_SUPPLIER_PANEL:
-        expected_entry = (
-            expected["user_name"],
-            expected["level"],
-            expected["attraction_id"],
-            expected["attraction_name"],
-            expected["status"],
-        )
-        if expected_entry not in actual_entries:
-            missing_visits.append(
-                f"{expected['phone']} / {expected['user_name']} / "
-                f"{expected['level']} / attraction_id={expected['attraction_id']}"
-            )
-
-    assert not missing_visits, (
-        "Не найдены ожидаемые визиты в supplier panel: " + "; ".join(missing_visits)
-    )
+    _wait_for_expected_waiting_visits(EXPECTED_VISITS_IN_SUPPLIER_PANEL)
 
 
 @allure.feature("Holder API")
@@ -928,13 +978,6 @@ def test_check_accepted_visits_in_supplier_panel_and_journal():
     admin_token = _resolve_admin_token()
     assert admin_token, "Не удалось получить admin token для проверки journal."
 
-    supplier_visits = _get_supplier_accepted_visits_for_month(month_value)
-    journal_rows = _get_journal_rows_for_period(
-        date_from=today.replace(day=1).isoformat(),
-        date_finish=today_iso,
-        admin_token=admin_token,
-    )
-
     expected_today_visits = {
         "Test AVT visit VIP": {"attraction_id": 17008, "attraction_name": "Водный мотоцикл"},
         "Test AVT visit PREMIUM": {"attraction_id": 16837, "attraction_name": "Кизомба"},
@@ -946,29 +989,13 @@ def test_check_accepted_visits_in_supplier_panel_and_journal():
             "attraction_name": "Пренатальная йога",
         },
     }
-
-    supplier_today_rows = []
-    for visit in supplier_visits:
-        if not isinstance(visit, dict):
-            continue
-        created_at = str(visit.get("created_at", ""))
-        if not created_at.startswith(today_iso):
-            continue
-        user = visit.get("user", {}) if isinstance(visit.get("user"), dict) else {}
-        attraction = visit.get("attraction", {}) if isinstance(visit.get("attraction"), dict) else {}
-        user_name = user.get("name")
-        if user_name in expected_today_visits:
-            supplier_today_rows.append(visit)
-
-    supplier_by_name = {}
-    for visit in supplier_today_rows:
-        user_name = visit["user"]["name"]
-        supplier_by_name[user_name] = visit
-
-    missing_in_supplier = sorted(set(expected_today_visits) - set(supplier_by_name))
-    assert not missing_in_supplier, (
-        "Не найдены accepted-визиты за сегодня в supplier panel: "
-        f"{missing_in_supplier}"
+    supplier_by_name = _wait_for_today_accepted_visits(
+        month_value, today_iso, expected_today_visits
+    )
+    journal_rows = _get_journal_rows_for_period(
+        date_from=today.replace(day=1).isoformat(),
+        date_finish=today_iso,
+        admin_token=admin_token,
     )
 
     journal_by_id = {row.get("id"): row for row in journal_rows}
@@ -1037,7 +1064,6 @@ def test_reject_accepted_visits_and_check_journal_status():
     admin_token = _resolve_admin_token()
     assert admin_token, "Не удалось получить admin token для реджекта визитов."
 
-    supplier_visits = _get_supplier_accepted_visits_for_month(month_value)
     expected_today_visits = {
         "Test AVT visit VIP": {"attraction_id": 17008, "attraction_name": "Водный мотоцикл"},
         "Test AVT visit PREMIUM": {"attraction_id": 16837, "attraction_name": "Кизомба"},
@@ -1049,26 +1075,8 @@ def test_reject_accepted_visits_and_check_journal_status():
             "attraction_name": "Пренатальная йога",
         },
     }
-
-    supplier_today_rows = []
-    for visit in supplier_visits:
-        if not isinstance(visit, dict):
-            continue
-        created_at = str(visit.get("created_at", ""))
-        user = visit.get("user", {}) if isinstance(visit.get("user"), dict) else {}
-        user_name = user.get("name")
-        if created_at.startswith(today_iso) and user_name in expected_today_visits:
-            supplier_today_rows.append(visit)
-
-    supplier_by_name = {
-        visit["user"]["name"]: visit
-        for visit in supplier_today_rows
-        if isinstance(visit.get("user"), dict) and visit["user"].get("name")
-    }
-    missing_in_supplier = sorted(set(expected_today_visits) - set(supplier_by_name))
-    assert not missing_in_supplier, (
-        "Не найдены accepted-визиты за сегодня перед реджектом: "
-        f"{missing_in_supplier}"
+    supplier_by_name = _wait_for_today_accepted_visits(
+        month_value, today_iso, expected_today_visits
     )
 
     for user_name, expected in expected_today_visits.items():

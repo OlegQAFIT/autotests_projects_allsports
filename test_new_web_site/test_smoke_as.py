@@ -130,6 +130,22 @@ def _check_no_failed_network_requests(driver) -> None:
     assert not failures, "Failed UI network requests:\n" + "\n".join(failures)
 
 
+def _check_no_browser_errors(driver) -> None:
+    """Fail on actual JavaScript runtime errors, not harmless console warnings."""
+    try:
+        entries = driver.get_log("browser")
+    except Exception:
+        pytest.skip("Browser console log is unavailable in the selected browser")
+    errors = [
+        entry["message"] for entry in entries
+        if entry.get("level") == "SEVERE"
+        and not any(allowed in entry["message"].lower() for allowed in (
+            "favicon.ico", "third-party cookie", "maps.googleapis.com",
+        ))
+    ]
+    assert not errors, "Browser JavaScript errors:\n" + "\n".join(errors)
+
+
 def _visible_text(driver) -> str:
     return driver.find_element(By.TAG_NAME, "body").text
 
@@ -154,6 +170,57 @@ def _form_button(driver):
     return driver.find_element(By.CSS_SELECTOR, "form button[type='submit']")
 
 
+def _visible_forms(driver):
+    return [
+        form for form in driver.find_elements(By.CSS_SELECTOR, "form")
+        if form.is_displayed() and form.find_elements(By.CSS_SELECTOR, "button[type='submit']")
+    ]
+
+
+def _buttons_with_text(driver, *labels: str):
+    expected = {label.casefold() for label in labels}
+    return [
+        button for button in driver.find_elements(By.TAG_NAME, "button")
+        if button.is_displayed() and button.text.strip().casefold() in expected
+    ]
+
+
+def _install_network_probe(driver) -> None:
+    """Record application Fetch/XHR results without changing the requests."""
+    driver.execute_script(
+        """
+        if (window.__qaNetworkProbeInstalled) return;
+        window.__qaNetworkProbeInstalled = true;
+        window.__qaNetworkEvents = [];
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+          const response = await originalFetch(...args);
+          window.__qaNetworkEvents.push({
+            kind: 'fetch', url: String(args[0]), status: response.status, ok: response.ok
+          });
+          return response;
+        };
+        const open = XMLHttpRequest.prototype.open;
+        const send = XMLHttpRequest.prototype.send;
+        XMLHttpRequest.prototype.open = function(method, url, ...rest) {
+          this.__qaMethod = method; this.__qaUrl = url;
+          return open.call(this, method, url, ...rest);
+        };
+        XMLHttpRequest.prototype.send = function(...args) {
+          this.addEventListener('loadend', () => window.__qaNetworkEvents.push({
+            kind: 'xhr', method: this.__qaMethod, url: this.__qaUrl,
+            status: this.status, ok: this.status >= 200 && this.status < 400
+          }));
+          return send.apply(this, args);
+        };
+        """
+    )
+
+
+def _submission_events(driver):
+    return driver.execute_script("return window.__qaNetworkEvents || []")
+
+
 def _test_public_routes(profile: SiteProfile) -> None:
     for path in COMMON_PATHS:
         url = _url(profile, path)
@@ -176,11 +243,25 @@ def _test_rendering_and_media(driver, profile: SiteProfile) -> None:
         ):
             assert _http_get(source).status_code < 400, f"Broken video resource: {source}"
         _check_no_failed_network_requests(driver)
+        _check_no_browser_errors(driver)
 
     _open(driver, profile.base_url)
     assert profile.country.lower() in _visible_text(driver).lower(), (
         f"Homepage copy does not mention its target country: {profile.country}"
     )
+
+
+def _test_copy_and_page_semantics(driver, profile: SiteProfile) -> None:
+    """Catch empty templates, untranslated placeholders and inaccessible pages."""
+    for path in COMMON_PATHS:
+        _open(driver, _url(profile, path))
+        body = _visible_text(driver)
+        assert driver.find_elements(By.CSS_SELECTOR, "h1"), f"Page has no H1: {driver.current_url}"
+        assert not re.search(r"\{\{[^}]+\}\}|\[object Object\]|lorem ipsum", body, re.I), (
+            f"Template placeholder leaked into visible copy: {driver.current_url}"
+        )
+        title = driver.title.strip()
+        assert title and len(title) > 3, f"Page has an empty/placeholder title: {driver.current_url}"
 
 
 def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
@@ -189,10 +270,21 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
         _open(driver, _url(profile, path))
         discovered.update(_links(driver))
 
-    internal = sorted(href for href in discovered if _same_site(profile, href))
-    for href in internal:
+    # Crawl every first-party URL reachable from the public templates and legal
+    # documents. It catches broken links that are not present in the footer.
+    pending = [href for href in discovered if _same_site(profile, href)]
+    checked: set[str] = set()
+    while pending:
+        href = pending.pop(0).split("#", 1)[0]
+        if not href or href in checked:
+            continue
+        checked.add(href)
         response = _http_get(href)
         assert response.status_code == 200, f"Internal link is broken: {href} -> {response.status_code}"
+        for raw_href in re.findall(r'''href=["']([^"']+)["']''', response.text, flags=re.I):
+            absolute = urljoin(response.url, raw_href)
+            if _same_site(profile, absolute) and absolute.split("#", 1)[0] not in checked:
+                pending.append(absolute)
 
     legal = set()
     for landing in ("/license", "/user-agreements"):
@@ -204,6 +296,15 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
         assert response.status_code == 200, f"Legal document is unavailable: {href}"
         assert len(response.text) > 800, f"Legal document is unexpectedly short: {href}"
         assert re.search(r"<html[^>]+lang=", response.text, re.I), f"Missing lang in {href}"
+        # Follow every document hyperlink as well, including version-history and
+        # footer references that are not present on marketing pages.
+        for raw_href in re.findall(r'''href=["']([^"']+)["']''', response.text, flags=re.I):
+            absolute = urljoin(response.url, raw_href)
+            if _same_site(profile, absolute):
+                nested = _http_get(absolute.split("#", 1)[0])
+                assert nested.status_code == 200, (
+                    f"Broken link inside legal document: {absolute} -> {nested.status_code}"
+                )
 
     # Some legal pages expose a date/version selector.  Its options must render
     # when the control exists; older document layouts legitimately have none.
@@ -226,6 +327,14 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
     for href in stores:
         assert urlparse(href).scheme == "https", f"Store link must use HTTPS: {href}"
 
+    external = sorted({
+        href for href in discovered
+        if urlparse(href).scheme == "https" and not _same_site(profile, href)
+    })
+    for href in external:
+        response = _http_get(href)
+        assert response.status_code < 500, f"External link has a server error: {href} -> {response.status_code}"
+
 
 def _test_levels_navigation(driver, profile: SiteProfile) -> None:
     _open(driver, _url(profile, "/levels"))
@@ -242,6 +351,50 @@ def _test_levels_navigation(driver, profile: SiteProfile) -> None:
     _open(driver, table_links[0])
     assert "/facilities-table" in driver.current_url
     assert _visible_text(driver).strip(), "Facilities table has no visible content"
+
+
+def _test_facilities_table_and_supplier_transitions(driver, profile: SiteProfile) -> None:
+    """Covers search, filter reset and the table/card-to-supplier journey."""
+    _open(driver, _url(profile, "/facilities-table"))
+    tables = driver.find_elements(By.CSS_SELECTOR, "table")
+    assert tables, "Facilities table is absent"
+    rows = [
+        row for row in driver.find_elements(By.CSS_SELECTOR, "tbody tr")
+        if row.is_displayed() and row.text.strip()
+    ]
+    assert rows, "Facilities table has no data rows"
+
+    search_fields = [
+        item for item in driver.find_elements(By.CSS_SELECTOR, "input")
+        if item.is_displayed() and ("search" in (item.get_attribute("placeholder") or "").lower()
+                               or "поиск" in (item.get_attribute("placeholder") or "").lower())
+    ]
+    if search_fields:
+        original = rows[0].text.split()[0]
+        _fill_input(search_fields[0], original)
+        WebDriverWait(driver, 10).until(
+            lambda d: any(original.casefold() in row.text.casefold()
+                          for row in d.find_elements(By.CSS_SELECTOR, "tbody tr"))
+        )
+        search_fields[0].clear()
+
+    # A row must lead to the same provider details instead of a dead click.
+    first_row = next(row for row in driver.find_elements(By.CSS_SELECTOR, "tbody tr") if row.is_displayed())
+    provider_name = first_row.text.splitlines()[0].strip()
+    driver.execute_script("arguments[0].click()", first_row)
+    WebDriverWait(driver, 10).until(
+        lambda d: provider_name.casefold() in _visible_text(d).casefold()
+        or bool(d.find_elements(By.CSS_SELECTOR, "[role='dialog'], [class*='modal']"))
+    )
+
+    close_buttons = _buttons_with_text(driver, "Close", "Закрыть")
+    if close_buttons:
+        driver.execute_script("arguments[0].click()", close_buttons[0])
+    _open(driver, _url(profile, "/facilities"))
+    table_links = [href for href in _links(driver) if "/facilities-table" in href]
+    assert table_links, "Map has no transition to the facilities table"
+    _open(driver, table_links[0])
+    assert driver.find_elements(By.CSS_SELECTOR, "tbody tr"), "Map-to-table transition lost facilities"
 
 
 def _test_map_filters_and_supplier_cards(driver, profile: SiteProfile) -> None:
@@ -268,9 +421,100 @@ def _test_map_filters_and_supplier_cards(driver, profile: SiteProfile) -> None:
                 WebDriverWait(driver, 10).until(lambda d: _visible_text(d).strip())
 
     cards = driver.find_elements(By.CSS_SELECTOR, "[class*='marker'], [class*='facility-card'], [class*='object-card']")
-    if cards:
-        driver.execute_script("arguments[0].click()", cards[0])
-        WebDriverWait(driver, 10).until(lambda d: _visible_text(d).strip())
+    assert cards, "No map marker or provider card is available to open"
+    driver.execute_script("arguments[0].click()", cards[0])
+    WebDriverWait(driver, 10).until(
+        lambda d: bool(d.find_elements(By.CSS_SELECTOR, "[role='dialog'], [class*='modal'], [class*='popup']"))
+        or len(_visible_text(d).strip()) > 50
+    )
+
+
+def _test_map_all_filter_values(driver, profile: SiteProfile) -> None:
+    """Opens every map-filter group and verifies its data and selection state."""
+    _open(driver, _url(profile, "/facilities"))
+    buttons = [
+        button for button in driver.find_elements(By.TAG_NAME, "button")
+        if button.text.strip() in {"Фильтр", "Filter"}
+    ]
+    assert buttons, "Map filter button is absent"
+    driver.execute_script("arguments[0].click()", buttons[0])
+    WebDriverWait(driver, 10).until(
+        lambda d: len(d.find_elements(By.CSS_SELECTOR, ".map-filter-modal li")) > 0
+    )
+    groups = driver.find_elements(By.CSS_SELECTOR, ".map-filter-modal ul")
+    assert groups, "Map filters have no option groups"
+    for group in groups:
+        options = [item for item in group.find_elements(By.CSS_SELECTOR, ":scope > li") if item.text.strip()]
+        selectable = [
+            item for item in options
+            if "show all" not in item.text.lower() and "показать все" not in item.text.lower()
+        ]
+        assert selectable, "A map-filter group has no real values"
+        # Every visible value is checked for readable localized content.
+        assert all(item.text.strip() for item in selectable), "Empty filter option text"
+        driver.execute_script("arguments[0].click()", selectable[0])
+
+    apply = [
+        button for button in driver.find_elements(By.TAG_NAME, "button")
+        if button.text.strip() in {"Применить", "Apply"}
+    ]
+    if apply:
+        driver.execute_script("arguments[0].click()", apply[0])
+    WebDriverWait(driver, 15).until(lambda d: _visible_text(d).strip())
+    state = driver.execute_script(
+        "return window.__NUXT__?.pinia?.mapFilter || window.__NUXT__?.pinia?.tableFilter || null"
+    )
+    assert state is not None, "Filter application did not expose a map/table state"
+
+
+def _test_each_map_filter_value(driver, profile: SiteProfile) -> None:
+    """Apply each offered value independently and ensure results remain usable.
+
+    The options are read from the UI, so this test automatically expands when
+    cities, activities or subscription types are added to the catalogue.
+    """
+    _open(driver, _url(profile, "/facilities"))
+    filter_button = _buttons_with_text(driver, "Filter", "Фильтр")
+    assert filter_button, "Map filter button is absent"
+    driver.execute_script("arguments[0].click()", filter_button[0])
+    WebDriverWait(driver, 10).until(
+        lambda d: d.find_elements(By.CSS_SELECTOR, ".map-filter-modal ul")
+    )
+    # Snapshot labels first: clicking closes/re-renders the Vue modal.
+    groups = []
+    for index, group in enumerate(driver.find_elements(By.CSS_SELECTOR, ".map-filter-modal ul")):
+        labels = [
+            option.text.strip() for option in group.find_elements(By.CSS_SELECTOR, ":scope > li")
+            if option.text.strip()
+            and "show all" not in option.text.lower()
+            and "показать все" not in option.text.lower()
+        ]
+        groups.append((index, labels))
+
+    for group_index, labels in groups:
+        for label in labels:
+            # Start from clean filters for every value to prove it is individually
+            # selectable and does not produce a broken map/table UI.
+            _open(driver, _url(profile, "/facilities"))
+            button = _buttons_with_text(driver, "Filter", "Фильтр")[0]
+            driver.execute_script("arguments[0].click()", button)
+            modal_groups = driver.find_elements(By.CSS_SELECTOR, ".map-filter-modal ul")
+            assert group_index < len(modal_groups), "Filter group order unexpectedly changed"
+            option = next(
+                (item for item in modal_groups[group_index].find_elements(By.CSS_SELECTOR, ":scope > li")
+                 if item.text.strip() == label),
+                None,
+            )
+            assert option is not None, f"Filter option disappeared: {label}"
+            driver.execute_script("arguments[0].click()", option)
+            apply = _buttons_with_text(driver, "Apply", "Применить")
+            if apply:
+                driver.execute_script("arguments[0].click()", apply[0])
+            WebDriverWait(driver, 10).until(lambda d: _visible_text(d).strip())
+            assert not driver.find_elements(By.CSS_SELECTOR, ".error-page, [class*='error-page']"), (
+                f"Applying '{label}' opened an error page"
+            )
+            _check_no_failed_network_requests(driver)
 
 
 def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) -> None:
@@ -292,7 +536,14 @@ def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) 
     checkboxes = driver.find_elements(By.CSS_SELECTOR, "form input[type='checkbox']")
     if checkboxes:
         driver.execute_script("arguments[0].click()", checkboxes[0])
-    WebDriverWait(driver, 10).until(lambda d: any("email" in e.text.lower() or "почт" in e.text.lower() for e in d.find_elements(By.CSS_SELECTOR, ".input-error")) or not _form_button(d).is_enabled())
+    WebDriverWait(driver, 10).until(
+        lambda d: any("email" in e.text.lower() or "почт" in e.text.lower()
+                      for e in d.find_elements(By.CSS_SELECTOR, ".input-error"))
+        or not _form_button(d).is_enabled()
+    )
+    assert not _form_button(driver).is_enabled(), (
+        "Submit became enabled despite invalid phone/e-mail; validation must block a request"
+    )
 
     if os.getenv("TEST_WEBSITE_FORM_SUBMIT") != "1":
         return
@@ -309,12 +560,41 @@ def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) 
         driver.execute_script("arguments[0].click()", checkboxes[0])
     submit = _form_button(driver)
     assert submit.is_enabled(), "Valid test form did not enable Submit"
+    _install_network_probe(driver)
     driver.execute_script("arguments[0].click()", submit)
     WebDriverWait(driver, 20).until(
         lambda d: any(token in _visible_text(d).lower() for token in ("thank", "success", "успеш", "спасибо", "oops", "error"))
     )
     text = _visible_text(driver).lower()
     assert not any(token in text for token in ("oops!", "something went wrong", "ошибка")), text
+    events = _submission_events(driver)
+    assert events, "Form click emitted no Fetch/XHR request"
+    assert all(event["ok"] for event in events), f"Form request failed: {events}"
+
+
+def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
+    """Checks each public-page form's consent link and initial submit state.
+
+    Modal forms are deliberately opened but not posted here; their submission
+    is covered by the explicitly enabled synthetic-lead scenario above.
+    """
+    checked = 0
+    for path in ("", "/levels", "/companies", "/partners", "/contacts"):
+        _open(driver, _url(profile, path))
+        for form in _visible_forms(driver):
+            button = form.find_element(By.CSS_SELECTOR, "button[type='submit']")
+            assert not button.is_enabled(), (
+                f"Empty form has an active submit button on {driver.current_url}"
+            )
+            policy = form.find_elements(
+                By.CSS_SELECTOR,
+                "a[href*='processing-personal-data'], a[href*='policy']",
+            )
+            assert policy, f"Form has no personal-data policy link on {driver.current_url}"
+            for link in policy:
+                assert _http_get(link.get_attribute("href")).status_code == 200
+            checked += 1
+    assert checked, "No public forms were discovered"
 
 
 def run_site_suite(driver, profile: SiteProfile) -> None:
@@ -322,14 +602,24 @@ def run_site_suite(driver, profile: SiteProfile) -> None:
         _test_public_routes(profile)
     with allure.step("Rendering, media and failed UI network requests"):
         _test_rendering_and_media(driver, profile)
+    with allure.step("Visible copy, page headings, titles and template placeholders"):
+        _test_copy_and_page_semantics(driver, profile)
     with allure.step("All discovered internal links, policy links and legal documents"):
         _test_all_links_and_documents(driver, profile)
     with allure.step("Subscription cards, preselected map levels and facilities table"):
         _test_levels_navigation(driver, profile)
+    with allure.step("Facilities table, search and provider-card transitions"):
+        _test_facilities_table_and_supplier_transitions(driver, profile)
     with allure.step("Map, filter controls, translated options and supplier cards"):
         _test_map_filters_and_supplier_cards(driver, profile)
+    with allure.step("Every visible map-filter group and selected-result state"):
+        _test_map_all_filter_values(driver, profile)
+    with allure.step("Each available map-filter value"):
+        _test_each_map_filter_value(driver, profile)
     with allure.step("Contact form, validation, policy link and optional submission"):
         _test_form_validation_and_optional_submission(driver, profile)
+    with allure.step("All visible public forms and consent links"):
+        _test_all_visible_form_ctas(driver, profile)
 
 
 @allure.feature("Test website smoke")
@@ -340,3 +630,18 @@ def run_site_suite(driver, profile: SiteProfile) -> None:
 @pytest.mark.form_submission
 def test_smoke_as_full_public_site(driver):
     run_site_suite(driver, AS)
+
+
+@allure.feature("Test website smoke")
+@allure.story("Allsports BY: homepage counters and Russian copy")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_smoke_as_homepage_does_not_overstate_facility_count(driver):
+    _open(driver, AS.base_url)
+    text = _visible_text(driver).lower()
+    counter = re.search(r"(\d+)\s+объект", text)
+    claim = re.search(r"более\s+(\d+)\s+спортивн", text)
+    assert counter and claim, "Homepage counter or marketing claim is missing"
+    assert int(claim.group(1)) <= int(counter.group(1)), (
+        f"Homepage says more than {claim.group(1)} facilities but counter is {counter.group(1)}"
+    )

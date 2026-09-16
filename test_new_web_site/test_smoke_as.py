@@ -34,6 +34,7 @@ class SiteProfile:
     country: str
     subscriptions: tuple[str, ...]
     expected_phone_prefix: str
+    expected_min_facilities: int | None = None
 
     @property
     def host(self) -> str:
@@ -47,6 +48,7 @@ AS = SiteProfile(
     "Беларус",
     ("region", "lite", "classic", "premium", "vip"),
     "+375",
+    800,
 )
 
 COMMON_PATHS = (
@@ -349,6 +351,14 @@ def _test_copy_and_page_semantics(driver, profile: SiteProfile) -> None:
         )
         title = driver.title.strip()
         assert title and len(title) > 3, f"Page has an empty/placeholder title: {driver.current_url}"
+    if profile.expected_min_facilities:
+        _open(driver, profile.base_url)
+        match = re.search(r"(\d+)\s+(?:объект|facilit)", _visible_text(driver), re.I)
+        assert match, f"Homepage facility counter is missing: {profile.base_url}"
+        assert int(match.group(1)) >= profile.expected_min_facilities, (
+            f"Homepage counter is {match.group(1)}, expected at least "
+            f"{profile.expected_min_facilities} for {profile.name}"
+        )
 
 
 def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
@@ -476,6 +486,57 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
         assert 200 <= response.status_code < 400, (
             f"External link does not resolve successfully: {href} -> {response.status_code}"
         )
+
+
+def _test_internal_clickthrough(driver, profile: SiteProfile) -> None:
+    """Follow every distinct first-party anchor through the browser UI itself."""
+    destinations: dict[str, str] = {}
+    for path in COMMON_PATHS:
+        _open(driver, _url(profile, path))
+        for href in _links(driver):
+            canonical = href.split("#", 1)[0]
+            if _same_site(profile, canonical):
+                destinations.setdefault(canonical, driver.current_url)
+    assert destinations, "No first-party UI links were found"
+
+    for destination, source in destinations.items():
+        _open(driver, source)
+        anchors = [
+            anchor for anchor in driver.find_elements(By.CSS_SELECTOR, "a[href]")
+            if anchor.get_attribute("href").split("#", 1)[0] == destination
+            and anchor.is_displayed()
+        ]
+        if not anchors:
+            # The link may be in a desktop/mobile variant; it was already
+            # checked by HTTP crawl, so do not misreport a hidden duplicate.
+            continue
+        driver.execute_script("arguments[0].scrollIntoView({block:'center'}); arguments[0].click();", anchors[0])
+        _wait_ready(driver)
+        assert driver.current_url.split("#", 1)[0] == destination, (
+            f"UI navigation failed: {source} -> {destination}; got {driver.current_url}"
+        )
+        assert _visible_text(driver).strip(), f"Blank destination after clicking {destination}"
+
+
+def _test_visual_layout_at_key_viewports(driver, profile: SiteProfile) -> None:
+    """Provide reviewable key-screen snapshots and reject horizontal overflow."""
+    original = driver.get_window_size()
+    try:
+        for width, height in ((390, 844), (1440, 1000)):
+            driver.set_window_size(width, height)
+            for path in ("", "/levels", "/facilities", "/facilities-table", "/contacts"):
+                _open(driver, _url(profile, path))
+                overflow = driver.execute_script(
+                    "return Math.max(0, document.documentElement.scrollWidth - window.innerWidth)"
+                )
+                assert overflow <= 2, f"Horizontal overflow ({overflow}px) at {width}px: {driver.current_url}"
+                allure.attach(
+                    driver.get_screenshot_as_png(),
+                    name=f"{profile.name}_{path.strip('/') or 'home'}_{width}px",
+                    attachment_type=allure.attachment_type.PNG,
+                )
+    finally:
+        driver.set_window_size(original["width"], original["height"])
 
 
 def _test_levels_navigation(driver, profile: SiteProfile) -> None:
@@ -834,6 +895,10 @@ def run_site_suite(driver, profile: SiteProfile) -> None:
         _test_copy_and_page_semantics(driver, profile)
     with allure.step("All discovered internal links, policy links and legal documents"):
         _test_all_links_and_documents(driver, profile)
+    with allure.step("Browser click-through for every visible internal link"):
+        _test_internal_clickthrough(driver, profile)
+    with allure.step("Mobile and desktop visual layout snapshots"):
+        _test_visual_layout_at_key_viewports(driver, profile)
     with allure.step("Subscription cards, preselected map levels and facilities table"):
         _test_levels_navigation(driver, profile)
     with allure.step("Facilities table, search and provider-card transitions"):

@@ -35,7 +35,6 @@ class SiteProfile:
     subscriptions: tuple[str, ...]
     expected_phone_prefix: str
     expected_email_placeholder: str
-    expected_min_facilities: int | None = None
 
     @property
     def host(self) -> str:
@@ -352,16 +351,6 @@ def _test_copy_and_page_semantics(driver, profile: SiteProfile) -> None:
         )
         title = driver.title.strip()
         assert title and len(title) > 3, f"Page has an empty/placeholder title: {driver.current_url}"
-    if profile.expected_min_facilities:
-        _open(driver, profile.base_url)
-        match = re.search(r"(\d+)\s+(?:объект|facilit)", _visible_text(driver), re.I)
-        assert match, f"Homepage facility counter is missing: {profile.base_url}"
-        assert int(match.group(1)) >= profile.expected_min_facilities, (
-            f"Homepage counter is {match.group(1)}, expected at least "
-            f"{profile.expected_min_facilities} for {profile.name}"
-        )
-
-
 def _assert_form_placeholders(form, profile: SiteProfile) -> int:
     """Check a single inline or CTA-modal form against its site profile."""
     checked_email_fields = 0

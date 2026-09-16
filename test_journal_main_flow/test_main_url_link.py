@@ -1,12 +1,15 @@
 """Smoke-проверка доступности и базовой работоспособности ключевых сервисов."""
 
 import json
+import os
+import time
 from urllib.parse import urlparse
 
 import allure
 import pytest
 import requests
 from selenium.common.exceptions import WebDriverException
+from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 
@@ -43,6 +46,12 @@ PAGES_TO_CHECK = (
 
 REQUEST_TIMEOUT_SECONDS = 30
 PAGE_LOAD_TIMEOUT_SECONDS = 30
+CONTINUE_BUTTON_XPATH = (
+    "//button[not(@disabled) and ("
+    "normalize-space()='Продолжить' or normalize-space()='Continue' or "
+    ".//*[normalize-space()='Продолжить'] or .//*[normalize-space()='Continue']"
+    ")]"
+)
 ERROR_PAGE_MARKERS = (
     "404 not found",
     "page not found",
@@ -51,6 +60,21 @@ ERROR_PAGE_MARKERS = (
     "gateway timeout",
     "service unavailable",
     "temporarily unavailable",
+)
+
+SUPPLIER_PANELS_TO_CHECK = (
+    (
+        "Allsports supplier panel",
+        "https://partner.allsports.fit/login",
+        "ALLSPORTS_PARTNER_SMOKE_LOGIN",
+        "ALLSPORTS_PARTNER_SMOKE_PASSWORD",
+    ),
+    (
+        "SportBenefit supplier panel",
+        "https://partner.sportbenefit.eu/login",
+        "SPORTBENEFIT_PARTNER_SMOKE_LOGIN",
+        "SPORTBENEFIT_PARTNER_SMOKE_PASSWORD",
+    ),
 )
 
 
@@ -116,6 +140,94 @@ def _get_critical_network_errors(driver) -> list[str]:
     return errors
 
 
+def _get_authenticated_panel_network_errors(driver) -> list[str]:
+    """Returns failed document/API requests made after supplier-panel login."""
+    try:
+        raw_entries = driver.get_log("performance")
+    except WebDriverException:
+        return []
+
+    errors = []
+    for entry in raw_entries:
+        message = json.loads(entry["message"])["message"]
+        method = message.get("method")
+        params = message.get("params", {})
+        resource_type = params.get("type")
+
+        if method == "Network.responseReceived" and resource_type in {"Document", "XHR", "Fetch"}:
+            response = params.get("response", {})
+            status = response.get("status", 0)
+            if status >= 400:
+                errors.append(
+                    f"{resource_type} returned HTTP {status}: {response.get('url')}"
+                )
+
+        if method == "Network.loadingFailed" and not params.get("canceled"):
+            if resource_type in {"Document", "XHR", "Fetch"}:
+                errors.append(
+                    f"{resource_type} failed to load: {params.get('errorText', 'unknown error')}"
+                )
+
+    return errors
+
+
+def _assert_supplier_panel_login_is_healthy(driver, service_name, url, login_env, password_env):
+    """Logs in and checks that the registration page and its API requests are healthy."""
+    login = os.getenv(login_env, "").strip()
+    password = os.getenv(password_env, "").strip()
+    assert login and password, (
+        f"Для {service_name} укажите {login_env} и {password_env} в .env."
+    )
+
+    driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT_SECONDS)
+    driver.get(url)
+    login_field = WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        EC.visibility_of_element_located(
+            (By.CSS_SELECTOR, "input:not([type='hidden']):not([type='password'])")
+        ),
+        f"{service_name}: поле логина не появилось на {driver.current_url}",
+    )
+    _clear_performance_log(driver)
+
+    login_field.clear()
+    login_field.send_keys(login)
+    WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        EC.element_to_be_clickable((By.XPATH, CONTINUE_BUTTON_XPATH)),
+        f"{service_name}: кнопка 'Продолжить' для логина недоступна",
+    ).click()
+
+    password_field = WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        EC.visibility_of_element_located((By.CSS_SELECTOR, "input[type='password']")),
+        f"{service_name}: поле пароля не появилось после отправки логина",
+    )
+    password_field.clear()
+    password_field.send_keys(password)
+    WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        EC.element_to_be_clickable((By.XPATH, CONTINUE_BUTTON_XPATH)),
+        f"{service_name}: кнопка 'Продолжить' для пароля недоступна",
+    ).click()
+
+    WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        lambda browser: "/login" not in browser.current_url,
+        f"{service_name}: после отправки пароля осталась страница login ({driver.current_url})",
+    )
+    WebDriverWait(driver, PAGE_LOAD_TIMEOUT_SECONDS).until(
+        lambda browser: browser.execute_script(
+            "return document.readyState === 'complete' && "
+            "Boolean(document.body && document.body.innerHTML.trim())"
+        ),
+        f"{service_name}: после входа не загрузился DOM страницы регистрации визитов "
+        f"({driver.current_url})",
+    )
+    time.sleep(2)
+
+    network_errors = _get_authenticated_panel_network_errors(driver)
+    assert not network_errors, (
+        f"{service_name}: after login the supplier panel has failed network requests: "
+        + "; ".join(network_errors)
+    )
+
+
 def _assert_page_is_rendered(driver, url: str, expected_selector: str) -> None:
     """Проверяет, что браузер закончил загрузку и отрисовал содержимое страницы."""
     driver.set_page_load_timeout(PAGE_LOAD_TIMEOUT_SECONDS)
@@ -171,6 +283,27 @@ def test_main_urls_are_available_and_rendered(driver):
             try:
                 _assert_http_response_is_healthy(url)
                 _assert_page_is_rendered(driver, url, expected_selector)
+            except Exception as error:
+                failures.append(f"{service_name} ({url}): {type(error).__name__}: {error}")
+
+    assert not failures, "\n\n".join(failures)
+
+
+@allure.feature("Service availability")
+@allure.story("Scheduled login check for supplier panels")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.schedule
+@pytest.mark.smoke
+def test_supplier_panels_login_and_load_without_network_errors(driver):
+    """Checks production supplier panels after authentication, including initial API calls."""
+    failures = []
+
+    for service_name, url, login_env, password_env in SUPPLIER_PANELS_TO_CHECK:
+        with allure.step(f"Log in to {service_name} and check registration-page requests"):
+            try:
+                _assert_supplier_panel_login_is_healthy(
+                    driver, service_name, url, login_env, password_env
+                )
             except Exception as error:
                 failures.append(f"{service_name} ({url}): {type(error).__name__}: {error}")
 

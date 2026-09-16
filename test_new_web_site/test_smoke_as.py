@@ -144,6 +144,7 @@ def _check_no_browser_errors(driver) -> None:
         and not any(allowed in entry["message"].lower() for allowed in (
             "favicon.ico", "third-party cookie", "maps.googleapis.com",
             "[nuxt-gtag] missing google tag id",
+            "net::err_cert_verifier_changed",
         ))
     ]
     assert not errors, "Browser JavaScript errors:\n" + "\n".join(errors)

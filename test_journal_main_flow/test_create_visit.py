@@ -178,6 +178,11 @@ def _normalize_bearer_token(token):
     return f"Bearer {normalized}" if normalized else ""
 
 
+def _holder_name_key(name):
+    """Build a comparison key for holder names returned by Supplier Panel."""
+    return str(name or "").strip().casefold()
+
+
 def _admin_headers(admin_token):
     return {
         "Accept": "application/json",
@@ -529,7 +534,7 @@ def _wait_for_expected_waiting_visits(expected_visits):
     """Wait until all newly created visits are visible in the supplier queue."""
     expected_entries = {
         (
-            visit["user_name"],
+            _holder_name_key(visit["user_name"]),
             visit["level"],
             visit["attraction_id"],
             visit["attraction_name"],
@@ -542,7 +547,7 @@ def _wait_for_expected_waiting_visits(expected_visits):
     while True:
         actual_entries = {
             (
-                visit.get("user", {}).get("name"),
+                _holder_name_key(visit.get("user", {}).get("name")),
                 visit.get("user", {}).get("level"),
                 visit.get("attraction", {}).get("id"),
                 visit.get("attraction", {}).get("name"),
@@ -565,6 +570,9 @@ def _wait_for_expected_waiting_visits(expected_visits):
 def _wait_for_today_accepted_visits(month_value, today_iso, expected_visits):
     """Wait until supplier panel API reflects visits confirmed through the UI."""
     deadline = time.monotonic() + SUPPLIER_VISITS_SYNC_TIMEOUT
+    expected_names_by_key = {
+        _holder_name_key(user_name): user_name for user_name in expected_visits
+    }
     supplier_by_name = {}
 
     while True:
@@ -577,8 +585,9 @@ def _wait_for_today_accepted_visits(month_value, today_iso, expected_visits):
 
             user = visit.get("user", {})
             user_name = user.get("name") if isinstance(user, dict) else None
-            if user_name in expected_visits:
-                supplier_by_name[user_name] = visit
+            expected_name = expected_names_by_key.get(_holder_name_key(user_name))
+            if expected_name:
+                supplier_by_name[expected_name] = visit
 
         missing_names = sorted(set(expected_visits) - set(supplier_by_name))
         if not missing_names:
@@ -759,6 +768,11 @@ def _reject_visit_card(page, card_info):
 def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_iterations=12):
     results = []
     processed_names_total = set()
+    expected_actions_by_key = {
+        _holder_name_key(user_name): action
+        for user_name, action in expected_actions.items()
+    }
+    expected_name_keys = set(expected_actions_by_key)
 
     for account in _iter_supplier_panel_accounts():
         _reset_supplier_panel_session(driver)
@@ -790,7 +804,8 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
 
             card_info = _current_visit_card(page)
             user_name = card_info["user_name"]
-            expected_action = expected_actions.get(user_name)
+            user_name_key = _holder_name_key(user_name)
+            expected_action = expected_actions_by_key.get(user_name_key)
 
             if expected_action is None:
                 # Do not accept or reject somebody else's visit. Refreshing and opening
@@ -808,7 +823,10 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
                 continue
 
             foreign_card_streak = 0
-            if user_name in processed_names_total or user_name in processed_names_account:
+            if (
+                user_name_key in processed_names_total
+                or user_name_key in processed_names_account
+            ):
                 duplicate_streak += 1
                 time.sleep(1)
                 _open_pending_visits_if_present(page)
@@ -826,10 +844,10 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
                 processed.append(_confirm_visit_card(page, card_info))
             else:
                 processed.append(_reject_visit_card(page, card_info))
-            processed_names_account.add(user_name)
-            processed_names_total.add(user_name)
+            processed_names_account.add(user_name_key)
+            processed_names_total.add(user_name_key)
 
-            if processed_names_total == set(expected_actions):
+            if processed_names_total == expected_name_keys:
                 stop_reason = "all expected visits processed"
                 break
 
@@ -847,7 +865,7 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
             }
         )
 
-        if processed_names_total == set(expected_actions):
+        if processed_names_total == expected_name_keys:
             return results
 
     return results
@@ -934,11 +952,15 @@ def test_confirm_target_visits_and_check_limit_counters(driver):
     print(f"supplier panel processing results: {results}")
 
     processed_names = {
-        item["user_name"]
+        _holder_name_key(item["user_name"])
         for account_result in results
         for item in account_result["processed"]
     }
-    missing_names = sorted(set(expected_actions) - processed_names)
+    missing_names = sorted(
+        user_name
+        for user_name in expected_actions
+        if _holder_name_key(user_name) not in processed_names
+    )
     assert not missing_names, (
         "Не удалось обработать все ожидаемые визиты в supplier panel. "
         f"Не обработаны: {missing_names}. Результаты: {results}"
@@ -1030,7 +1052,7 @@ def test_check_accepted_visits_in_supplier_panel_and_journal():
             f"attraction_id={supplier_attraction_id}, статус={supplier_status}"
         )
 
-        assert journal_row.get("holder") == user_name, (
+        assert _holder_name_key(journal_row.get("holder")) == _holder_name_key(user_name), (
             f"В journal у id={supplier_visit_id} неверный holder: {journal_row}"
         )
         assert journal_row.get("status") == "app_holder_passed", (
@@ -1101,7 +1123,7 @@ def test_reject_accepted_visits_and_check_journal_status():
         assert journal_row, (
             f"В journal не найден визит после реджекта: id={visit_id}, user={user_name}"
         )
-        assert journal_row.get("holder") == user_name, (
+        assert _holder_name_key(journal_row.get("holder")) == _holder_name_key(user_name), (
             f"В journal после реджекта у id={visit_id} неверный holder: {journal_row}"
         )
         assert journal_row.get("status") == "app_holder_reject", (

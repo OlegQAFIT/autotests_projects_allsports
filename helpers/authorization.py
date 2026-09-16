@@ -12,7 +12,12 @@ class LoginLocators:
 
 
 
-    LOGIN_FIELD_SUPPLER_PANEL = "//div[@class='input-container']/input[@type='text']"
+    # Supplier Panel now renders the first login step as an email/phone field,
+    # which can be type=email or type=tel rather than type=text.
+    LOGIN_FIELD_SUPPLER_PANEL = (
+        "//div[@class='input-container']/input["
+        "not(@type='password') and not(@type='hidden')]"
+    )
     PASSWORD_FIELD_SUPPLER_PANEL = "//div[@class='input-container']/input[@type='password']"
     SIGNIN_BUTTON_SUPPLER_PANEL = "//button[contains(@class, 'btn__primary') and contains(@class, 'btn-base') and contains(@class, 'w-50')]"
 

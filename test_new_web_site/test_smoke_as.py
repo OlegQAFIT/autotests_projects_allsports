@@ -997,10 +997,22 @@ def test_smoke_as_invalid_contact_data_keeps_submit_disabled(driver):
 @pytest.mark.smoke
 def test_regression_al_892_as_invalid_cyprus_phone_keeps_offer_disabled(driver):
     """The exact invalid-phone case reported in AL-892 must not enable Send."""
-    _open(driver, _url(AS, "/contacts"))
-    forms = _visible_forms(driver)
-    assert forms, "Get an Offer/contact form is absent"
-    form = forms[0]
+    _open(driver, AS.base_url)
+    offer_ctas = [
+        button for button in driver.find_elements(By.TAG_NAME, "button")
+        if button.is_displayed() and "получить предложение" in button.text.casefold()
+    ]
+    assert offer_ctas, "AL-892: Get an Offer CTA is absent on AS homepage"
+    driver.execute_script("arguments[0].click()", offer_ctas[0])
+    WebDriverWait(driver, 10).until(
+        lambda d: bool(d.find_elements(By.CSS_SELECTOR, ".modal form, [role='dialog'] form"))
+    )
+    forms = [
+        form for form in driver.find_elements(By.CSS_SELECTOR, ".modal form, [role='dialog'] form")
+        if form.is_displayed()
+    ]
+    assert forms, "AL-892: Get an Offer CTA did not open its form"
+    form = forms[-1]
     _fill_synthetic_form(form, AS, valid=True)
     phone = next(
         (field for field in form.find_elements(By.CSS_SELECTOR, "input")

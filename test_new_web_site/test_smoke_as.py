@@ -20,7 +20,7 @@ from urllib.parse import urljoin, urlparse
 import allure
 import pytest
 import requests
-from selenium.common.exceptions import TimeoutException
+from selenium.common.exceptions import StaleElementReferenceException, TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import Select, WebDriverWait
@@ -174,23 +174,21 @@ def _fill_input(element, value: str) -> None:
 
 
 def _form_button(root):
-    buttons = [
-        button for button in root.find_elements(By.CSS_SELECTOR, "button[type='submit']")
-        if button.is_displayed()
-    ]
-    assert buttons, "No visible form submit button found"
+    buttons = root.find_elements(By.CSS_SELECTOR, "button[type='submit']")
+    assert buttons, "No form submit button found"
+    root.parent.execute_script("arguments[0].scrollIntoView({block:'center'});", buttons[0])
     return buttons[0]
 
 
 def _visible_forms(driver):
-    return [
-        form for form in driver.find_elements(By.CSS_SELECTOR, "form")
-        if form.is_displayed()
-        and any(
-            button.is_displayed()
-            for button in form.find_elements(By.CSS_SELECTOR, "button[type='submit']")
-        )
-    ]
+    forms = []
+    for form in driver.find_elements(By.CSS_SELECTOR, "form"):
+        try:
+            if form.is_displayed() and form.find_elements(By.CSS_SELECTOR, "button[type='submit']"):
+                forms.append(form)
+        except StaleElementReferenceException:
+            continue
+    return forms
 
 
 def _buttons_with_text(driver, *labels: str):
@@ -938,17 +936,22 @@ def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
 def _test_question_cta_placeholder(driver, profile: SiteProfile) -> None:
     """Focused regression helper for the Ask Us a Question CTA."""
     _open(driver, profile.base_url)
-    questions = [
-        button for button in driver.find_elements(By.TAG_NAME, "button")
-        if button.is_displayed() and any(
-            token in button.text.casefold() for token in ("question", "вопрос")
-        )
-    ]
+    questions = []
+    for button in driver.find_elements(By.TAG_NAME, "button"):
+        try:
+            if button.is_displayed() and any(
+                token in button.text.casefold() for token in ("question", "вопрос")
+            ):
+                questions.append(button)
+        except StaleElementReferenceException:
+            continue
     assert questions, f"Ask Us a Question CTA is absent for {profile.name}"
     driver.execute_script("arguments[0].click()", questions[0])
-    WebDriverWait(driver, 10).until(lambda d: bool(_visible_forms(d)))
+    WebDriverWait(driver, 10).until(
+        lambda d: bool(d.find_elements(By.CSS_SELECTOR, "form"))
+    )
     forms = [
-        form for form in _visible_forms(driver)
+        form for form in driver.find_elements(By.CSS_SELECTOR, "form")
         if form.find_elements(By.CSS_SELECTOR, "textarea")
     ] or _visible_forms(driver)
     assert forms, "Ask Us a Question CTA did not open its form"

@@ -34,6 +34,7 @@ class SiteProfile:
     country: str
     subscriptions: tuple[str, ...]
     expected_phone_prefix: str
+    expected_email_placeholder: str
     expected_min_facilities: int | None = None
 
     @property
@@ -48,6 +49,7 @@ AS = SiteProfile(
     "Беларус",
     ("region", "lite", "classic", "premium", "vip"),
     "+375",
+    "qwerty@allsports.by",
 )
 
 COMMON_PATHS = (
@@ -358,6 +360,30 @@ def _test_copy_and_page_semantics(driver, profile: SiteProfile) -> None:
             f"Homepage counter is {match.group(1)}, expected at least "
             f"{profile.expected_min_facilities} for {profile.name}"
         )
+
+
+def _test_form_placeholders(driver, profile: SiteProfile) -> None:
+    """Protect brand/country-specific form hints from cross-site leakage."""
+    checked_email_fields = 0
+    for path in ("", "/levels", "/companies", "/partners", "/contacts"):
+        _open(driver, _url(profile, path))
+        for field in driver.find_elements(By.CSS_SELECTOR, "input"):
+            if not field.is_displayed():
+                continue
+            placeholder = (field.get_attribute("placeholder") or "").strip()
+            kind = (field.get_attribute("type") or "").casefold()
+            if kind == "email" or "@" in placeholder:
+                assert placeholder == profile.expected_email_placeholder, (
+                    f"Wrong e-mail placeholder on {driver.current_url}: "
+                    f"expected '{profile.expected_email_placeholder}', got '{placeholder}'"
+                )
+                checked_email_fields += 1
+            if kind == "tel" or "phone" in (field.get_attribute("name") or "").casefold():
+                assert profile.expected_phone_prefix in placeholder, (
+                    f"Wrong phone placeholder on {driver.current_url}: "
+                    f"expected prefix {profile.expected_phone_prefix}, got '{placeholder}'"
+                )
+    assert checked_email_fields, f"No e-mail placeholders found for {profile.name}"
 
 
 def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
@@ -892,6 +918,8 @@ def run_site_suite(driver, profile: SiteProfile) -> None:
         _test_rendering_and_media(driver, profile)
     with allure.step("Visible copy, page headings, titles and template placeholders"):
         _test_copy_and_page_semantics(driver, profile)
+    with allure.step("Brand and country-specific e-mail/phone form placeholders"):
+        _test_form_placeholders(driver, profile)
     with allure.step("All discovered internal links, policy links and legal documents"):
         _test_all_links_and_documents(driver, profile)
     with allure.step("Browser click-through for every visible internal link"):

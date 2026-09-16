@@ -16,6 +16,7 @@ SB_LT = SiteProfile(
     "Lithuania",
     ("gold", "platinum", "vip"),
     "+370",
+    "qwerty@sportbenefit.eu",
 )
 
 

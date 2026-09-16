@@ -21,6 +21,7 @@ SB_CY = SiteProfile(
     "Cyprus",
     ("silver", "gold", "platinum", "vip"),
     "+357",
+    "qwerty@sportbenefit.eu",
     350,
 )
 

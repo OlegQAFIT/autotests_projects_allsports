@@ -35,8 +35,19 @@ def test_smoke_sb_lt_full_public_site(driver):
 @pytest.mark.smoke
 def test_smoke_sb_lt_copy_uses_lithuania_not_cyprus(driver):
     """Protects LT membership cards from Cyprus copy/phone-format leakage."""
-    for path in ("", "/levels", "/contacts"):
+    for path in ("", "/levels", "/companies", "/partners", "/contacts"):
         driver.get(f"{SB_LT.base_url.rstrip('/')}{path}")
         text = driver.find_element(By.TAG_NAME, "body").text.lower()
         assert "across cyprus" not in text, f"Cyprus copy leaked into LT page: {driver.current_url}"
-    assert "+357 00 00 00 00" not in text, "Cyprus phone placeholder leaked into LT contacts"
+        placeholders = [
+            item.get_attribute("placeholder") or ""
+            for item in driver.find_elements(By.CSS_SELECTOR, "input[type='tel'], input[placeholder]")
+        ]
+        assert not any("+357" in placeholder for placeholder in placeholders), (
+            f"Cyprus phone placeholder leaked into LT page: {driver.current_url}; {placeholders}"
+        )
+        phone_placeholders = [placeholder for placeholder in placeholders if "+" in placeholder]
+        if phone_placeholders:
+            assert any("+370" in placeholder for placeholder in phone_placeholders), (
+                f"Lithuanian phone prefix +370 is missing: {driver.current_url}; {phone_placeholders}"
+            )

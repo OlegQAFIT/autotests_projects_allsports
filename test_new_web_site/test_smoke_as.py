@@ -23,7 +23,7 @@ import requests
 from selenium.common.exceptions import TimeoutException
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support import expected_conditions as EC
-from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support.ui import Select, WebDriverWait
 
 
 @dataclass(frozen=True)
@@ -221,6 +221,93 @@ def _submission_events(driver):
     return driver.execute_script("return window.__qaNetworkEvents || []")
 
 
+def _form_label(form) -> str:
+    return re.sub(r"\s+", " ", form.text).strip()[:160]
+
+
+def _form_submit(form):
+    return form.find_element(By.CSS_SELECTOR, "button[type='submit'], input[type='submit']")
+
+
+def _fill_synthetic_form(form, profile: SiteProfile, valid: bool) -> None:
+    """Fill every editable field without relying on translated placeholders."""
+    for index, field in enumerate(form.find_elements(By.CSS_SELECTOR, "input, textarea, select")):
+        if not field.is_displayed() or field.get_attribute("type") in {"hidden", "submit", "button"}:
+            continue
+        kind = (field.get_attribute("type") or "").lower()
+        if kind in {"checkbox", "radio"}:
+            if valid and not field.is_selected():
+                field.click()
+            continue
+        if field.tag_name.lower() == "select":
+            options = field.find_elements(By.CSS_SELECTOR, "option:not([disabled])")
+            if len(options) > 1:
+                driver = form.parent
+                driver.execute_script("arguments[0].selectedIndex=1; arguments[0].dispatchEvent(new Event('change',{bubbles:true}))", field)
+            continue
+        name = " ".join((
+            field.get_attribute("name") or "",
+            field.get_attribute("placeholder") or "",
+            field.get_attribute("autocomplete") or "",
+        )).lower()
+        if "mail" in name or kind == "email":
+            value = "qa.matrix@example.test" if valid else "broken-email"
+        elif "phone" in name or "tel" in name or kind == "tel":
+            value = f"{profile.expected_phone_prefix} 99 123 45 67" if valid else "123"
+        elif field.tag_name.lower() == "textarea":
+            value = "QA synthetic question for test environment"
+        elif "company" in name or "facility" in name:
+            value = "QA Synthetic Company"
+        elif "city" in name:
+            value = "QA City"
+        else:
+            value = "QA Synthetic Name"
+        field.clear()
+        field.send_keys(value)
+
+
+def _assert_form_validation_contract(driver, form, profile: SiteProfile) -> None:
+    """Negative form cases must show feedback and must never create a request."""
+    _install_network_probe(driver)
+    before = len(_submission_events(driver))
+    _fill_synthetic_form(form, profile, valid=False)
+    submit = _form_submit(form)
+    driver.execute_script("arguments[0].click()", submit)
+    WebDriverWait(driver, 10).until(
+        lambda d: not submit.is_enabled()
+        or bool(form.find_elements(By.CSS_SELECTOR, ".input-error, [aria-invalid='true'], .error"))
+    )
+    after = _submission_events(driver)[before:]
+    assert not [event for event in after if event.get("method", "POST").upper() == "POST"], (
+        f"Invalid form sent a POST instead of blocking client-side validation: {_form_label(form)}"
+    )
+
+
+def _assert_live_form_submission(driver, form, profile: SiteProfile) -> None:
+    """Post a synthetic lead and require a precise successful network outcome."""
+    if os.getenv("TEST_WEBSITE_FORM_SUBMIT") != "1":
+        return
+    _install_network_probe(driver)
+    before = len(_submission_events(driver))
+    _fill_synthetic_form(form, profile, valid=True)
+    submit = _form_submit(form)
+    assert submit.is_enabled(), f"Valid form remains disabled: {_form_label(form)}"
+    driver.execute_script("arguments[0].click()", submit)
+    WebDriverWait(driver, 20).until(
+        lambda d: any(
+            event.get("method", "POST").upper() == "POST"
+            for event in _submission_events(d)[before:]
+        )
+    )
+    posts = [
+        event for event in _submission_events(driver)[before:]
+        if event.get("method", "POST").upper() == "POST"
+    ]
+    assert posts and all(200 <= int(event["status"]) < 300 for event in posts), (
+        f"Form HTTP response is not 2xx: {_form_label(form)}; {posts}"
+    )
+
+
 def _test_public_routes(profile: SiteProfile) -> None:
     for path in COMMON_PATHS:
         url = _url(profile, path)
@@ -287,6 +374,7 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
                 pending.append(absolute)
 
     legal = set()
+    document_external = set()
     for landing in ("/license", "/user-agreements"):
         _open(driver, _url(profile, landing))
         legal.update(_legal_links(profile, driver))
@@ -305,6 +393,8 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
                 assert nested.status_code == 200, (
                     f"Broken link inside legal document: {absolute} -> {nested.status_code}"
                 )
+            elif urlparse(absolute).scheme == "https":
+                document_external.add(absolute)
 
     # Some legal pages expose a date/version selector.  Its options must render
     # when the control exists; older document layouts legitimately have none.
@@ -321,6 +411,56 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
                 assert any(option.text.strip() for option in options), (
                     f"Document date/version dropdown opened without options on {driver.current_url}"
                 )
+        # Native version/date selects must render every option and retain the
+        # chosen value. This is intentionally separate from the generic custom
+        # dropdown check above.
+        for select_element in driver.find_elements(By.CSS_SELECTOR, "select"):
+            if not select_element.is_displayed() or not select_element.is_enabled():
+                continue
+            select = Select(select_element)
+            values = [option.get_attribute("value") for option in select.options if option.text.strip()]
+            assert values, f"Document select has no versions/dates: {driver.current_url}"
+            for value in values:
+                select.select_by_value(value)
+                assert select.first_selected_option.get_attribute("value") == value, (
+                    f"Document select did not retain version/date '{value}'"
+                )
+        custom_triggers = [
+            element for element in driver.find_elements(
+                By.CSS_SELECTOR, "input[readonly][class*='select'], button[class*='select']"
+            )
+            if element.is_displayed() and element.is_enabled()
+        ]
+        for trigger_index, trigger in enumerate(custom_triggers):
+            driver.execute_script("arguments[0].click()", trigger)
+            labels = [
+                option.text.strip() for option in driver.find_elements(
+                    By.CSS_SELECTOR, "[role='option'], .select__option, .dropdown-item"
+                )
+                if option.is_displayed() and option.text.strip()
+            ]
+            assert labels, f"Custom document dropdown has no options: {driver.current_url}"
+            for label in labels:
+                _open(driver, _url(profile, landing))
+                triggers = [
+                    element for element in driver.find_elements(
+                        By.CSS_SELECTOR, "input[readonly][class*='select'], button[class*='select']"
+                    )
+                    if element.is_displayed() and element.is_enabled()
+                ]
+                assert trigger_index < len(triggers), "Document dropdown changed after reload"
+                driver.execute_script("arguments[0].click()", triggers[trigger_index])
+                option = next(
+                    (element for element in driver.find_elements(
+                        By.CSS_SELECTOR, "[role='option'], .select__option, .dropdown-item"
+                    ) if element.is_displayed() and element.text.strip() == label),
+                    None,
+                )
+                assert option is not None, f"Document version/date disappeared: {label}"
+                driver.execute_script("arguments[0].click()", option)
+                assert label in _visible_text(driver), (
+                    f"Selecting document version/date did not render '{label}'"
+                )
 
     stores = [href for href in discovered if urlparse(href).netloc in STORE_HOSTS]
     assert stores, "No application-store links found"
@@ -330,10 +470,12 @@ def _test_all_links_and_documents(driver, profile: SiteProfile) -> None:
     external = sorted({
         href for href in discovered
         if urlparse(href).scheme == "https" and not _same_site(profile, href)
-    })
+    } | document_external)
     for href in external:
         response = _http_get(href)
-        assert response.status_code < 500, f"External link has a server error: {href} -> {response.status_code}"
+        assert 200 <= response.status_code < 400, (
+            f"External link does not resolve successfully: {href} -> {response.status_code}"
+        )
 
 
 def _test_levels_navigation(driver, profile: SiteProfile) -> None:
@@ -511,10 +653,52 @@ def _test_each_map_filter_value(driver, profile: SiteProfile) -> None:
             if apply:
                 driver.execute_script("arguments[0].click()", apply[0])
             WebDriverWait(driver, 10).until(lambda d: _visible_text(d).strip())
+            state = driver.execute_script(
+                "return window.__NUXT__?.pinia?.mapFilter || window.__NUXT__?.pinia?.tableFilter || null"
+            )
+            assert state is not None, f"Applying '{label}' did not update filter state"
+            normalized_label = re.sub(r"[^a-zа-я0-9]+", "", label.casefold())
+            serialized_state = re.sub(
+                r"[^a-zа-я0-9]+", "", json.dumps(state, ensure_ascii=False).casefold()
+            )
+            assert normalized_label in serialized_state, (
+                f"Selected filter value is absent from the applied state: {label}"
+            )
+            results = driver.find_elements(
+                By.CSS_SELECTOR, "tbody tr, [class*='facility-card'], [class*='object-card'], [class*='marker']"
+            )
+            empty_state = driver.find_elements(
+                By.CSS_SELECTOR, "[class*='empty'], [class*='no-result'], [class*='not-found']"
+            )
+            assert results or empty_state, (
+                f"Filter '{label}' leaves neither suppliers nor an explicit empty-result state"
+            )
             assert not driver.find_elements(By.CSS_SELECTOR, ".error-page, [class*='error-page']"), (
                 f"Applying '{label}' opened an error page"
             )
             _check_no_failed_network_requests(driver)
+
+
+def _test_every_supplier_card(driver, profile: SiteProfile) -> None:
+    """Open every currently available supplier entry from the map/list UI."""
+    _open(driver, _url(profile, "/facilities"))
+    selector = "[class*='facility-card'], [class*='object-card'], [class*='marker']"
+    cards = [card for card in driver.find_elements(By.CSS_SELECTOR, selector) if card.is_displayed()]
+    assert cards, "Map exposes no supplier cards/markers"
+    # Reopen the page before each click because opening a card can replace the
+    # map DOM. This intentionally covers each current provider/marker type.
+    total = len(cards)
+    for index in range(total):
+        _open(driver, _url(profile, "/facilities"))
+        current = [card for card in driver.find_elements(By.CSS_SELECTOR, selector) if card.is_displayed()]
+        assert index < len(current), "Supplier list changed while opening cards"
+        card = current[index]
+        label = card.get_attribute("aria-label") or card.text.strip() or f"card #{index + 1}"
+        driver.execute_script("arguments[0].click()", card)
+        WebDriverWait(driver, 10).until(
+            lambda d: bool(d.find_elements(By.CSS_SELECTOR, "[role='dialog'], [class*='modal'], [class*='popup']"))
+            or label.casefold() in _visible_text(d).casefold()
+        )
 
 
 def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) -> None:
@@ -579,10 +763,12 @@ def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
     is covered by the explicitly enabled synthetic-lead scenario above.
     """
     checked = 0
+    ctas_checked = 0
     for path in ("", "/levels", "/companies", "/partners", "/contacts"):
         _open(driver, _url(profile, path))
-        for form in _visible_forms(driver):
-            button = form.find_element(By.CSS_SELECTOR, "button[type='submit']")
+        forms = _visible_forms(driver)
+        for form in forms:
+            button = _form_submit(form)
             assert not button.is_enabled(), (
                 f"Empty form has an active submit button on {driver.current_url}"
             )
@@ -594,7 +780,49 @@ def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
             for link in policy:
                 assert _http_get(link.get_attribute("href")).status_code == 200
             checked += 1
+
+        # Run negative and (when explicitly allowed) positive submission paths
+        # for every inline form. Reloading isolates one form from another.
+        for form_index in range(len(forms)):
+            _open(driver, _url(profile, path))
+            current_forms = _visible_forms(driver)
+            assert form_index < len(current_forms), "Inline form disappeared after reload"
+            _assert_form_validation_contract(driver, current_forms[form_index], profile)
+            _open(driver, _url(profile, path))
+            current_forms = _visible_forms(driver)
+            assert form_index < len(current_forms), "Inline form disappeared before live submission"
+            _assert_live_form_submission(driver, current_forms[form_index], profile)
+
+        # Cover each semantic CTA separately. Modal dialogs are re-found after
+        # every click, which handles Vue re-rendering and identical labels.
+        cta_buttons = [
+            button for button in driver.find_elements(By.TAG_NAME, "button")
+            if button.is_displayed()
+            and button.get_attribute("type") != "submit"
+            and any(token in button.text.casefold() for token in (
+                "offer", "предлож", "partner", "партнер", "question", "вопрос", "contact", "связ",
+            ))
+        ]
+        for index in range(len(cta_buttons)):
+            _open(driver, _url(profile, path))
+            buttons = [
+                button for button in driver.find_elements(By.TAG_NAME, "button")
+                if button.is_displayed()
+                and button.get_attribute("type") != "submit"
+                and any(token in button.text.casefold() for token in (
+                    "offer", "предлож", "partner", "партнер", "question", "вопрос", "contact", "связ",
+                ))
+            ]
+            assert index < len(buttons), "CTA disappeared while opening modal"
+            driver.execute_script("arguments[0].click()", buttons[index])
+            modal_forms = _visible_forms(driver)
+            assert modal_forms, f"CTA did not open a form: {buttons[index].text}"
+            form = modal_forms[-1]
+            _assert_form_validation_contract(driver, form, profile)
+            _assert_live_form_submission(driver, form, profile)
+            ctas_checked += 1
     assert checked, "No public forms were discovered"
+    assert ctas_checked, "No offer/partner/question/contact CTAs were discovered"
 
 
 def run_site_suite(driver, profile: SiteProfile) -> None:
@@ -645,3 +873,12 @@ def test_smoke_as_homepage_does_not_overstate_facility_count(driver):
     assert int(claim.group(1)) <= int(counter.group(1)), (
         f"Homepage says more than {claim.group(1)} facilities but counter is {counter.group(1)}"
     )
+
+
+@allure.feature("Test website regressions")
+@allure.story("Allsports BY: invalid contact data cannot submit")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_smoke_as_invalid_contact_data_keeps_submit_disabled(driver):
+    """Regression for an enabled submit button with invalid contact values."""
+    _test_form_validation_and_optional_submission(driver, AS)

@@ -955,9 +955,19 @@ def _test_question_cta_placeholder(driver, profile: SiteProfile) -> None:
         if form.find_elements(By.CSS_SELECTOR, "textarea")
     ] or _visible_forms(driver)
     assert forms, "Ask Us a Question CTA did not open its form"
-    assert _assert_form_placeholders(forms[-1], profile), (
-        "Ask Us a Question form has no e-mail placeholder"
-    )
+    email_fields = [
+        field for field in forms[-1].find_elements(By.CSS_SELECTOR, "input")
+        if (field.get_attribute("type") or "").casefold() == "email"
+        or "email" in (field.get_attribute("name") or "").casefold()
+        or "@" in (field.get_attribute("placeholder") or "")
+    ]
+    assert email_fields, "Ask Us a Question form has no e-mail input"
+    for field in email_fields:
+        placeholder = (field.get_attribute("placeholder") or "").strip()
+        assert placeholder == profile.expected_email_placeholder, (
+            f"Wrong Ask Us a Question e-mail placeholder: expected "
+            f"'{profile.expected_email_placeholder}', got '{placeholder}'"
+        )
 
 
 def run_site_suite(driver, profile: SiteProfile) -> None:

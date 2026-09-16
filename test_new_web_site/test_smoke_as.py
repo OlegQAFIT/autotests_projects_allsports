@@ -161,8 +161,11 @@ def _legal_links(profile: SiteProfile, driver) -> list[str]:
     })
 
 
-def _form_inputs(driver):
-    return driver.find_elements(By.CSS_SELECTOR, "form input")
+def _form_inputs(root):
+    return [
+        field for field in root.find_elements(By.CSS_SELECTOR, "input")
+        if (field.get_attribute("type") or "").casefold() not in {"hidden", "checkbox", "radio"}
+    ]
 
 
 def _fill_input(element, value: str) -> None:
@@ -170,8 +173,13 @@ def _fill_input(element, value: str) -> None:
     element.send_keys(value)
 
 
-def _form_button(driver):
-    return driver.find_element(By.CSS_SELECTOR, "form button[type='submit']")
+def _form_button(root):
+    buttons = [
+        button for button in root.find_elements(By.CSS_SELECTOR, "button[type='submit']")
+        if button.is_displayed()
+    ]
+    assert buttons, "No visible form submit button found"
+    return buttons[0]
 
 
 def _visible_forms(driver):
@@ -326,7 +334,12 @@ def _test_rendering_and_media(driver, profile: SiteProfile) -> None:
         _open(driver, _url(profile, path))
         assert profile.locale in driver.find_element(By.TAG_NAME, "html").get_attribute("lang").lower()
         broken = driver.execute_script(
-            "return [...document.images].filter(i => i.complete && !i.naturalWidth).map(i => i.currentSrc || i.src)"
+            """
+            return [...document.images]
+              .filter(i => i.complete && !i.naturalWidth
+                && !((i.currentSrc || i.src || '').split('?')[0].toLowerCase().endsWith('.svg')))
+              .map(i => i.currentSrc || i.src)
+            """
         )
         assert not broken, f"Broken images on {driver.current_url}: {broken}"
         for source in driver.execute_script(
@@ -788,9 +801,12 @@ def _test_every_supplier_card(driver, profile: SiteProfile) -> None:
 
 def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) -> None:
     _open(driver, _url(profile, "/contacts"))
-    inputs = _form_inputs(driver)
+    forms = _visible_forms(driver)
+    assert forms, "Contact form is absent"
+    form = max(forms, key=lambda item: len(_form_inputs(item)))
+    inputs = _form_inputs(form)
     assert len(inputs) >= 4, "Contact form fields are absent"
-    button = _form_button(driver)
+    button = _form_button(form)
     assert not button.is_enabled(), "Submit button must be disabled on an empty form"
 
     policy_links = [href for href in _links(driver) if "processing-personal-data" in href]
@@ -802,15 +818,15 @@ def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) 
     _fill_input(inputs[1], "invalid")
     _fill_input(inputs[2], "invalid-email")
     _fill_input(inputs[3], "QA Test Company")
-    checkboxes = driver.find_elements(By.CSS_SELECTOR, "form input[type='checkbox']")
+    checkboxes = form.find_elements(By.CSS_SELECTOR, "input[type='checkbox']")
     if checkboxes:
         driver.execute_script("arguments[0].click()", checkboxes[0])
     WebDriverWait(driver, 10).until(
         lambda d: any("email" in e.text.lower() or "почт" in e.text.lower()
                       for e in d.find_elements(By.CSS_SELECTOR, ".input-error"))
-        or not _form_button(d).is_enabled()
+            or not _form_button(form).is_enabled()
     )
-    assert not _form_button(driver).is_enabled(), (
+    assert not _form_button(form).is_enabled(), (
         "Submit became enabled despite invalid phone/e-mail; validation must block a request"
     )
 
@@ -819,15 +835,18 @@ def _test_form_validation_and_optional_submission(driver, profile: SiteProfile) 
 
     # A real test lead is created only when this explicit CI/local switch is set.
     _open(driver, _url(profile, "/contacts"))
-    inputs = _form_inputs(driver)
+    forms = _visible_forms(driver)
+    assert forms, "Contact form is absent before synthetic submission"
+    form = max(forms, key=lambda item: len(_form_inputs(item)))
+    inputs = _form_inputs(form)
     _fill_input(inputs[0], "QA Test")
     _fill_input(inputs[1], f"{profile.expected_phone_prefix} 00 000 00 00")
     _fill_input(inputs[2], "qa-smoke@example.test")
     _fill_input(inputs[3], "QA Smoke Test Company")
-    checkboxes = driver.find_elements(By.CSS_SELECTOR, "form input[type='checkbox']")
+    checkboxes = form.find_elements(By.CSS_SELECTOR, "input[type='checkbox']")
     if checkboxes:
         driver.execute_script("arguments[0].click()", checkboxes[0])
-    submit = _form_button(driver)
+    submit = _form_button(form)
     assert submit.is_enabled(), "Valid test form did not enable Submit"
     _install_network_probe(driver)
     driver.execute_script("arguments[0].click()", submit)

@@ -9,6 +9,7 @@ from selenium.webdriver.common.by import By
 
 from test_new_web_site.test_smoke_as import (
     SiteProfile,
+    _test_question_cta_placeholder,
     _test_form_validation_and_optional_submission,
     run_site_suite,
 )
@@ -58,3 +59,21 @@ def test_smoke_sb_homepage_does_not_overstate_facility_count(driver):
 def test_smoke_sb_invalid_contact_data_keeps_submit_disabled(driver):
     """Regression for the previously observed active button with invalid e-mail."""
     _test_form_validation_and_optional_submission(driver, SB_CY)
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-891: Cyprus contact address names the fourth floor")
+@allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.smoke
+def test_regression_al_891_sb_cy_contact_address_has_fourth_floor(driver):
+    driver.get(f"{SB_CY.base_url.rstrip('/')}/contacts")
+    text = driver.find_element(By.TAG_NAME, "body").text.casefold()
+    assert "4th floor" in text, "AL-891: Cyprus contact address must specify '4th floor'"
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-883: Ask Us a Question uses SportBenefit e-mail placeholder")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_regression_al_883_sb_cy_question_form_has_no_allsports_placeholder(driver):
+    _test_question_cta_placeholder(driver, SB_CY)

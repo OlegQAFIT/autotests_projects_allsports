@@ -922,6 +922,24 @@ def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
     assert ctas_checked, "No offer/partner/question/contact CTAs were discovered"
 
 
+def _test_question_cta_placeholder(driver, profile: SiteProfile) -> None:
+    """Focused regression helper for the Ask Us a Question CTA."""
+    _open(driver, profile.base_url)
+    questions = [
+        button for button in driver.find_elements(By.TAG_NAME, "button")
+        if button.is_displayed() and any(
+            token in button.text.casefold() for token in ("question", "вопрос")
+        )
+    ]
+    assert questions, f"Ask Us a Question CTA is absent for {profile.name}"
+    driver.execute_script("arguments[0].click()", questions[0])
+    forms = _visible_forms(driver)
+    assert forms, "Ask Us a Question CTA did not open its form"
+    assert _assert_form_placeholders(forms[-1], profile), (
+        "Ask Us a Question form has no e-mail placeholder"
+    )
+
+
 def run_site_suite(driver, profile: SiteProfile) -> None:
     with allure.step("HTTP availability of all key public routes"):
         _test_public_routes(profile)
@@ -982,3 +1000,42 @@ def test_smoke_as_homepage_counter_is_rendered(driver):
 def test_smoke_as_invalid_contact_data_keeps_submit_disabled(driver):
     """Regression for an enabled submit button with invalid contact values."""
     _test_form_validation_and_optional_submission(driver, AS)
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-892: AS rejects a Cyprus phone number")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_regression_al_892_as_invalid_cyprus_phone_keeps_offer_disabled(driver):
+    """The exact invalid-phone case reported in AL-892 must not enable Send."""
+    _open(driver, _url(AS, "/contacts"))
+    forms = _visible_forms(driver)
+    assert forms, "Get an Offer/contact form is absent"
+    form = forms[0]
+    _fill_synthetic_form(form, AS, valid=True)
+    phone = next(
+        (field for field in form.find_elements(By.CSS_SELECTOR, "input")
+         if (field.get_attribute("type") or "").casefold() == "tel"
+         or "phone" in (field.get_attribute("name") or "").casefold()),
+        None,
+    )
+    assert phone is not None, "Offer form has no phone input"
+    _fill_input(phone, "+75796276351")
+    submit = _form_submit(form)
+    WebDriverWait(driver, 10).until(
+        lambda d: not submit.is_enabled()
+        or bool(form.find_elements(By.CSS_SELECTOR, ".input-error, [aria-invalid='true']"))
+    )
+    assert not submit.is_enabled(), "AL-892: Cyprus phone enabled AS offer submission"
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-891: AS uses hard sign in object copy")
+@allure.severity(allure.severity_level.NORMAL)
+@pytest.mark.smoke
+def test_regression_al_891_as_has_no_soft_sign_object_typos(driver):
+    """Regression for 'обьект*'; Russian copy must use 'объект*'."""
+    for path in ("", "/levels", "/facilities", "/facilities-table"):
+        _open(driver, _url(AS, path))
+        text = _visible_text(driver).casefold()
+        assert "обьект" not in text, f"AL-891 soft-sign typo found: {driver.current_url}"

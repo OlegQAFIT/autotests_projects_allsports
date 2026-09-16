@@ -6,7 +6,11 @@ import allure
 import pytest
 from selenium.webdriver.common.by import By
 
-from test_new_web_site.test_smoke_as import SiteProfile, run_site_suite
+from test_new_web_site.test_smoke_as import (
+    SiteProfile,
+    _test_question_cta_placeholder,
+    run_site_suite,
+)
 
 
 SB_LT = SiteProfile(
@@ -52,3 +56,32 @@ def test_smoke_sb_lt_copy_uses_lithuania_not_cyprus(driver):
             assert any("+370" in placeholder for placeholder in phone_placeholders), (
                 f"Lithuanian phone prefix +370 is missing: {driver.current_url}; {phone_placeholders}"
             )
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-891: LT contacts contain the approved Lithuanian phone only")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_regression_al_891_sb_lt_contact_phone_and_titles(driver):
+    driver.get(f"{SB_LT.base_url.rstrip('/')}/contacts")
+    expected_href = "tel:+37060894673"
+    tel_links = driver.find_elements(By.CSS_SELECTOR, "a[href^='tel:']")
+    assert any(link.get_attribute("href") == expected_href for link in tel_links), (
+        "AL-891: approved LT contact number +370 608 94673 is absent"
+    )
+    # Section headings must not themselves be telephone/mail/location links.
+    linked_headings = driver.execute_script(
+        """
+        return [...document.querySelectorAll('a h1,a h2,a h3,a h4,a h5,a h6')]
+          .map(item => item.textContent.trim()).filter(Boolean);
+        """
+    )
+    assert not linked_headings, f"AL-891: clickable contact headings: {linked_headings}"
+
+
+@allure.feature("Jira regressions")
+@allure.story("AL-883: LT Ask Us a Question has SportBenefit placeholder")
+@allure.severity(allure.severity_level.CRITICAL)
+@pytest.mark.smoke
+def test_regression_al_883_sb_lt_question_form_has_no_allsports_placeholder(driver):
+    _test_question_cta_placeholder(driver, SB_LT)

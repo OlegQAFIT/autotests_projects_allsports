@@ -362,27 +362,35 @@ def _test_copy_and_page_semantics(driver, profile: SiteProfile) -> None:
         )
 
 
+def _assert_form_placeholders(form, profile: SiteProfile) -> int:
+    """Check a single inline or CTA-modal form against its site profile."""
+    checked_email_fields = 0
+    for field in form.find_elements(By.CSS_SELECTOR, "input"):
+        if not field.is_displayed():
+            continue
+        placeholder = (field.get_attribute("placeholder") or "").strip()
+        kind = (field.get_attribute("type") or "").casefold()
+        if kind == "email" or "@" in placeholder:
+            assert placeholder == profile.expected_email_placeholder, (
+                f"Wrong e-mail placeholder on {form.parent.current_url}: "
+                f"expected '{profile.expected_email_placeholder}', got '{placeholder}'"
+            )
+            checked_email_fields += 1
+        if kind == "tel" or "phone" in (field.get_attribute("name") or "").casefold():
+            assert profile.expected_phone_prefix in placeholder, (
+                f"Wrong phone placeholder on {form.parent.current_url}: "
+                f"expected prefix {profile.expected_phone_prefix}, got '{placeholder}'"
+            )
+    return checked_email_fields
+
+
 def _test_form_placeholders(driver, profile: SiteProfile) -> None:
     """Protect brand/country-specific form hints from cross-site leakage."""
     checked_email_fields = 0
     for path in ("", "/levels", "/companies", "/partners", "/contacts"):
         _open(driver, _url(profile, path))
-        for field in driver.find_elements(By.CSS_SELECTOR, "input"):
-            if not field.is_displayed():
-                continue
-            placeholder = (field.get_attribute("placeholder") or "").strip()
-            kind = (field.get_attribute("type") or "").casefold()
-            if kind == "email" or "@" in placeholder:
-                assert placeholder == profile.expected_email_placeholder, (
-                    f"Wrong e-mail placeholder on {driver.current_url}: "
-                    f"expected '{profile.expected_email_placeholder}', got '{placeholder}'"
-                )
-                checked_email_fields += 1
-            if kind == "tel" or "phone" in (field.get_attribute("name") or "").casefold():
-                assert profile.expected_phone_prefix in placeholder, (
-                    f"Wrong phone placeholder on {driver.current_url}: "
-                    f"expected prefix {profile.expected_phone_prefix}, got '{placeholder}'"
-                )
+        for form in _visible_forms(driver):
+            checked_email_fields += _assert_form_placeholders(form, profile)
     assert checked_email_fields, f"No e-mail placeholders found for {profile.name}"
 
 
@@ -904,6 +912,9 @@ def _test_all_visible_form_ctas(driver, profile: SiteProfile) -> None:
             modal_forms = _visible_forms(driver)
             assert modal_forms, f"CTA did not open a form: {buttons[index].text}"
             form = modal_forms[-1]
+            assert _assert_form_placeholders(form, profile), (
+                f"CTA form has no e-mail placeholder: {buttons[index].text}"
+            )
             _assert_form_validation_contract(driver, form, profile)
             _assert_live_form_submission(driver, form, profile)
             ctas_checked += 1

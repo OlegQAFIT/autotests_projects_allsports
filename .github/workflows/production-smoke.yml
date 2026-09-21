@@ -1,8 +1,6 @@
 name: Production smoke monitor
 
 on:
-  schedule:
-    - cron: "*/15 * * * *"
   workflow_dispatch:
 
 permissions:
@@ -37,6 +35,7 @@ jobs:
         run: |
           pytest --headless \
             test_journal_main_flow/test_main_url_link.py \
+            production_smoke/test_production_website_smoke.py \
             --alluredir=allure-results
 
       - name: Upload Allure results on failure

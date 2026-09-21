@@ -1,0 +1,49 @@
+name: Production smoke monitor
+
+on:
+  schedule:
+    - cron: "7,22,37,52 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  production-smoke:
+    name: Check production services and supplier-panel login
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install test dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest selenium webdriver-manager requests python-dotenv allure-pytest
+
+      - name: Run production availability and authentication smoke checks
+        env:
+          ALLSPORTS_PARTNER_SMOKE_LOGIN: ${{ secrets.ALLSPORTS_PARTNER_SMOKE_LOGIN }}
+          ALLSPORTS_PARTNER_SMOKE_PASSWORD: ${{ secrets.ALLSPORTS_PARTNER_SMOKE_PASSWORD }}
+          SPORTBENEFIT_PARTNER_SMOKE_LOGIN: ${{ secrets.SPORTBENEFIT_PARTNER_SMOKE_LOGIN }}
+          SPORTBENEFIT_PARTNER_SMOKE_PASSWORD: ${{ secrets.SPORTBENEFIT_PARTNER_SMOKE_PASSWORD }}
+        run: |
+          pytest --headless \
+            test_journal_main_flow/test_main_url_link.py \
+            --alluredir=allure-results
+
+      - name: Upload Allure results on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-smoke-allure-results
+          path: allure-results
+          if-no-files-found: ignore
+          retention-days: 14

@@ -24,7 +24,7 @@ jobs:
       - name: Install test dependencies
         run: |
           python -m pip install --upgrade pip
-          python -m pip install pytest selenium webdriver-manager requests python-dotenv allure-pytest
+          python -m pip install pytest pytest-rerunfailures selenium webdriver-manager requests python-dotenv allure-pytest
 
       - name: Run production availability and authentication smoke checks
         env:
@@ -34,6 +34,8 @@ jobs:
           SPORTBENEFIT_PARTNER_SMOKE_PASSWORD: ${{ secrets.SPORTBENEFIT_PARTNER_SMOKE_PASSWORD }}
         run: |
           pytest --headless \
+            --reruns 1 \
+            --reruns-delay 10 \
             test_journal_main_flow/test_main_url_link.py \
             production_smoke/test_production_website_smoke.py \
             --alluredir=allure-results

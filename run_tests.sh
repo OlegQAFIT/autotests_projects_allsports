@@ -29,7 +29,9 @@ REPORT_ZIP="allure_report_${NOW}.zip"
 TEST_EXIT=0
 set +e
 "$PYTEST" \
-    test_new_web_site/test_smoke_post_release.py \
+    test_new_web_site/test_smoke_as.py \
+    test_new_web_site/test_smoke_sb.py \
+    test_new_web_site/test_smoke_sb_lt.py \
     -m "smoke and release_gate" \
     --json-report \
     --json-report-file=pytest-report.json \

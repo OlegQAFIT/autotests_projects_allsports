@@ -93,8 +93,8 @@ VISIT_PROFILES = {
         "request_body": {
             "supplier_id": 5010,
             "attraction_id": 16984,
-            "lat": 53.904963940824274,
-            "lng": 27.561529701524286,
+            "lat": 34.69323610,
+            "lng": 33.03418616,
             "geo_mocked": False,
         },
     },
@@ -153,6 +153,8 @@ VISIT_REJECT_STATUS = "supplier_reject_wrong_id"
 
 def _normalize_token(token):
     normalized = str(token or "").strip()
+    if len(normalized) >= 2 and normalized[0] == normalized[-1] in {"'", '"'}:
+        normalized = normalized[1:-1].strip()
     if normalized.lower().startswith("bearer "):
         return normalized[7:].strip()
     return normalized
@@ -325,6 +327,47 @@ def _reset_visit_limit(holder_id, admin_token):
     )
 
 
+def _reset_anti_fraud_mode(holder_id, admin_token):
+    response = requests.post(
+        f"{BASE_URL}/api/jrnl/admin/holders/{holder_id}/reset/anti-fraud-mode",
+        headers=_admin_headers(admin_token),
+        timeout=30,
+    )
+    assert response.status_code in (200, 204), (
+        f"RESET ANTI-FRAUD MODE failed. status={response.status_code}, body={response.text}"
+    )
+
+    body = _get_holder_card(holder_id, admin_token)
+    holder = body["holder"]
+    card = body["card"]
+    if card.get("anti_fraud_mode") == "none":
+        return
+
+    response = requests.put(
+        f"{BASE_URL}/api/companies/{holder['company_id']}/any_cards/{holder_id}",
+        headers=_admin_headers(admin_token),
+        json={
+            "id": holder_id,
+            "holder": holder["holder"],
+            "middle_name": "",
+            "email": None,
+            "activated": bool(holder["activated"]),
+            "deactivation_cause": holder.get("deactivation_cause") or "",
+            "level": holder["level"],
+            "phone_number": str(holder["phone_number"]),
+            "location_status": card.get("location_status") or "on",
+            "anti_fraud_mode": "none",
+            "anti_fraud_result": "none",
+            "locked": bool(card["locked"]),
+            "is_suspicious": bool(card.get("is_suspicious", False)),
+        },
+        timeout=30,
+    )
+    assert response.status_code in (200, 201), (
+        f"RESET ANTI-FRAUD MODE UPDATE failed. status={response.status_code}, body={response.text}"
+    )
+
+
 def _mobile_headers(instance_id, csrf_token=None, language="ru_RU", connection="close"):
     headers = {
         "Accept": "application/json",
@@ -483,6 +526,7 @@ def _login_and_create_visit(phone, request_body):
         holder_id = _find_holder_id(phone, admin_token)
         _reset_installs(holder_id, admin_token)
         _reset_visit_limit(holder_id, admin_token)
+        _reset_anti_fraud_mode(holder_id, admin_token)
         instance_id = str(uuid.uuid4())
         request_csrf_token = _get_csrf_token(instance_id)
         request_sms_result = _request_sms(phone, instance_id, request_csrf_token)

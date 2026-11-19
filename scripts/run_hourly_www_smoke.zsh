@@ -22,7 +22,7 @@ mkdir -p "$LOG_DIRECTORY"
 
 cd "$PROJECT_DIRECTORY" || exit 1
 
-"$PYTHON_EXECUTABLE" -m pytest -q -s -p no:allure_pytest -o addopts='' \
+"$PYTHON_EXECUTABLE" -m pytest -q -s --tb=short -p no:allure_pytest -o addopts='' \
     test_journal_main_flow --headless --live-api 2>&1 | tee -a "$LOG_FILE"
 TEST_EXIT_CODE=${pipestatus[1]}
 

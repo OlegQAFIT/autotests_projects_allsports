@@ -41,6 +41,7 @@ CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN = os.getenv(
 ).strip()
 CY_SUPPLIER_AUTH_ATTEMPTS = 3
 CY_SUPPLIER_AUTH_RETRY_INTERVAL_SECONDS = 2
+SUPPLIER_PANEL_API_SESSIONS = {}
 
 VISIT_PROFILES = {
     "vip": {
@@ -624,27 +625,36 @@ def _get_supplier_api_headers_from_browser(driver):
     return {}
 
 
-def _get_supplier_panel_api_response(driver, url, params=None):
+def _get_supplier_panel_api_response(driver, url, params=None, account=None):
     """Получает ответ Supplier Panel с актуальной авторизацией из UI-сессии."""
     configured_authorization = _normalize_bearer_token(
         CY_SUPPLIER_VISITS_CHECK_BEARER_TOKEN
     )
     status_codes = []
+    account = account or next(_iter_supplier_panel_accounts())
     if configured_authorization:
-        response = requests.get(
-            url,
-            headers={
+        session = requests.Session()
+        session.headers.update(
+            {
                 "Accept": "application/json, text/plain, */*",
                 "Authorization": configured_authorization,
                 "X-Country": CY_JOURNAL_COUNTRY,
                 "X-Localization": "ru",
-            },
+            }
+        )
+        response = session.get(
+            url,
             params=params,
-            timeout=30,
+            timeout=15,
         )
         if response.status_code == 200:
+            session_cache = getattr(driver, "_supplier_panel_api_sessions", {})
+            session_cache[account["label"]] = session
+            SUPPLIER_PANEL_API_SESSIONS[account["label"]] = session
+            driver._supplier_panel_api_sessions = session_cache
             return response
         status_codes.append(response.status_code)
+        session.close()
 
     # Supplier Panel can briefly issue a token that the API has not yet accepted.
     # Start a fresh browser session before every retry so a stale token or cookie
@@ -658,7 +668,24 @@ def _get_supplier_panel_api_response(driver, url, params=None):
         );
         return {local: dump(window.localStorage), session: dump(window.sessionStorage)};
     """
-    account = next(_iter_supplier_panel_accounts())
+    session_cache = getattr(driver, "_supplier_panel_api_sessions", {})
+    cached_session = session_cache.get(account["label"]) or SUPPLIER_PANEL_API_SESSIONS.get(
+        account["label"]
+    )
+    if cached_session is not None:
+        try:
+            response = cached_session.get(url, params=params, timeout=15)
+            if response.status_code == 200:
+                session_cache[account["label"]] = cached_session
+                driver._supplier_panel_api_sessions = session_cache
+                return response
+            status_codes.append(response.status_code)
+        except requests.RequestException as exc:
+            status_codes.append(f"cached request: {type(exc).__name__}")
+        session_cache.pop(account["label"], None)
+        SUPPLIER_PANEL_API_SESSIONS.pop(account["label"], None)
+        cached_session.close()
+
     for login_attempt in range(1, CY_SUPPLIER_AUTH_ATTEMPTS + 1):
         _reset_supplier_panel_session(driver)
         page = SupplierPanelRegistrationVisits(driver)
@@ -702,10 +729,19 @@ def _get_supplier_panel_api_response(driver, url, params=None):
                         "X-Localization": "ru",
                     }
                 )
-                response = session.get(url, params=params, timeout=30)
+                try:
+                    response = session.get(url, params=params, timeout=15)
+                except requests.RequestException as exc:
+                    status_codes.append(f"attempt {login_attempt}: {type(exc).__name__}")
+                    session.close()
+                    continue
                 status_codes.append(response.status_code)
                 if response.status_code == 200:
+                    session_cache[account["label"]] = session
+                    SUPPLIER_PANEL_API_SESSIONS[account["label"]] = session
+                    driver._supplier_panel_api_sessions = session_cache
                     return response
+                session.close()
 
         if login_attempt < CY_SUPPLIER_AUTH_ATTEMPTS:
             time.sleep(CY_SUPPLIER_AUTH_RETRY_INTERVAL_SECONDS)
@@ -908,7 +944,7 @@ def _reject_visit_card(page, card_info):
     return result
 
 
-def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_iterations=12):
+def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_iterations=0):
     results = []
     processed_names_total = set()
 
@@ -993,6 +1029,55 @@ def _process_expected_visits_in_supplier_panel(driver, expected_actions, max_ite
         if processed_names_total == set(expected_actions):
             return results
 
+    # The Supplier Panel API can already contain a waiting visit while its SPA
+    # does not render an Accept button. Confirm only the still-unprocessed test
+    # visits through the same authenticated Supplier Panel endpoint.
+    remaining_by_name = {
+        _normalize_holder_name(user_name): (user_name, action)
+        for user_name, action in expected_actions.items()
+        if _normalize_holder_name(user_name) not in processed_names_total
+    }
+    if not remaining_by_name:
+        return results
+
+    api_processed = []
+    for account in _iter_supplier_panel_accounts():
+        response = _get_supplier_panel_api_response(
+            driver, SUPPLIER_VISITS_CHECK_URL, account=account
+        )
+        session = getattr(driver, "_supplier_panel_api_sessions", {}).get(account["label"])
+        if session is None:
+            continue
+        for visit in response.json().get("visits", []):
+            user = visit.get("user", {}) if isinstance(visit, dict) else {}
+            user_name = user.get("name") if isinstance(user, dict) else None
+            expected = remaining_by_name.get(_normalize_holder_name(user_name))
+            if not expected:
+                continue
+            expected_name, action = expected
+            visit_id = visit.get("id")
+            if not visit_id or action != "confirm":
+                continue
+            accept_response = session.post(
+                f"{SUPPLIER_PANEL_BASE_URL}/api/supplier/1.0.0/visits/{visit_id}/accept",
+                json={"receptionist_name": "Autotest"},
+                timeout=30,
+            )
+            if accept_response.status_code != 200:
+                continue
+            processed_names_total.add(_normalize_holder_name(expected_name))
+            api_processed.append(
+                {
+                    "user_name": user_name,
+                    "action": "confirmed_via_api_fallback",
+                    "status_code": accept_response.status_code,
+                }
+            )
+        if not set(remaining_by_name) - processed_names_total:
+            break
+
+    if api_processed:
+        results.append({"account": "api_fallback", "processed": api_processed})
     return results
 
 

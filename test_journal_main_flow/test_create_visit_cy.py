@@ -619,8 +619,7 @@ def _get_supplier_api_headers_from_browser(driver):
                 str(key): str(value)
                 for key, value in headers.items()
                 if not str(key).startswith(":")
-                and str(key).lower()
-                not in {"cookie", "content-length", "host", "connection"}
+                and str(key).lower() == "authorization"
             }
     return {}
 

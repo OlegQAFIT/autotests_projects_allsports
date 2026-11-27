@@ -257,8 +257,7 @@ def _get_supplier_api_headers_from_browser(driver):
                 str(key): str(value)
                 for key, value in headers.items()
                 if not str(key).startswith(":")
-                and str(key).lower()
-                not in {"cookie", "content-length", "host", "connection"}
+                and str(key).lower() == "authorization"
             }
     return {}
 
@@ -646,8 +645,13 @@ def _get_supplier_panel_api_response(driver, url, params=None, account=None):
             status_codes.append(f"attempt {login_attempt}: no authorization found")
         else:
             for authorization in dict.fromkeys(authorization_values):
+                if not str(authorization).isascii():
+                    status_codes.append(f"attempt {login_attempt}: invalid authorization encoding")
+                    continue
                 session = requests.Session()
                 for cookie in driver.get_cookies():
+                    if not str(cookie["value"]).isascii():
+                        continue
                     session.cookies.set(
                         cookie["name"],
                         cookie["value"],
